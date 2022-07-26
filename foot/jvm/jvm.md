@@ -139,7 +139,7 @@ public class StaticCodeTest {
 }
 ```
 
-![image-20220726003344759](/Users/rolyfish/Desktop/MyFoot/blogonwork/foot/foot/jvm/jvm.assets/image-20220726003344759.png)
+![image-20220726003344759](jvm.assets/image-20220726003344759.png)
 
 编译器会按顺序收集静态代码，并打包成`cinit`方法。
 
@@ -165,7 +165,7 @@ class Son extends Parent {
 }
 ```
 
-![image-20220726004205338](/Users/rolyfish/Desktop/MyFoot/blogonwork/foot/foot/jvm/jvm.assets/image-20220726004205338.png)
+![image-20220726004205338](jvm.assets/image-20220726004205338.png)
 
 > `cinit<>()`不是必须的
 
@@ -212,7 +212,7 @@ class Test{
 
 此例说明第一点和第四点
 
-![image-20220726010524997](/Users/rolyfish/Desktop/MyFoot/blogonwork/foot/foot/jvm/jvm.assets/image-20220726010524997.png)
+![image-20220726010524997](jvm.assets/image-20220726010524997.png)
 
 Code2:
 
@@ -231,11 +231,11 @@ public class Code2 {
 
 此例说明反射也会触发类的初始化。
 
-![image-20220726010900070](/Users/rolyfish/Desktop/MyFoot/blogonwork/foot/foot/jvm/jvm.assets/image-20220726010900070.png)
+![image-20220726010900070](jvm.assets/image-20220726010900070.png)
 
 第二个参数设为false不会触发类的初始化：
 
-![image-20220726011132098](/Users/rolyfish/Desktop/MyFoot/blogonwork/foot/foot/jvm/jvm.assets/image-20220726011132098.png)
+![image-20220726011132098](jvm.assets/image-20220726011132098.png)
 
 
 
@@ -273,7 +273,7 @@ class Son extends Parent {
 }
 ```
 
-![image-20220726011653498](/Users/rolyfish/Desktop/MyFoot/blogonwork/foot/foot/jvm/jvm.assets/image-20220726011653498.png)
+![image-20220726011653498](jvm.assets/image-20220726011653498.png)
 
 
 
@@ -310,4 +310,5 @@ class Demo2 {
 }
 ```
 
-![image-20220726012228025](/Users/rolyfish/Desktop/MyFoot/blogonwork/foot/foot/jvm/jvm.assets/image-20220726012228025.png)
+![image-20220726012228025](jvm.assets/image-20220726012228025.png)
+
