@@ -233,7 +233,7 @@ public void tt() {
 }
 ```
 
-![image-20220317223413508](/Users/rolyfish/Desktop/MyFoot/thead/thread04-synchronized&cas.assets/image-20220317223413508.png)
+![image-20220317223413508](thread04-synchronized&cas.assets/image-20220317223413508.png)
 
 对象内存地址不一样，也就是引用i1指向的不同的对象。
 
@@ -302,7 +302,7 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 
 进行同步操作的时候是通过获取对象的monitor来保证同步的,就是获取对象的标志位，而这个标志位存在对象头里。Java对象头里的Mark Word，32位默认存储结构为：
 
-![image-20220318001303132](/Users/rolyfish/Desktop/MyFoot/thead/thread04-synchronized&cas.assets/image-20220318001303132.png)
+![image-20220318001303132](thread04-synchronized&cas.assets/image-20220318001303132.png)
 
 锁有4种状态，级别从低到高依次是：**无锁状态、偏向锁状态、轻量级锁状态和重量级锁状态**，这几个状态会随着竞争情况逐渐升级。**锁可以升级但不能降级**，意味着偏向锁升级成轻量级锁后不能降级成偏向锁。这种锁升级却不能降级的策略，目的是为了提高获得锁和释放锁的效率。
 
@@ -347,4 +347,4 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 
 #### 比较
 
-![image-20220318010757871](/Users/rolyfish/Desktop/MyFoot/thead/thread04-synchronized&cas.assets/image-20220318010757871.png)
+![image-20220318010757871](thread04-synchronized&cas.assets/image-20220318010757871.png)

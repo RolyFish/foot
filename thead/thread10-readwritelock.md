@@ -588,7 +588,7 @@ class Runable01 implements Runnable {
 }
 ```
 
-![image-20220328232513618](/Users/rolyfish/Desktop/MyFoot/thead/thread10-readwritelock.assets/image-20220328232513618.png)
+![image-20220328232513618](thread10-readwritelock.assets/image-20220328232513618.png)
 
 锁降级针对的是线程拥有锁的类型，而不是锁的性质发生变化。
 
@@ -647,7 +647,7 @@ public static void main(String[] args) {
 }
 ```
 
-![image-20220328230253471](/Users/rolyfish/Desktop/MyFoot/thead/thread10-readwritelock.assets/image-20220328230253471.png)
+![image-20220328230253471](thread10-readwritelock.assets/image-20220328230253471.png)
 
 
 
@@ -695,7 +695,7 @@ public static void main(String[] args) {
 }
 ```
 
-![image-20220328230200968](/Users/rolyfish/Desktop/MyFoot/thead/thread10-readwritelock.assets/image-20220328230200968.png)
+![image-20220328230200968](thread10-readwritelock.assets/image-20220328230200968.png)
 
 
 
@@ -739,7 +739,7 @@ public static void main(String[] args) {
 }
 ```
 
-![image-20220328230622268](/Users/rolyfish/Desktop/MyFoot/thead/thread10-readwritelock.assets/image-20220328230622268.png)
+![image-20220328230622268](thread10-readwritelock.assets/image-20220328230622268.png)
 
 
 
@@ -788,7 +788,7 @@ class WrlDemo04 {
 }
 ```
 
-![image-20220328230757360](/Users/rolyfish/Desktop/MyFoot/thead/thread10-readwritelock.assets/image-20220328230757360.png)
+![image-20220328230757360](thread10-readwritelock.assets/image-20220328230757360.png)
 
 
 

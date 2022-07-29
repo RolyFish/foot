@@ -137,7 +137,7 @@ public class LockTest {
 }
 ```
 
-![image-20220323203335391](/Users/rolyfish/Desktop/MyFoot/thead/thread07-lockapi.assets/image-20220323203335391.png)
+![image-20220323203335391](thread07-lockapi.assets/image-20220323203335391.png)
 
 ##### tryLock()
 
@@ -205,7 +205,7 @@ class TryLockTest2 {
 }
 ```
 
-![image-20220323204937525](/Users/rolyfish/Desktop/MyFoot/thead/thread07-lockapi.assets/image-20220323204937525.png)
+![image-20220323204937525](thread07-lockapi.assets/image-20220323204937525.png)
 
 
 
@@ -288,7 +288,7 @@ public class ConditionTest {
 }
 ```
 
-![image-20220323212655374](/Users/rolyfish/Desktop/MyFoot/thead/thread07-lockapi.assets/image-20220323212655374.png)
+![image-20220323212655374](thread07-lockapi.assets/image-20220323212655374.png)
 
 <hr>
 
@@ -352,7 +352,7 @@ class ObjectWaitAndThreadSleep {
 }
 ```
 
-![image-20220323213532864](/Users/rolyfish/Desktop/MyFoot/thead/thread07-lockapi.assets/image-20220323213532864.png)
+![image-20220323213532864](thread07-lockapi.assets/image-20220323213532864.png)
 
 
 
