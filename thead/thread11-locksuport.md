@@ -10,7 +10,7 @@
 
 aqs可重写方法：
 
-![image-20220330205242470](/Users/rolyfish/Desktop/MyFoot/thead/thread11-locksuport.assets/image-20220330205242470.png)
+![image-20220330205242470](thread11-locksuport.assets/image-20220330205242470.png)
 
  我们晓得AQS提供了获取共享式锁和获取非共享式锁供同步器实现，以及一些模板方法来实现线程阻塞、自旋和入队，从而控制线程的执行。
 
@@ -40,7 +40,7 @@ void parkUntil(Object blocker, long deadline)：//功能同方法5，入参增�
 
 使用jps + jstack pid 查看 堆栈信息，注意这边信息倒着看。
 
-![image-20220330212905829](/Users/rolyfish/Desktop/MyFoot/thead/thread11-locksuport.assets/image-20220330212905829.png)
+![image-20220330212905829](thread11-locksuport.assets/image-20220330212905829.png)
 
 没大区别，多了一行wait for obj。
 

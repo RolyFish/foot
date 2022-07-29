@@ -301,7 +301,7 @@ class readHoldsTest{
 }
 ```
 
-![image-20220330165522532](/Users/rolyfish/Desktop/MyFoot/thead/thread10-readwritelock.assets/image-20220330165522532.png)
+![image-20220330165522532](thread10-readwritelock.assets/image-20220330165522532.png)
 
 <hr>
 

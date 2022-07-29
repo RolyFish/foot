@@ -8,7 +8,7 @@ ReenTrantLock理解
 
 首先看一下这个类
 
-![image-20220326205736172](/Users/rolyfish/Desktop/MyFoot/thead/thread09-reentrantlock.assets/image-20220326205736172.png)
+![image-20220326205736172](thread09-reentrantlock.assets/image-20220326205736172.png)
 
 Sync是AQS的一个实现类、NofairSync非公平锁、FairSync公平锁这两个都是Sync的子类。
 
@@ -51,7 +51,7 @@ public static void main(String[] args) {
 }
 ```
 
-![image-20220326215800378](/Users/rolyfish/Desktop/MyFoot/thead/thread09-reentrantlock.assets/image-20220326215800378.png)
+![image-20220326215800378](thread09-reentrantlock.assets/image-20220326215800378.png)
 
 state = 2 即该线程获取了两次同步状态(加了两次锁)。
 
@@ -101,7 +101,7 @@ public static void main(String[] args) throws InterruptedException {
 
 用javap -v查看字节码文件
 
-![image-20220326223443185](/Users/rolyfish/Desktop/MyFoot/thead/thread09-reentrantlock.assets/image-20220326223443185.png)
+![image-20220326223443185](thread09-reentrantlock.assets/image-20220326223443185.png)
 
 下面还有两个monitorExit指令，是遇到异常需要执行的指令。
 
@@ -210,7 +210,7 @@ public final boolean hasQueuedPredecessors() {
 
 原状态:
 
-![image-20220401181641908](/Users/rolyfish/Desktop/MyFoot/thead/thread09-reentrantlock.assets/image-20220401181641908.png)
+![image-20220401181641908](thread09-reentrantlock.assets/image-20220401181641908.png)
 
 解释：sync为同步器、head和tail为头尾节点、exclusiveOwner为同步状态拥有者(这是AQS父类一个属性)、Node们构成同步队列。
 
@@ -218,7 +218,7 @@ public final boolean hasQueuedPredecessors() {
 
 公平锁情况下排队获取锁：
 
-![image-20220401182602954](thread09.assets/image-20220401182602954.png![image-20220401183105531](/Users/rolyfish/Desktop/MyFoot/thead/thread09-reentrantlock.assets/image-20220401183105531.png)
+![image-20220401182602954](thread09.assets/image-20220401182602954.png![image-20220401183105531](thread09-reentrantlock.assets/image-20220401183105531.png)
 
 公平锁情况下，会先判断同步队列列里是否还有节点，如果有获取同步状态失败，尾插法将节点插入同步队列，并且使得sync的tail指向刚插入的节点。即公平锁在同步队列有节点的情况下不会进行竞争。
 
@@ -228,7 +228,7 @@ public final boolean hasQueuedPredecessors() {
 
 可能会出现这种情况，cas竞争
 
-![image-20220401183532598](/Users/rolyfish/Desktop/MyFoot/thead/thread09-reentrantlock.assets/image-20220401183532598.png)
+![image-20220401183532598](thread09-reentrantlock.assets/image-20220401183532598.png)
 
 当头结点完全释放锁时，如果此刻刚好启动一个线程去获取锁，同时此刻head节点的后驱节点也在cas自旋尝试获取得到锁，如果head节点的后驱节点cas失败了，也就出现上图所示状态，同步队列没有变化，但是锁却被一个同步队列外的线程获取，形成了插队！！！
 

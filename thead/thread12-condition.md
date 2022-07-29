@@ -61,13 +61,13 @@ private transient Node lastWaiter;
 
 入队操作是尾插法：
 
-![image-20220402015947482](/Users/rolyfish/Desktop/MyFoot/thead/thread12-condition.assets/image-20220402015947482.png)
+![image-20220402015947482](thread12-condition.assets/image-20220402015947482.png)
 
 出队操作：
 
 从等待队列断开，尾插法插入同步队列
 
-![image-20220402020611487](/Users/rolyfish/Desktop/MyFoot/thead/thread12-condition.assets/image-20220402020611487.png)
+![image-20220402020611487](thread12-condition.assets/image-20220402020611487.png)
 
 
 

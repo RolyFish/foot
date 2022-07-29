@@ -220,13 +220,13 @@ return interrupted;
 
 原同步队列情况：
 
-![image-20220326204452544](/Users/rolyfish/Desktop/MyFoot/thead/thread08-aqs源码解读.assets/image-20220326204452544.png)
+![image-20220326204452544](thread08-aqs源码解读.assets/image-20220326204452544.png)
 
 
 
 出队逻辑执行完后：
 
-![image-20220326204635259](/Users/rolyfish/Desktop/MyFoot/thead/thread08-aqs源码解读.assets/image-20220326204635259.png)
+![image-20220326204635259](thread08-aqs源码解读.assets/image-20220326204635259.png)
 
 shouldParkAfterFailedAcquire方法
 
