@@ -16,7 +16,7 @@ vim  /etc/shells
 
 可以发现有很多中终端
 
-<img src="/Users/rolyfish/Desktop/MyFoot/MacUse/Mac使用.assets/image-20220612231304647.png" alt="image-20220612231304647" style="zoom: 50%;" />
+<img src="Mac使用.assets/image-20220612231304647.png" alt="image-20220612231304647" style="zoom: 50%;" />
 
 #### 切换终端
 
@@ -44,7 +44,7 @@ zsh的配置文件是.zshrc
 
 需要设置开启：
 
-![image-20220612234134549](/Users/rolyfish/Desktop/MyFoot/MacUse/Mac使用.assets/image-20220612234134549.png)
+![image-20220612234134549](Mac使用.assets/image-20220612234134549.png)
 
 
 
