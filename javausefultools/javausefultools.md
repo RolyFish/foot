@@ -67,7 +67,7 @@ public void collectionsSort() {
 }
 ```
 
-![image-20220622020116927](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622020116927.png)
+![image-20220622020116927](javausefultools.assets/image-20220622020116927.png)
 
 ##### 获取极值
 
@@ -88,7 +88,7 @@ public void getMaxAndMin() {
 }
 ```
 
-![image-20220622021111513](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622021111513.png)
+![image-20220622021111513](javausefultools.assets/image-20220622021111513.png)
 
 
 
@@ -142,7 +142,7 @@ public void binarySearch() {
 }
 ```
 
-![image-20220622023556956](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622023556956.png)
+![image-20220622023556956](javausefultools.assets/image-20220622023556956.png)
 
 
 
@@ -162,7 +162,7 @@ public void toUnModify() {
 }
 ```
 
-![image-20220622023924305](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622023924305.png)
+![image-20220622023924305](javausefultools.assets/image-20220622023924305.png)
 
 
 
@@ -205,7 +205,7 @@ public void testCollectionIsEmpty() {
 }
 ```
 
-![image-20220623221817985](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220623221817985.png)
+![image-20220623221817985](javausefultools.assets/image-20220623221817985.png)
 
 
 
@@ -250,7 +250,7 @@ public void testCollectionMerge() {
 }
 ```
 
-![image-20220622124248508](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622124248508.png)
+![image-20220622124248508](javausefultools.assets/image-20220622124248508.png)
 
 
 
@@ -322,7 +322,7 @@ public void cartesianProduct() {
 }
 ```
 
-![image-20220622195532153](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622195532153.png)
+![image-20220622195532153](javausefultools.assets/image-20220622195532153.png)
 
 
 
@@ -348,7 +348,7 @@ public void splitList() {
 }
 ```
 
-![image-20220622195714963](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622195714963.png)
+![image-20220622195714963](javausefultools.assets/image-20220622195714963.png)
 
 
 
@@ -392,7 +392,7 @@ public void reverse() {
 }
 ```
 
-![image-20220622211335193](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622211335193.png)
+![image-20220622211335193](javausefultools.assets/image-20220622211335193.png)
 
 
 
@@ -447,7 +447,7 @@ public void ifNullThrow() {
 }
 ```
 
-![image-20220622213325224](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622213325224.png)
+![image-20220622213325224](javausefultools.assets/image-20220622213325224.png)
 
 
 
@@ -471,7 +471,7 @@ public void isEquals() {
 }
 ```
 
-![image-20220622213823873](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622213823873.png)
+![image-20220622213823873](javausefultools.assets/image-20220622213823873.png)
 
 
 
@@ -627,7 +627,7 @@ public void split() {
 }
 ```
 
-![image-20220622224442299](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622224442299.png)
+![image-20220622224442299](javausefultools.assets/image-20220622224442299.png)
 
 
 
@@ -655,7 +655,7 @@ public void testIsNumeric() {
 }
 ```
 
-![image-20220622224849352](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622224849352.png)
+![image-20220622224849352](javausefultools.assets/image-20220622224849352.png)
 
 
 
@@ -675,7 +675,7 @@ public void join() {
 }
 ```
 
-![image-20220622225528384](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622225528384.png)
+![image-20220622225528384](javausefultools.assets/image-20220622225528384.png)
 
 
 
@@ -711,7 +711,7 @@ public void testIsNull() {
 }
 ```
 
-![image-20220622235110478](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220622235110478.png)
+![image-20220622235110478](javausefultools.assets/image-20220622235110478.png)
 
 
 
@@ -879,7 +879,7 @@ public void readOneLine() throws IOException {
 }
 ```
 
-![image-20220623230937553](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220623230937553.png)
+![image-20220623230937553](javausefultools.assets/image-20220623230937553.png)
 
 <hr>
 
@@ -907,7 +907,7 @@ public void test() {
 }
 ```
 
-![image-20220623232656328](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220623232656328.png)
+![image-20220623232656328](javausefultools.assets/image-20220623232656328.png)
 
 
 
@@ -927,7 +927,7 @@ public void getPackageName() {
 }
 ```
 
-![image-20220623233249996](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220623233249996.png)
+![image-20220623233249996](javausefultools.assets/image-20220623233249996.png)
 
 
 
@@ -947,7 +947,7 @@ public void isInnerClass() {
 }
 ```
 
-![image-20220623233452283](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220623233452283.png)
+![image-20220623233452283](javausefultools.assets/image-20220623233452283.png)
 
 <hr>
 
@@ -1033,9 +1033,9 @@ public void copyProperties() {
 }
 ```
 
-![image-20220623235730942](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220623235730942.png)
+![image-20220623235730942](javausefultools.assets/image-20220623235730942.png)
 
-![image-20220623235742860](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220623235742860.png)
+![image-20220623235742860](javausefultools.assets/image-20220623235742860.png)
 
 
 
@@ -1061,7 +1061,7 @@ public void instant() throws NoSuchMethodException {
 }
 ```
 
-![image-20220624000752453](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220624000752453.png)
+![image-20220624000752453](javausefultools.assets/image-20220624000752453.png)
 
 
 
@@ -1091,7 +1091,7 @@ public void getMethod() throws NoSuchMethodException, InvocationTargetException,
 }
 ```
 
-![image-20220624005124913](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220624005124913.png)
+![image-20220624005124913](javausefultools.assets/image-20220624005124913.png)
 
 
 
@@ -1110,7 +1110,7 @@ public void getMethodParams() {
 }
 ```
 
-![image-20220624011411539](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220624011411539.png)
+![image-20220624011411539](javausefultools.assets/image-20220624011411539.png)
 
 <hr>
 
@@ -1179,7 +1179,7 @@ public void testEncodeAndDecode() {
 }
 ```
 
-![image-20220624014713964](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220624014713964.png)
+![image-20220624014713964](javausefultools.assets/image-20220624014713964.png)
 
 
 
@@ -1225,7 +1225,7 @@ public void hex() throws UnsupportedEncodingException {
 }
 ```
 
-![image-20220624021753659](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220624021753659.png)
+![image-20220624021753659](javausefultools.assets/image-20220624021753659.png)
 
 
 
@@ -1253,7 +1253,7 @@ public void serializationUtilsTest() {
 }
 ```
 
-![image-20220624022755404](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220624022755404.png)
+![image-20220624022755404](javausefultools.assets/image-20220624022755404.png)
 
 <hr>
 
@@ -1275,4 +1275,4 @@ public void httpStatusTest() {
 
 > 这是一个枚举类，给定了很多状态，当然我们也可以自定义，没毛病。
 
-![image-20220624025115981](/Users/rolyfish/Desktop/MyFoot/javausefultools/javausefultools.assets/image-20220624025115981.png)
+![image-20220624025115981](javausefultools.assets/image-20220624025115981.png)
