@@ -120,7 +120,7 @@ class Daughter extends Person {
 }
 ```
 
-![image-20220729135114407](读书笔记.assets/image-20220729135114407.png)
+![image-20220729135114407](java成神之路(基础).assets/image-20220729135114407.png)
 
 
 
@@ -306,7 +306,7 @@ abstract class AbstractPersonX implements IPerson{
 
 > 菱形问题：假设B和C都继承自A，B和C都继承了父类A的所有属性和方法，如果java支持多继承的话，此刻有一个D继承自B和C，那么类D就同时拥有类B和类C的所有属性和方法，并且类D继承了两份来自于A的属性和方法，拥有同名属性和相同方法签名的方法是通过不了编译的，且如果通过编译，在调用的时候也会产生歧义。
 
-<img src="读书笔记.assets/image-20220728231808420.png" alt="image-20220728231808420" style="zoom:50%;" />
+<img src="java成神之路(基础).assets/image-20220728231808420.png" alt="image-20220728231808420" style="zoom:50%;" />
 
 ##### java可以多实现
 
@@ -460,13 +460,13 @@ class ClassD implements InterfaceC, InterfaceD {
 
 > 继承(Inheritance)是一种联结类与类的层次模型。指的是一个类(子类、子接口)继承另外一个类(父类、父接口)的功能。并且可以增加自己新的功能的能力。继承是一种`AS-a`的关系。
 
-![image-20220729130759731](读书笔记.assets/image-20220729130759731.png)
+![image-20220729130759731](java成神之路(基础).assets/image-20220729130759731.png)
 
 组合
 
 > 组合(Composition)体现的是整体与部分、拥有的关系，即`has-a`关系。
 
-![image-20220729131252923](读书笔记.assets/image-20220729131252923.png)
+![image-20220729131252923](java成神之路(基础).assets/image-20220729131252923.png)
 
 
 
