@@ -871,7 +871,7 @@ java为我们提供了float和double两个浮点数数据类型，分别占4字�
 
 > 存储结构
 
-Float:        1位符号位，8位指数位，23位尾数位
+float:        1位符号位，8位指数位，23位尾数位
 
 double： 1位符号位，11位指数位，52位尾数位
 
@@ -881,11 +881,359 @@ double： 1位符号位，11位指数位，52位尾数位
 
 ##### 自动装箱与拆箱
 
-> 八大基本数据类型自动装箱与自动拆箱。
+> 八大基本数据类型自动装箱与自动拆箱。八大基本数据类型都有对应的对象类型，自动装箱拆箱的意思就是在需要基本数据类型需要转化为对应的包装类型的时候不需要程序员主动的去操作，而是编译器会自动帮我们去做。
+
+除了`int`对应的包装类型为`Integer`，``char`对应包装类型为`Character`外其他基本数据类型对应的包装类型都为对应基本数据类型首字母大写。
+
+> `Java`是一种面向对象的编程语言，一切皆对象，为何需要基本数据类型？
+
+基本数据类型，相较于对象类型运算简单。
+
+> 包装类型存在的意义？
+
+基本数据类型的包装类型，不仅仅只有值的概念，其扩展了额外的方法(比如equals)。且对于集合框架来说，需要的是对象类型，我们无法将基本数据类型放进去。
 
 
+
+###### 装箱&拆箱
+
+> 装箱
+
+```java
+int i = 10;
+Integer i2 = new Integer(i);
+或
+Integer i2 = Integer.valueOf(i);
+```
+
+> 拆箱
+
+```java
+Integer i = new Integer(10);
+int i2 = i.intValue();
+```
+
+
+
+###### 自动装箱拆箱
+
+> 基本数据类型在需要转化为对应包装类型的时候，无需程序员手动操作
+
+```java
+Integer i = 10;
+int i2 = i;
+```
+
+对其进行反编译可以发现确实自动帮我们转化了：
+
+![image-20220731161053533](java成神之路(基础).assets/image-20220731161053533.png)
+
+> 还有就是集合的泛型是一个对象类型，但是我们在编码的时候可以直接将基本数据类型放入，因为编译器会帮我们自动装箱。
+
+```java
+List<Integer> ints = new ArrayList<>();
+ints.add(10);
+```
+
+反编译看：
+
+![image-20220731161803912](java成神之路(基础).assets/image-20220731161803912.png)
+
+##### 基本数据类型的池化技术
+
+> 基本数据类型（除了double、float）都有缓存技术，会缓存一定范围内的对象，原因就是`jvm`认为在此范围内的对象很常用，在需要使用的时候直接去池中拿取，而无需重新创建。
+
+
+
+###### 缓存范围
+
+除了`Character`没有负数概念，其缓存范围为：【0,127】,Boolean缓存范围 {true,false}
+
+其他都是：【-128,127】
+
+```java
+@Test
+public void testCache() {
+
+    System.out.println("========char==========");
+    Character c1 = 127;
+    Character c2 = 127;
+    Character c3 = 128;
+    Character c4 = 128;
+    System.out.println(c1 == c2);
+    System.out.println(c3 == c4);
+
+    System.out.println("========byte==========");
+    Byte b1 = 127;
+    Byte b2 = 127;
+    Byte b3 = -128;
+    Byte b4 = -128;
+    System.out.println(b1 == b2);
+    System.out.println(b3 == b4);
+
+    System.out.println("========short==========");
+    Short s1 = 127;
+    Short s2 = 127;
+    Short s3 = -129;
+    Short s4 = -129;
+    System.out.println(s1 == s2);
+    System.out.println(s3 == s4);
+
+    System.out.println("========int==========");
+    Integer i1 = 127;
+    Integer i2 = 127;
+    Integer i3 = -129;
+    Integer i4 = -129;
+    System.out.println(i1 == i2);
+    System.out.println(i3 == i4);
+
+    System.out.println("========long==========");
+    Long l1 = 127L;
+    Long l2 = 127L;
+    Long l3 = -129L;
+    Long l4 = -129L;
+    System.out.println(l1 == l2);
+    System.out.println(l3 == l4);
+  
+    System.out.println("========Boolean==========");
+    Boolean bb1 = false;
+    Boolean bb2 = false;
+    System.out.println(bb1 == bb2);
+}
+```
+
+![image-20220731163829088](java成神之路(基础).assets/image-20220731163829088.png)
+
+
+
+###### new关键字
+
+> 特别的，如果使用`new`关键字创建包装类型，其不会存放于缓存池中，而是存放于堆内存中
+
+```java
+@Test
+public void testCache2() {
+    Integer i1 = new Integer(128);
+    Integer i2 = 128;
+    System.out.println(i1 == i2);
+    System.out.println("equals方法：" + i1.equals(i2));
+}
+```
+
+![image-20220731163644314](java成神之路(基础).assets/image-20220731163644314.png)
+
+
+
+###### 问题
+
+> 池化技术可有效的节省内存空间，但是也会给我们带来一些问题。对于基本数据类型我们一般来说只关心其数值的大小，并不会去关心其对象具体。所以说对于基本数据类型的判等一般采用equals方法，这样即便数据超过缓存范围也可以准确判断。
+
+
+
+###### 谁负责缓存
+
+> java中会有专门的类负责缓存
+
+有ByteCache用于缓存Byte对象
+
+有ShortCache用于缓存Short对象
+
+有LongCache用于缓存Long对象
+
+有CharacterCache用于缓存Character对象
+
+有IntegerCache用于缓存Integer对象
 
 
 
 #### String
+
+> `String`在`java`中很常用，看似简单，也有很多知识点。
+
+##### 不可变性
+
+对象的不可变性指的是什么？
+
+对象的不可变性指的是在对象创建完成，我们不可以调用方法来修改其属性。
+
+
+
+######  现象
+
+> 在编程中我们常常通过等号和加号来"修改"字符串的值，为什么还是不可变得呢？
+
+比如：
+
+```java
+String str1 = "abc";
+str1 = "123";
+//
+String str1 = "abc";
+str1 += "123"; 
+```
+
+这不是修改了么？
+
+> 这里两种方式好像都修改了str1的值，其实是修改了str1的引用，将str1指向了一个新的字符串对象。
+>
+> 对于字符串相加，回收先得到相加后的结果，创建对应字符串，然后赋予引用。
+
+图示：
+
+<img src="java成神之路(基础).assets/image-20220731210311597.png" alt="image-20220731210311597" style="zoom:67%;" />
+
+<img src="java成神之路(基础).assets/image-20220731210337273.png" alt="image-20220731210337273" style="zoom:67%;" />
+
+
+
+###### String为什么是不可变的
+
+> 简单理解一下为什么String不可变
+
+打开`String`类的源码，可以发现`String`底层是一个字符数组，且该属性被`final`修饰：
+
+```java
+private final char value[];
+```
+
+那么此刻自然就想到被`final`修饰的对象不可变。
+
+> 其实被`final`修饰的对象不可变指的是，不可以修改其引用，如果说我可以通过调用对象提供的修改方法那么完全是可以修改的。
+
+
+
+那么String类不可变的真正原因是什么呢？
+
+- 首相String类被final修饰，也就是不可以被继承，我们知道继承及侵入式的，不可以继承那么就没有子类可以破坏其不可变性。（不仅仅是String八大基本数据类型的包装类型都是fianl的）
+- String类底层是一个字符数组，其作为String的属性，被private修饰，也就是不提供外部访问
+- String类底层是一个字符数组，其作为String的属性，被final修饰，不可修改字符数组引用
+- 最后一点也是最重要的，String类中未提供任何修改其字符数组的方法（无论是私有的还是公开的），其内部方法返回的都是一个String
+
+
+
+###### String真的不可变吗
+
+> 我们直到`Java`提供了一个很强大的机制，就是反射，那么我们是否可以通过反射来破坏String底层数组的private和final呢？
+
+写一个测试案例：可以通过反射来修改被fianl修饰的属性
+
+```java
+@Test
+public void testFinal() throws NoSuchFieldException, IllegalAccessException {
+  TestFinal testFinal = new TestFinal();
+  System.out.println(testFinal.sb + ":" + VM.current().addressOf(testFinal.sb));
+  final Field sb = testFinal.getClass().getDeclaredField("sb");
+  final StringBuilder abc = new StringBuilder("abc");
+  //反射破坏不可修改
+  sb.setAccessible(true);
+  sb.set(testFinal, abc);
+  System.out.println(testFinal.sb + ":" + VM.current().addressOf(testFinal.sb));
+}
+class TestFinal {
+    final StringBuilder sb = new StringBuilder("123");
+}
+```
+
+结果很意外，被final修饰的属性其值可以被改变，且其内存地址也发生了改变，也就是sb的引用也别修改了
+
+![image-20220731214248215](java成神之路(基础).assets/image-20220731214248215.png)
+
+同理我们尝试修改String的字符数组：
+
+```java
+/**
+ * 我们都知道String其内部是字符数组，且是私有的，那么我们是否可以通过反射修改其私有属性
+ */
+@Test
+public void test3() throws NoSuchFieldException, IllegalAccessException {
+    String str = "123";
+    System.out.println(str + ":" + VM.current().addressOf(str));
+
+    final Field value = str.getClass().getDeclaredField("value");
+    value.setAccessible(true);
+    value.set(str, "abc".toCharArray());
+    System.out.println(str + ":" + VM.current().addressOf(str));
+
+    String str2 = "123";
+    System.out.println(str2 + ":" + VM.current().addressOf(str2));
+
+    String str3 = "abc";
+    System.out.println(str3 + ":" + VM.current().addressOf(str3));
+}
+```
+
+> 结果有令人很惊讶
+
+- 可以修改String的属性字符数组的值，且不会修改其引用
+- String str2 = "123";为何值为”abc“，这里我只能猜测，String的缓存池中记录着这么一个 ”123“字符串，但是其内部的字符数组指向的是['a','b','c']
+
+![image-20220731215113520](java成神之路(基础).assets/image-20220731215113520.png)
+
+
+
+###### String为什么设计成不可变的
+
+> 
+
+
+
+- 缓存池
+
+  > String是很常用的，为了避免频繁创建相同的字符串，JVM特地在堆内存中开辟了一块空间叫字符串缓存池，专门用于缓存已创建的字符串。
+
+  如果说需要的字符串在缓存池中存在，那么直接去缓存池中取即可，不用再去创建。
+
+- 安全
+
+  > 字符串用于存储的内容还是很广泛的，密码、url、账号信息等等，如果说String可以很容易的被改变，那么整个系统奖没有可信度可言了。
+
+- 线程安全
+
+  > 线程安全性问题，只出现在可修改的数据上，String不可变那么自动保证线程安全。
+
+- 拷贝安全
+
+  > 我们知道在深拷贝的时候，需要考虑对象属性的拷贝，以不影响原型对象，而String不可变在拷贝的时候无需考虑他的拷贝。
+
+- hash缓存
+
+  > 当字符串作为哈希实现的key值的时候。在对这些散列实现进行操作时，经常调用hashCode()方法。
+  >
+  > 不可变性保证了字符串的值不会改变，其哈希值也不会变，只有在首次哈希的时候会计算哈希值，之后会直接去取已计算的哈希值。
+
+  ```java
+  /** Cache the hash code for the string */
+  private int hash; // Default to 0
+  public int hashCode() {
+      int h = hash;
+      if (h == 0 && value.length > 0) {
+          char val[] = value;
+          for (int i = 0; i < value.length; i++) {
+              h = 31 * h + val[i];
+          }
+          hash = h;
+      }
+      return h;
+  }
+  ```
+
+###### 小结
+
+> 以上提到的String的缓存池技术，hashCode()缓存技术，都旨在与提高性能，因为String是非常常用的数据类型，对于它的性能即便是小小的提升，映射到整个java生态中，也是庞大的提升。
+
+
+
+##### substring
+
+> 介绍subString方法的原理，以及在jdk6和jdk6之后版本中的不同之处，jdk6中的substring方法的问题
+
+
+
+###### JDK6中substring的实现原理
+
+> 为了看一眼特地下载的JDK6
+
+
+
+
 
