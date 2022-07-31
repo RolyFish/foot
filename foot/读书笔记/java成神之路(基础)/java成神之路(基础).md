@@ -1231,9 +1231,111 @@ public void test3() throws NoSuchFieldException, IllegalAccessException {
 
 ###### JDK6中substring的实现原理
 
-> 为了看一眼特地下载的JDK6
+> String底层是一个字符数组，在jdk6中String有三个成员变量：`char value[]` `int offset` `int count`。分别表示字符数组、起始下标、字符个数。
+
+```java
+String(int offset, int count, char value[]) {
+    this.value = value;
+    this.offset = offset;
+    this.count = count;
+}
+
+public String substring(int beginIndex, int endIndex) {
+    //check boundary
+    return  new String(offset + beginIndex, endIndex - beginIndex, value);
+}
+```
+
+在调用substring方法的时候会返回一个新的string对象，但其内部的字符数组引用任然指向原堆中的字符数组，只不过其实下标和字符数量不同。
+
+图示：
+
+![image-20220731235844909](java成神之路(基础).assets/image-20220731235844909.png)
 
 
 
+###### JDK6中substring存在的问题
 
+> 由于截取的字符串和原字符串引用的是同一个字符数组，如果原字符串很大，但是截取的部分很小，那么就会导致，原来很长的字符串所指向的字符数组即便不会使用也一直会被引用，就会无法回收，导致内存泄漏。 还有就是效率问题，我只需要截取一小段，却引用了整个字符数组。
+>
+> 解决方式是截取后的字符串重新创建一个字符串。
+
+```java
+x = x.substring(x, y) + ""
+```
+
+
+
+###### jdk7对于sbustring的优化
+
+> 优化方式是调用sbustring方法生成的字符串其内部字符数组的引用，指向一个新创建的字符数组。
+
+```java
+//JDK 7
+public String(char value[], int offset, int count) {
+    //check boundary
+    this.value = Arrays.copyOfRange(value, offset, offset + count);
+}
+
+public String substring(int beginIndex, int endIndex) {
+    //check boundary
+    int subLen = endIndex - beginIndex;
+    return new String(value, beginIndex, subLen);
+}
+```
+
+![image-20220801000754715](java成神之路(基础).assets/image-20220801000754715.png)
+
+
+
+##### replcae
+
+```java
+//将所有的replacement字符替换为target字符
+public String replace(CharSequence target字符, CharSequence replacement) {
+    return Pattern.compile(target.toString(), Pattern.LITERAL).matcher(
+            this).replaceAll(Matcher.quoteReplacement(replacement.toString()));
+}
+//将所有的replacement字符串替换为target字符串
+public String replaceAll(String regex, String replacement) {
+    return Pattern.compile(regex).matcher(this).replaceAll(replacement);
+}
+//将首个replacement字符串替换为target字符串
+public String replaceFirst(String regex, String replacement) {
+    return Pattern.compile(regex).matcher(this).replaceFirst(replacement);
+}
+```
+
+
+
+##### 字符串拼接
+
+> 字符串通过`+`拼接的原理
+
+```java
+public void test1() {
+  String str1 = "abc" + "123";
+  System.out.println(str1);
+}
+
+void method(String str1, String str2) {
+  final String strX = str1 + "," + str2;
+}
+```
+
+反编译后：
+
+```java
+public void test1() {
+  String str1 = "abc123";
+  System.out.println(str1);
+}
+
+void method(String str1, String str2) {
+  (new StringBuilder()).append(str1).append(",").append(str2).toString();
+}
+```
+
+- 对于编译时期就知道字面量的字符串，进行常量折叠
+- 对于编译器不确定的变量，会使用StringBuilder.append拼接
 
