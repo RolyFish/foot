@@ -1,6 +1,6 @@
 ## java成神之路读书笔记
 
-> 借鉴地址G：itee Pages 完整阅读:http://hollischuang.gitee.io/tobetopjavaer
+> 借鉴地址Gitee Pages 完整阅读:http://hollischuang.gitee.io/tobetopjavaer
 >
 > 作者：Hollis ，阿里巴巴技术专家，51CTO 专栏作家，CSDN 博客专家，掘金优秀作者， 《程序员的三门课》联合作者，《Java 工程师成神之路》系列文章作者;热衷于分享计算 机编程相关技术，博文全网阅读量数千万。
 
@@ -1945,8 +1945,6 @@ jdk7中，由于后续版本计划通过元空间代替永久代，所以先将�
 
 jdk8中，彻底废除了永久代，使用元空间代替永久代，字符串常量池从堆内存，移动到永久代。
 
-
-
 ##### String长度限制？
 
 > `String`存不存在长度限制呢？
@@ -1958,6 +1956,244 @@ jdk8中，彻底废除了永久代，使用元空间代替永久代，字符串�
 - 运行期间限制：不能超过int的范围
 
 
+
+#### java中的各种关键字
+
+
+
+##### transient
+
+> 短暂瞬时的意思，java提供的关键字，用于修饰成员变量。如果一个变量被`transient`修饰，当对象需要序列化传输、或存储时，会忽略该变量。
+>
+> 当我们不希望对象的某个变量需要被序列化的时候，比如我们定义一个变量，该变量我们只希望它在当前系统中使用，而不希望他在上下游系统传输，可以使用`transient`修饰。
+
+被transient修饰的引用类型也就是对象类型，在被反序列化的时候初始化为null，基本数据类型为默认值int就是0。
+
+> 创建一个对象，注意需要实现序列化接口支持序列化操作。如果存在特殊需求可以重写writeObjec方法和readObject方法。
+
+```java
+@Data
+class TransientTestClass implements Serializable {
+    private static final long serialVersionUID = 9167810647635375505L;
+  
+    private String str;
+    private Integer value;
+    private transient String name;
+    private transient int age;
+}
+```
+
+> 将对象序列化持久化到本地
+
+```java
+String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+
+@Test
+public void test1() throws IOException {
+    final TransientTestClass transientTestClass = new TransientTestClass();
+    transientTestClass.setName("element");
+    transientTestClass.setStr("element");
+    transientTestClass.setValue(123);
+    //序列化到文件
+    final ObjectOutputStream objectOutputStream = new ObjectOutputStream(
+            new FileOutputStream(new File(filePath, transientTestClass.getClass().getName())));
+    objectOutputStream.writeObject(transientTestClass);
+    objectOutputStream.flush();
+    objectOutputStream.close();
+}
+```
+
+> 再通过反序列化将文件中的对象读出来，查看其属性值
+
+```java
+/**
+ * 读出来，使用对象接收看看
+ */
+@Test
+public void test2() throws IOException, ClassNotFoundException {
+    final ObjectInputStream objectInputStream = new ObjectInputStream(
+            new FileInputStream(new File(filePath, TransientTestClass.class.getName())));
+    TransientTestClass transientTestClass = (TransientTestClass) objectInputStream.readObject();
+    System.out.println(transientTestClass);
+}
+```
+
+> 结果也如我们说的一样
+
+![image-20220801235653264](java成神之路(基础).assets/image-20220801235653264.png)
+
+
+
+##### instanceof
+
+> java关键字，类似于一个二元操作符，用于判断`instanceOf`左右两边对象类型是否一致。
+
+```java
+@Test
+public void test() {
+    System.out.println(InstanceofTest.class instanceof Object);
+    System.out.println("InstanceofTest.class" instanceof String);
+    System.out.println(Integer.valueOf(10) instanceof Integer);
+
+    Object o = Integer.valueOf(10);
+    System.out.println(o instanceof String);
+}
+```
+
+![image-20220802000331345](java成神之路(基础).assets/image-20220802000331345.png)
+
+
+
+##### volatile
+
+
+
+#### 枚举
+
+> 枚举类型是java5引入的，由一组固定常量组成的合法类型。
+
+##### 在枚举引入之前如何定义一组常量
+
+> java在枚举引入之前，我们一般会用一组int常量值，来表示一组固定的数据。比如使用1、2、3、4来表示春、夏、秋、冬。
+
+```java
+/**
+ * 枚举类型一般会被系统共享，所以其访问修饰符一般为public
+ */
+class Season {
+    public static final int SPRING = 1;
+    public static final int SUMMER = 2;
+    public static final int AUTUMN = 3;
+    public static final int WINTER = 4;
+}
+```
+
+> 可以根据传入的int值来判断对应季节
+
+```java
+@Test
+public void test1() {
+    final int spring = Season.SPRING;
+    season(spring);
+}
+public void season(int value) {
+    switch (value) {
+        case 1:
+            System.out.println("春天");
+            break;
+        case 2:
+            System.out.println("夏天");
+            break;
+        case 3:
+            System.out.println("秋天");
+            break;
+        case 4:
+            System.out.println("冬天");
+            break;
+        default:
+            System.out.println("输入不合法");
+            break;
+    }
+}
+```
+
+这种方法称作int枚举模式。存在一些安全问题，就如上面判断季节的方法，default分支是我们不愿意看到的场景，如果说我们不加校验可能会产生问题。并且Season这个类打印出来的也只是一个int值1、2、3、4，表面并不能看出任何的意思。所以说int枚举模式他的安全性和可读性是不可观的。
+
+> 当然了我们也可以使用字符串作为枚举值，但是字符串的比较算法相对来说比较浪费性能，也是不可取的。
+
+
+
+##### 定义枚举
+
+> 由于int枚举和字符串枚举存在着缺陷，java5引入了枚举类型`enum type`，接下来我们看如何定义一个枚举。
+
+使用enum声明一个枚举，在枚举类中列举枚举值，使用逗号隔开，尾部使用分号结尾。
+
+```java
+enum Season2 {
+    SPRING, SUMMER, AUTUMN, WINTER;  
+}
+```
+
+并且我们还可以为枚举定义属性：
+
+```java
+@AllArgsConstructor
+enum Season3 {
+    SPRING(1, "春天"),
+    SUMMER(1, "春天"),
+    AUTUMN(1, "春天"),
+    WINTER(1, "春天");
+    int code;
+    String msg;
+}
+```
+
+##### 特点
+
+- 简约
+- 和普通class类一样，枚举类可以单独存在，也可以存在于其他java类中
+- 枚举类可以实现接口
+- 也可以定义新的属性和方法
+
+
+
+##### switch对于枚举的支持
+
+> 使用枚举改造上面代码
+
+```java
+public void seasonUseEnum(Season2 season) {
+    System.out.println(Season2.SPRING);
+    switch (season) {
+        case SPRING:
+            System.out.println("春天");
+            break;
+        case SUMMER:
+            System.out.println("夏天");
+            break;
+        case AUTUMN:
+            System.out.println("秋天");
+            break;
+        case WINTER:
+            System.out.println("冬天");
+            break;
+        default:
+            System.out.println("输入不合法");
+            break;
+    }
+}
+
+@Test
+public void test2() {
+    seasonUseEnum(Season2.SPRING);
+}
+```
+
+> 如此判断季节的方法对于传入参数存在类型限制，不会再有不合法参数的出现。一般来说我们会对枚举添加表示域的属性和对应的描述，方便统一管理。
+
+```java
+public void seasonUseEnum(Season3 season) {
+    System.out.println(Season2.SPRING);
+    final StringBuilder sb = new StringBuilder();
+    switch (season) {
+        case SPRING:
+        case WINTER:
+        case AUTUMN:
+        case SUMMER:
+            sb.append(season.msg);
+            break;
+        default:
+            System.out.println("输入不合法");
+            break;
+    }
+    System.out.println(sb.toString());
+}
+@Test
+public void test3() {
+    seasonUseEnum(Season3.SPRING);
+}
+```
 
 
 
