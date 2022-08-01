@@ -939,6 +939,25 @@ ints.add(10);
 
 ![image-20220731161803912](java成神之路(基础).assets/image-20220731161803912.png)
 
+###### 问题
+
+> 自动装箱与拆箱虽然给我们编码带来了方便，但也会有一些问题。
+
+- 对于基本数据类型来说，我们只关心其数值，在自动装箱过后，超过缓存范围的包装类型，必须使用equals判等。不可使用 `==`
+- 将包装类型拆箱的过程中，可能胡出现空指针异常(NPE)
+
+```java
+Integer methodRe(){
+    return null;
+}
+@Test
+public void testRe(){
+    int i = methodRe();
+}
+```
+
+
+
 ##### 基本数据类型的池化技术
 
 > 基本数据类型（除了double、float）都有缓存技术，会缓存一定范围内的对象，原因就是`jvm`认为在此范围内的对象很常用，在需要使用的时候直接去池中拿取，而无需重新创建。
@@ -950,6 +969,8 @@ ints.add(10);
 除了`Character`没有负数概念，其缓存范围为：【0,127】,Boolean缓存范围 {true,false}
 
 其他都是：【-128,127】
+
+> 需要注意的是Integer的缓存范围是可配置的，其他的是固定的。
 
 ```java
 @Test
@@ -1045,6 +1066,190 @@ public void testCache2() {
 有IntegerCache用于缓存Integer对象
 
 
+
+##### 对于boolean属性如何命名及返回值如何定义
+
+> `Boolean`作为实体类的属性的时候如何命名？`success`or `isSuccess`?，`Boolean`作为方法返回参数的时候使用基本类型还是包装类型？
+
+
+
+###### boolean作为属性
+
+> 我们测试`Boolean`作为属性？其生成的`getter`和`setter`方法是什么样子的，对RPC框架有什么影响。
+
+存在四种情况：
+
+```java
+Boolean success;
+Boolean isSuccess;
+boolean success;
+boolean isSuccess;
+```
+
+分别举例：
+
+> 使用Lombok自动生成getter和setter方法，编译查看对应代码
+
+```java
+@Data
+class BooleanType1{
+    boolean success;
+}
+@Data
+class BooleanType2{
+    boolean isSuccess;
+}
+@Data
+class BooleanType3{
+    Boolean success;
+}
+@Data
+class BooleanType4{
+    Boolean isSuccess;
+}
+```
+
+> 编译后查看：
+
+```java
+class BooleanType1 {
+    boolean success;
+    public boolean isSuccess() {
+        return this.success;
+    }
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+}
+class BooleanType2 {
+    boolean isSuccess;
+    public boolean isSuccess() {
+        return this.isSuccess;
+    }
+    public void setSuccess(boolean isSuccess) {
+        this.isSuccess = isSuccess;
+    }
+}
+class BooleanType3 {
+    Boolean success;
+    public Boolean getSuccess() {
+        return this.success;
+    }
+    public void setSuccess(Boolean success) {
+        this.success = success;
+    }
+}
+class BooleanType4 {
+    Boolean isSuccess;
+    public Boolean getIsSuccess() {
+        return this.isSuccess;
+    }
+    public void setIsSuccess(Boolean isSuccess) {
+        this.isSuccess = isSuccess;
+    }
+}
+```
+
+这里可以发现如果属性是基本数据类型的`boolean`生成的getter和setter方法是:isXXXX()和setXXX();
+
+如果是包装类型生成的getter和setter方法是getXXX()和setXXX()
+
+这里可以发现，如果是基本数据类型`boolean`作为属性的话，属性名success和isSuccess其对应的getter和setter方法是相同的。那么如果我们的属性名是isSuccess的话，在部分RPC框架中，得到的getter方法是isSuccess()，会误认为对应的属性名称是success，会导致获取不到属性，从而报出异常。
+
+> 所以说对于实体类如果存在Boolean数据类型的属性，使用包装类型。
+
+###### boolean对序列化的影响
+
+> 使用FastJson  JACKSON、GSON这几个常见JSON序列话对比区别。
+
+> 同样的对于基本数据类型的boolean，对不同的序列话工具会有不同的结果。而对于包装类型则没有影响。
+
+fastjson和jackson是通过反射得到所有的getter方法（getXXX或isXXXX），然后认为 XXXX就是字段名称，并得到对应的值，直接序列化成对应JSON字符串。
+
+Gson则是通过反射，遍历对象对应类的属性，再序列话成json字符串。
+
+```java
+@Test
+public void test() throws JsonProcessingException {
+
+    Gson gson = new Gson();
+    ObjectMapper om = new ObjectMapper();
+
+    BooleanType1 booleanType1 = new BooleanType1(true);
+    System.out.println("booleanType1");
+    System.out.println("FastJson:boolean success: => " + JSON.toJSON(booleanType1));
+    System.out.println("Gson:boolean success: => " + gson.toJson(booleanType1));
+    System.out.println("JackSon:boolean success: => " + om.writeValueAsString(booleanType1));
+
+    BooleanType2 booleanType2 = new BooleanType2(true);
+    System.out.println("booleanType2");
+    System.out.println("FastJson:boolean isSuccess: => " + JSON.toJSON(booleanType2));
+    System.out.println("Gson:boolean isSuccess: => " + gson.toJson(booleanType2));
+    System.out.println("JackSon:boolean isSuccess: => " + om.writeValueAsString(booleanType2));
+
+    BooleanType3 booleanType3 = new BooleanType3(true);
+    System.out.println("booleanType3");
+    System.out.println("FastJson:Boolean success: => " + JSON.toJSON(booleanType3));
+    System.out.println("Gson:Boolean success: => " + gson.toJson(booleanType3));
+    System.out.println("JackSon:Boolean success: => " + om.writeValueAsString(booleanType3));
+
+    BooleanType4 booleanType4 = new BooleanType4(true);
+    System.out.println("booleanType4");
+    System.out.println("FastJson:Boolean isSuccess: => " + JSON.toJSON(booleanType4));
+    System.out.println("Gson:Boolean isSuccess: => " + gson.toJson(booleanType4));
+    System.out.println("JackSon:Boolean isSuccess: => " + om.writeValueAsString(booleanType4));
+}
+```
+
+![image-20220801145946307](java成神之路(基础).assets/image-20220801145946307.png)
+
+> 对于boolean isSuccess 不同的JSON序列化工具，生成的JSON字符串并不是一样的。那么如果对于同一对象使用不同序列化工具序列化和反序列化会产生什么结果？
+
+```java
+@Test
+public void testSer() throws IOException {
+
+    BooleanType2 booleanType2 = new BooleanType2(true);
+    //使用fastjson序列话
+    String jsonStr = JSON.toJSONString(booleanType2);
+    System.out.println("json字符串：=》" + jsonStr);
+    //分别使用 fastJson 、 GSON  、 JackSon反序列化
+    BooleanType2 t1 = JSON.toJavaObject(JSON.parseObject(jsonStr), BooleanType2.class);
+    System.out.println("FastJson反序列化后=》" + t1);
+
+    ObjectMapper om = new ObjectMapper();
+    BooleanType2 t2 = om.readValue(jsonStr, BooleanType2.class);
+    System.out.println("Jackson反序列化后=》" + t2);
+
+    Gson gson = new Gson();
+    BooleanType2 t3 = gson.fromJson(jsonStr, BooleanType2.class);
+    System.out.println("Gson反序列化后=》" + t3);
+}
+```
+
+![image-20220801152221308](java成神之路(基础).assets/image-20220801152221308.png)
+
+> 还是Gson出现的问题，对于同一个类，使用不同的序列化工具进行，序列话和反序列化，对象会产生前后不一致问题。
+
+同样的对于fastjson和jackson来说，会根据success通过反射来找对应得setter方法，将属性set进去。而Gson会通过反射去找success属性，发现没找打，那么就只能赋予默认值false。
+
+> 又一次证明了只能使用success而不可以使用isSuccess
+
+###### Boolean  or   boolean
+
+> 编码得时候使用Boolean  还是 boolean
+
+- 对于实体类的属性，一律使用包装类型
+- 对于远程调用的接口来说，必须使用包装类型。避免默认值的出现
+- 对于局部变量来说使用基本数据类型
+
+###### 小结
+
+> 对于布尔值如何命名和使用success还是isSuccess。
+
+第一：布尔值命名必须去掉 is
+
+第二：除了局部变量，其他地方一律使用包装类型
 
 #### String
 
@@ -1310,6 +1515,10 @@ public String replaceFirst(String regex, String replacement) {
 
 ##### 字符串拼接
 
+
+
+###### 通过+拼接
+
 > 字符串通过`+`拼接的原理
 
 ```java
@@ -1338,4 +1547,419 @@ void method(String str1, String str2) {
 
 - 对于编译时期就知道字面量的字符串，进行常量折叠
 - 对于编译器不确定的变量，会使用StringBuilder.append拼接
+
+
+
+###### 通过concat拼接
+
+> 会重新生成一个字符串对象，其内部的字符数组也是通过ArrayCopy新拷贝出来的。
+
+```java
+public String concat(String str) {
+    int otherLen = str.length();
+    if (otherLen == 0) {
+        return this;
+    }
+    int len = value.length;
+    char buf[] = Arrays.copyOf(value, len + otherLen);
+    str.getChars(buf, len);
+    return new String(buf, true);
+}
+```
+
+
+
+###### StringBuffer&StringBuilder
+
+> 可以使用在这两类对字符串进行拼接，最后toString返回即可
+
+###### 第三方工具类
+
+> StringUtils，可以使用Spring提供的也可以是apache提供的，都是一个用法，将一个String数组或集合，以某个字符分割拼接
+
+```java
+@Test
+public void testAppendByUtil(){
+    String[] value = {"hello", "你好", "hello"};
+    String result = StringUtils.join(value, ",");
+    System.out.println(result);
+}
+```
+
+hello,你好,hello
+
+
+
+###### String的join方法
+
+
+
+```java
+@Test
+public void testAppendByStr(){
+    String join = String.join(",", "hello", "你好", "hello", "4");
+    System.out.println(join);
+}
+```
+
+hello,你好,hello,4
+
+
+
+###### 性能对比
+
+```java
+@Test
+public void testAppend() {
+    StopWatch stopWatch = new StopWatch();
+    stopWatch.start("使用+拼接字符串");//任务说明
+    String str1 = "";
+    for (int i = 0; i < 50000; i++) {
+        //str1 += "a";  拼接代码
+    }
+    stopWatch.stop();
+    System.out.println(stopWatch.getLastTaskName() +"消耗时长："+stopWatch.getTotalTimeNanos());
+}
+```
+
+```java
+使用+拼接字符串消耗时长：1942387300
+使用StringBuilder拼接字符串消耗时长：2846001
+使用StringBuffer拼接字符串消耗时长：4217800
+使用concat拼接字符串消耗时长：5055200
+使用StringUtils  join拼接字符串消耗时长：39924299
+```
+
+结果是：StringBuilder > StringBuffer  >  concat> StringUtils > `+`
+
+> StringBuffer  append方法基于StringBuilder实现，同时也是同步的，性能差一点点。
+
+> concat每次循环，都会进行数组拷贝，创建新字符串，性能差点。但也是为了保证字符串的不可变性
+
+> StringUtils底层使用的StringBuilder实现，拼接过程存在很多其他操作，回去判断对象是否为空等，性能也差点
+
+> `+`号是我们很常用的，性能却最差，这是为什么呢？
+
+查看使用`+`拼接字符串的反编译后的代码：
+
+> 发现每次循环都会new一个StringBuilder出来，再进行append，性能自然不会很高了。频繁的创建对象，也是对内存资源的浪费。
+
+```java
+void append1() {
+    StopWatch stopWatch = new StopWatch();
+    stopWatch.start("使用+拼接字符串");
+    String str1 = "";
+    for (int i = 0; i < 50000; i++) {
+        str1 += "a";
+    }
+    stopWatch.stop();
+    System.out.println(stopWatch.getLastTaskName() + "消耗时长：" + stopWatch.getTotalTimeNanos());
+}
+```
+
+```java
+void append1()
+{
+    StopWatch stopWatch = new StopWatch();
+    stopWatch.start("\u4F7F\u7528+\u62FC\u63A5\u5B57\u7B26\u4E32");
+    String str1 = "";
+    for(int i = 0; i < 50000; i++)
+        str1 = (new StringBuilder()).append(str1).append("a").toString();
+
+    stopWatch.stop();
+    System.out.println((new StringBuilder()).append(stopWatch.getLastTaskName()).append("\u6D88\u8017\u65F6\u957F\uFF1A").append(stopWatch.getTotalTimeNanos()).toString());
+}
+```
+
+###### 小结
+
+> 对于循环体内字符串的拼接禁止使用`+`，采用`StringBuilder`的`append`的方式进行字符串拼接。有并发需求时，使用`StringBuffer`代替`StringBuilder`。
+
+
+
+##### StringBuffer & StringBuilder
+
+> String是不可变的，java还为我们提供了两个可变的用于操作字符串的类，StringBuffer  & StringBuilder
+
+StringBuilder和StringBuilder都是AbstractStringBuilder的子类。底层也是字符数组，使用一个成员变量count来表示字符数组已使用的字符数。
+
+```java
+char[] value;
+
+int count;
+```
+
+> StringBuilder是非线程安全的，StringBuffer是线程安全的（使用Synchronized保证）。
+
+
+
+
+
+##### String.valueOf  & Intege.toString
+
+> 将一个`Integer`转化为`String`有几种方式？
+
+```java
+@Test
+public void test(){
+    int i = 10;
+    String str1 = i + "";
+    String str2 = Integer.valueOf(i).toString();
+    String str3 = String.valueOf(10);
+}
+```
+
+> 第一种方式使用`StringBuilder`
+
+```java
+String str1 = (new StringBuilder()).append(i).append("").toString();
+```
+
+> 第二种和第三种都是使用`Integer.toString()`
+
+
+
+##### switch支持String
+
+> jdk7之后`switch`添加了对`String`的支持。
+>
+> `switch`目前支持的类型有Character, Byte, Short, Integer, String, or an enum，`switch`真正意义上只支持整型，对于`Character`会转化成ASCII码，ASCII是一个`int`类型的数据。`String`会优先通过`hashCode`判断，然后再通过`equals`进行安全检查，`hashCode`也是`int`类型的
+
+###### int&short&byte
+
+代码：
+
+```java
+@Test
+public void testInt() {
+    int i = 10;
+    switch (i) {
+        case 1:
+            System.out.println(1);
+            break;
+        case 2:
+            System.out.println(2);
+            break;
+        case 3:
+            System.out.println(3);
+            break;
+        default:
+            System.out.println(i);
+    }
+}
+```
+
+反编译查看：
+
+> 没什么特别的，switch对int支持很好。对Short和byte也是一样的，不支持long
+
+```java
+public void testInt()
+{
+    int i = 10;
+    switch(i)
+    {
+    case 1: // '\001'
+        System.out.println(1);
+        break;
+
+    case 2: // '\002'
+        System.out.println(2);
+        break;
+
+    case 3: // '\003'
+        System.out.println(3);
+        break;
+
+    default:
+        System.out.println(i);
+        break;
+    }
+}
+```
+
+
+
+###### char
+
+代码：
+
+```java
+@Test
+public void testChar() {
+    char c = 'a';
+    switch (c) {
+        case 'a':
+            System.out.println('a');
+            break;
+        case 'b':
+            System.out.println('b');
+            break;
+        case 'c':
+            System.out.println('c');
+            break;
+        default:
+            System.out.println(c);
+    }
+}
+```
+
+反编译查看：
+
+> 会将char转化成对应的ascii码值，再通过整型switch
+
+```java
+public void testChar()
+{
+    char c = 'a';
+    switch(c)
+    {
+    case 97: // 'a'
+        System.out.println('a');
+        break;
+    case 98: // 'b'
+        System.out.println('b');
+        break;
+    case 99: // 'c'
+        System.out.println('c');
+        break;
+    default:
+        System.out.println(c);
+        break;
+    }
+}
+```
+
+
+
+###### string
+
+代码：
+
+```java
+@Test
+public void testString() {
+    String str = "abc";
+    switch (str) {
+        case "abc":
+            System.out.println("a");
+            break;
+        case "bac":
+            System.out.println("b");
+            break;
+        case "cab":
+            System.out.println("c");
+            break;
+        default:
+            System.out.println(str);
+    }
+}
+```
+
+反编译查看：
+
+> 发现首先获取哈希值，哈希值是整型，然后进行switch，最后使用equals进行安全判断。
+
+```java
+public void testString()
+{
+    String str = "abc";
+    String s = str;
+    byte byte0 = -1;
+    switch(s.hashCode())
+    {
+    case 96354: 
+        if(s.equals("abc"))
+            byte0 = 0;
+        break;
+
+    case 97284: 
+        if(s.equals("bac"))
+            byte0 = 1;
+        break;
+
+    case 98244: 
+        if(s.equals("cab"))
+            byte0 = 2;
+        break;
+    }
+    switch(byte0)
+    {
+    case 0: // '\0'
+        System.out.println("a");
+        break;
+
+    case 1: // '\001'
+        System.out.println("b");
+        break;
+
+    case 2: // '\002'
+        System.out.println("c");
+        break;
+
+    default:
+        System.out.println(str);
+        break;
+    }
+}
+```
+
+
+
+##### 字符串缓存池
+
+> 创建字符串的方式有以下两种方式:
+
+```java
+@Test
+public void testStrCache(){
+    String str1 = "abc";
+    String str2 = new String("abc");
+}
+```
+
+- 第一种方式通过"字面量"的形式赋值，字符串如果在缓存池中不存在，则会创建并放入缓存池
+- 第二种方式会将字符串对象当作一个普通的对象类型，放在堆内存中
+
+> 当我们使用字面量创建字符串的时候，jvm会对此字符串进行检查，如果该字符串在缓存池中不存在，则会创建该字符串，并将其放入字符串缓存池；如果该字符串存在，那么直接将缓存池中的字符串对象的引用返回。
+
+```java
+@Test
+public void testStrCache2(){
+    String str1 = "abc";
+    String str2 = String.valueOf("abc");//String.valueOf也是字面量，调用toString方法直接返回
+    String str3 = "abc";
+    System.out.println(str1 == str2);//true
+    System.out.println(str2 == str3);//true
+    System.out.println(str1 == str3);//true
+}
+```
+
+
+
+> 字符串缓存池在内存中的哪个位置
+
+jdk7之前，字符串缓存池在永久代中。
+
+jdk7中，由于后续版本计划通过元空间代替永久代，所以先将字符串缓存池从永久代移出，暂时放入堆内存。
+
+jdk8中，彻底废除了永久代，使用元空间代替永久代，字符串常量池从堆内存，移动到永久代。
+
+
+
+##### String长度限制？
+
+> `String`存不存在长度限制呢？
+
+- 在编译期间不可以超过 2^16^-1 = 65535
+
+  也就是我们在使用字面量对字符串赋值的时候如果字符串长度大于等于65535，就通过不了编译
+
+- 运行期间限制：不能超过int的范围
+
+
+
+
+
+
 
