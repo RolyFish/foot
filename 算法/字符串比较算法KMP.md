@@ -63,7 +63,7 @@ public static void main(String[] args) {
 
 模式串：ABCDABD
 
-1、匹配失败后移![image-20220712002832777](字符串比较算法KMP.assets/image-20220712002832777.png)
+1、匹配失败文本串指针后移，模式串指针回溯![image-20220712002832777](字符串比较算法KMP.assets/image-20220712002832777.png)
 
 2、
 
