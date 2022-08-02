@@ -2022,8 +2022,6 @@ public void test2() throws IOException, ClassNotFoundException {
 
 ![image-20220801235653264](java成神之路(基础).assets/image-20220801235653264.png)
 
-
-
 ##### instanceof
 
 > java关键字，类似于一个二元操作符，用于判断`instanceOf`左右两边对象类型是否一致。
@@ -2044,7 +2042,178 @@ public void test() {
 
 
 
+##### synchronized
+
+[synchronized](https://juejin.cn/post/7077457448290189348)
+
+> 后续重点看
+
+
+
 ##### volatile
+
+[volatile](https://juejin.cn/post/7077459563963908109)
+
+> 后续重点看
+
+
+
+##### final
+
+[final](https://juejin.cn/post/7077469542946979847)
+
+> `final`是`java`提供的关键字，表示该部分不可修改，可修饰类、方法、变量。
+
+######  final修饰类
+
+> final 修饰类表示该类不可以被继承。一般是类的自我保护，不希望子类对父类造成破坏。
+
+> 比如说`String`和八大基本数据类型的包装类型
+
+
+
+###### final修饰方法
+
+> 表示该方法不可以被子类重写，但是可以在本类中重载。
+
+
+
+###### final修饰变量
+
+> 被final修饰的变量如果是基本数据类型则其不可变，如果是引用数据类型则其引用地址不可变。
+
+> 作为局部变量
+
+不管是引用类型还是基本数据类型，都不可以使用等号赋值。但是如果引用数据类型存在修改方法的时候是可以修改对象的引用的。
+
+```java
+@Test
+public void test01() {
+    final StringBuilder sb = new StringBuilder("abc");
+    final int i = 10;
+    sb.append("123");
+    System.out.println(sb.toString());
+}
+```
+
+
+
+> 作为成员变量
+
+```java
+class MemberField {
+    /**
+     * 被static final修饰，属于类不可变。必须1、在声明的时候赋值 2、或static代码块中赋值
+     */
+    static final StringBuilder sb1 = new StringBuilder();
+    /**
+     * 被final修饰，属于实例，不可变。必须1、在声明的时候赋值 2、非static代码块中赋值 3、构造方法赋值
+     */
+    final StringBuilder sb2 ;
+    {
+        sb2 = new StringBuilder();
+    }
+}
+```
+
+
+
+##### static
+
+> 用于修饰成员变量、方法或代码块，被static修饰的成员变量称为静态成员变量或类变量属于类，被static修饰的代码块称为静态代码块。
+
+###### 静态成员变量
+
+> 也称为类变量，它不属于类的某个实例，它被所有该类的实例共享，因此存在线程安全问题。
+>
+> 如果类变量没有被private修饰，可以使用”类名.变量名“的方式访问。
+
+###### 静态方法
+
+> 和静态变量一样，静态方法也属于类，以`类名 。方法名`调用，在此期间不必创建类的实例，因此会方便许多。
+
+> 比如说集合工具类返回空集合Collections.emptyList();
+
+> java8支持在接口中定义静态方法
+
+```java
+interface IStaticMethod{
+    static void method1() {
+        Collections.emptyList();
+    }
+    default void method2(){
+    }
+}
+```
+
+
+
+###### 静态代码块
+
+> 静态代码块会在类初始化的时候，将所有静态代码组合成一个`cinit<>`方法，由类加载器执行。一个类在其一个生命周期内只加载一次，所以说对于静态代码块，在类生命周期中只执行一次。
+
+```java
+public class AboutStatic {  
+    static int a;
+    static {
+        a = 1;
+        System.out.println("静态代码块执行");
+    }
+    {
+        System.out.println("非静态代码块执行");
+    }
+    public static void main(String[] args) {
+        for (int i = 0; i < 100; i++) {
+            new AboutStatic();
+        }
+    }
+}
+```
+
+<img src="java成神之路(基础).assets/image-20220802164043054.png" alt="image-20220802164043054" style="zoom:67%;" />
+
+###### 静态类
+
+> 静态内部类定义于普通类内部，可以和普通类一样使用。
+>
+> 下面列出类：内部类、静态内部类和匿名内部类写法
+
+```java
+public class AboutStaticClass {
+    static class StaticClass {
+        int a;
+        static int b;
+    }
+    class InnerClass {
+        int a;
+        //不可以定义静态变量
+        //static int b;
+    }
+    void method() {
+        AboutStaticClass.InnerClass innerClass = new AboutStaticClass.InnerClass();
+    }
+    //匿名内部类写法
+     IInterface ia = new IInterface() {
+        @Override
+        public void method() {
+        }
+    };
+}
+class TestClass {
+    public static void main(String[] args) {
+        AboutStaticClass.StaticClass staticClass = new AboutStaticClass.StaticClass();
+        System.out.println(AboutStaticClass.StaticClass.b);
+    }
+}
+@FunctionalInterface
+interface IInterface{
+    void method();
+}
+```
+
+##### const
+
+> const和final相似，用于后期扩展。
 
 
 
