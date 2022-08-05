@@ -127,13 +127,91 @@ public class Person {
 
 
 
+##### 常量池计数器(constant_pool_count)
+
+> 紧跟于版本号后面的是常量池计数器占两个字节。记录整个class文件的字面量信息个数，决定常量池大小。
+>
+> `constant_pool_count` =  常量池元素个数 + 1。  只有索引在 （0，constant_pool_count）范围内才会有效，索引从1开始。
 
 
 
+##### 常量池数据区(constant_pool)
+
+> 常量池类似于一张二维表，每一个元素代表一条记录，包含`class`文件结构及其子结构中引用的所有字符串常量、类、接口、字段和其他常量。且常量池中每一个元素都具备相似的结构特征，每一个元素的第一字节用做于识别该项是哪种数据类型的常量，称为`tag byte`。
 
 
 
+##### 访问标志(access_flags)
 
+> 用于表示一个类或接口的访问权限。占用两个字节。
+
+
+
+| 标记           | 值（0x） | 作用                   |
+| -------------- | -------- | ---------------------- |
+| ACC_PUBLIC     | 0x0001   | 公共的                 |
+| ACC_FINAL      | 0x0010   | 不允许被继承           |
+| ACC_SUPER      | 0x0020   | 需要特殊处理父类方法   |
+| ACC_INTERFACE  | 0x0200   | 标记为接口，而不是类   |
+| ACC_ABSTRACT   | 0x0400   | 抽象的，不可被实例化   |
+| ACC_SYNTHETIC  | 0x1000   | 表示由编译器自己生成的 |
+| ACC_ANNOCATION | 0x2000   | 表示注解               |
+| ACC_ENUM       | 0x4000   | 表示枚举               |
+|                |          |                        |
+
+
+
+- ACC_SYNTHETIC
+
+> 由编译器自己生成的代码，比如一些桥接方法，我们写一个类实现一个范型接口
+>
+> 然后使用javap -v查看字节码信息
+
+```java
+public class AboutACCSYNTHETIC implements Comparator<String> {
+    @Override
+    public int compare(String o1, String o2) {
+        return 0;
+    }
+}
+```
+
+> 会发向编译器会为我们生成一个桥接方法，类型是Object的，且访问标志存在  ACC_SYNTHETIC
+
+```class
+  public int compare(java.lang.String, java.lang.String);
+    descriptor: (Ljava/lang/String;Ljava/lang/String;)I
+    flags: ACC_PUBLIC
+    Code:
+      stack=1, locals=3, args_size=3
+         0: iconst_0
+         1: ireturn
+      LineNumberTable:
+        line 16: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       2     0  this   Lcom/roily/jvm/day01/AboutACCSYNTHETIC;
+            0       2     1    o1   Ljava/lang/String;
+            0       2     2    o2   Ljava/lang/String;
+
+  public int compare(java.lang.Object, java.lang.Object);
+    descriptor: (Ljava/lang/Object;Ljava/lang/Object;)I
+    flags: ACC_PUBLIC, ACC_BRIDGE, ACC_SYNTHETIC
+    Code:
+      stack=3, locals=3, args_size=3
+         0: aload_0
+         1: aload_1
+         2: checkcast     #2                  // class java/lang/String
+         5: aload_2
+         6: checkcast     #2                  // class java/lang/String
+         9: invokevirtual #3                  // Method compare:(Ljava/lang/String;Ljava/lang/String;)I
+        12: ireturn
+      LineNumberTable:
+        line 12: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      13     0  this   Lcom/roily/jvm/day01/AboutACCSYNTHETIC;
+```
 
 
 

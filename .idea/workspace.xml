@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础).md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foot/读书笔记/读书笔记.assets/image-20220728231808420.png" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).assets/image-20220728231808420.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foot/读书笔记/读书笔记.assets/image-20220729130759731.png" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).assets/image-20220729130759731.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foot/读书笔记/读书笔记.assets/image-20220729131252923.png" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).assets/image-20220729131252923.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foot/读书笔记/读书笔记.assets/image-20220729135114407.png" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).assets/image-20220729135114407.png" afterDir="false" />
+    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0802work">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +26,8 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\File\Desktop\blogXX\foot\.idea" />
+      <recent name="D:\File\Desktop\blogXX\foot" />
       <recent name="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)" />
     </key>
   </component>
@@ -42,7 +40,16 @@
       <option name="presentableId" value="Default" />
       <updated>1659104649873</updated>
       <workItem from="1659104651612" duration="169000" />
+      <workItem from="1659435026542" duration="147000" />
     </task>
+    <task id="LOCAL-00001" summary="0802work">
+      <created>1659435136175</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1659435136175</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -58,5 +65,10 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="0802work" />
+    <option name="LAST_COMMIT_MESSAGE" value="0802work" />
   </component>
 </project>
