@@ -2366,7 +2366,451 @@ public void test3() {
 
 
 
+###### jad查看原理
+
+> 可以使用jad 反编译一下，查看一下底层原理
+
+可以得出如下结论：
+
+- 枚举类经过编译器编译后会被当作普通类处理，继承自 `java.lang.Enum`
+- 每一个枚举项是一个 `final static`的成员变量。天生是一个单例
+
+
+
+```java
+final class Season3 extends Enum
+{
+    private Season3(String s, int i, int code, String msg)
+    {
+        super(s, i);
+        this.code = code;
+        this.msg = msg;
+    }
+    public static final Season3 SPRING;
+    public static final Season3 SUMMER;
+    public static final Season3 AUTUMN;
+    public static final Season3 WINTER;
+    int code;
+    String msg;
+    private static final Season3 $VALUES[];
+    static 
+    {
+        SPRING = new Season3("SPRING", 0, 1, "\u6625\u5929");
+        SUMMER = new Season3("SUMMER", 1, 1, "\u6625\u5929");
+        AUTUMN = new Season3("AUTUMN", 2, 1, "\u6625\u5929");
+        WINTER = new Season3("WINTER", 3, 1, "\u6625\u5929");
+        $VALUES = (new Season3[] {
+            SPRING, SUMMER, AUTUMN, WINTER
+        });
+    }
+}
+```
+
+> 但是要想知道switch对枚举的支持的原理，其实就在构造函数内，会调用super(s,i)。s是String类型为枚举项的字段名称，i为自动生成的编号。
+>
+> 我们使用jad对switch相关代码反编译一下：
+
+- 首先枚举类中的每一个枚举都是一个单例对象，在使用new 关键字创建实例的时候会为各个实例添加一个编号 ordinal
+- 在引用了枚举类的类中，会在static代码块中初始化一个int类型的数组，用于描述各个枚举值对应的编号
+- switch还是对int做操作
+
+```java
+ {
+     static final int $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[];
+     static 
+     {
+         $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3 = new int[Season3.values().length];
+         $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.SPRING.ordinal()] int= 1;
+         $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.WINTER.ordinal()] = 2;
+         $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.AUTUMN.ordinal()] = 3;
+         $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.SUMMER.ordinal()] = 4;
+     }
+ }
+public void seasonUseEnum(Season3 season)
+{
+    System.out.println(Season2.SPRING);
+    StringBuilder sb = new StringBuilder();
+    switch(_cls1..SwitchMap.com.roily.booknode.javatogod._01faceobj.javakeywords.aboutenum.Season3[season.ordinal()])
+    {
+    case 1: // '\001'
+    case 2: // '\002'
+    case 3: // '\003'
+    case 4: // '\004'
+        sb.append(season.msg);
+        break;
+    default:
+        System.out.println("\u8F93\u5165\u4E0D\u5408\u6CD5");
+        break;
+    }
+}
+```
+
+
+
 ### 异常处理
+
+> `ThrowAble`类下有两个重要的子类：`Error`和`Exception`,并且这两个子类下面也存在着大量的子类。
+>
+> `Error`表示系统或硬件级别的错误，由java虚拟机抛出异常，程序员无法处理。
+>
+> `Exception`表示程序级别的错误，是由于程序设计不完善而出现的问题，程序员必须手动处理
+
+#### 异常类型
+
+ 主要分两大类：
+
+- 受检异常(checked   exception)
+- 非受检异常(unchecked   exception)
+
+
+
+##### 受检异常
+
+> 受检异常声明：在对应方法上通过`throws`关键字，声明一个异常。然后此方法在被调用的时候，调用方一定要对其做处理(要么捕获、要么向上抛出)，否则是无法通过编译的。
+>
+> 所以当我们希望调用者，必须处理一些特殊情况的时候，就可以声明受检异常。
+
+受检异常在io操作中使用的非常频繁，比如说`FileNotFoundException`异常以及`IOException`及其子类。
+
+比如：
+
+```java
+public void test1() throws IOException {
+    IOUtils.readLines(new FileInputStream("filename"),  StandardCharsets.UTF_8);
+}
+public void test2()   {
+    try {
+        IOUtils.readLines(new FileInputStream("filename"),  StandardCharsets.UTF_8);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+查看 IOUtils.readLines()方法：发现此方法声明了受检异常：
+
+![image-20220808104023792](java成神之路(基础).assets/image-20220808104023792.png)
+
+##### 非受检异常
+
+> 非受检异常，在编码的时候不用强制捕获，但是如果不捕获，在出现异常的时候就会中断程序的运行。
+>
+> 一般来说都是运行时异常，为 `RuntimeException`及其子类。
+>
+> 比如说空指针异常(NPE)、数组下标越界异常(IOE)以及一些我们自定义的运行期间异常。对于非受检异常来说，如果代码编写的合理，这些异常都是可以避免的。
+
+##### 关键字
+
+- throws     方法声明异常
+- throw       后跟异常实例显示抛出异常
+- try            用来包裹一块可能出现异常的代码块
+- catch        跟在try代码后，指定异常类型，并对异常进行处理
+- finally        一些代码无论是否出现异常都会执行，可以定义在fianlly代码块李
+
+
+
+##### 异常处理
+
+> 要么自己try    catch处理
+>
+> 要么向上抛出，交给调用者处理
+
+
+
+##### 自定义异常
+
+> 一般通过继承`RuntimeException`定义一个自定义异常，用于抛出一些错误的业务。
+
+```java
+public class MyException  extends RuntimeException{
+    
+    private final String DEFAULT_ERROR_CODE = "5000";
+    private final String DEFAULT_ERROR_MSG = "运行时异常";
+    
+    String code;
+    String msg;
+    //someMethod
+    public MyException(Throwable cause, String code, String msg) {
+        super(cause);
+        this.code = code;
+        this.msg = msg;
+    }
+}
+```
+
+
+
+##### 异常链
+
+> 是指java在运行期捕获了一个异常，处理的时候，抛出了一个新的异常，所抛出的新的异常包含前一个异常的信息，如此形成一个异常链。
+
+如果抛出的异常不包含前一个异常信息的话，我们就不会清楚的知道这个异常具体出现的原因：
+
+```java
+public void test1() {
+    try {
+        String str = null;
+        byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+    } catch (NullPointerException npe) {
+        throw new MyException("5000", "空指针异常");
+    }
+}
+```
+
+![image-20220808111542845](java成神之路(基础).assets/image-20220808111542845.png)
+
+如果我们包含前一个异常信息，在异常抛出的时候可以，追溯到肯本原因：
+
+```java
+public void test1() {
+。。。。
+    throw new MyException(npe, "5000", "空指针异常");
+。。。
+}
+```
+
+![image-20220808111646319](java成神之路(基础).assets/image-20220808111646319.png)
+
+
+
+##### try-with-resources
+
+> java对于资源的操作，比如说io流、数据库连接，这些资源在非常昂贵，必须在使用结束后显示的关闭资源。
+>
+> 即在finally代码块内调用对应资源的close()方法。
+
+```java
+public void test2() {
+    BufferedReader bi = null;
+    try {
+        bi = new BufferedReader(new FileReader("filename"));
+        String line;
+        while ((line = bi.readLine()) != null){
+            System.out.println(line);
+        }
+    } catch (IOException e) {
+        //dosomething
+    } finally {
+        try {
+            IOUtils.close(bi);
+        } catch (IOException e) {
+            //dosomething
+        }
+    }
+}
+```
+
+> java7 开始提供了一个跟好的处理资源的方式：try-with-resources 语句。这是一个类似于语法糖的语法，方便程序员编码，但是经过编译器编译后，都会转化成jvm认识的。
+
+将资源定义在try括号内，便无需我们手动去关闭异常了：
+
+```java
+@Test
+public void test4() {
+    try( BufferedReader bi = new BufferedReader(new FileReader("filename"))) {
+        String line;
+        while ((line = bi.readLine()) != null){
+            System.out.println(line);
+        }
+    } catch (IOException e) {
+        //dosomething
+    }
+}
+```
+
+可以使用jad反编译查看一下：
+
+发现编译器帮我们做了：
+
+![image-20220808114543526](java成神之路(基础).assets/image-20220808114543526.png)
+
+
+
+
+
+
+
+##### finally  & return
+
+- ffinally代码块一定会执行么？
+- return的结果是否被finally影响？
+- return和finally代码执行顺序，孰先孰后？
+
+###### finally代码块不一定执行
+
+> finally代码块不一定会执行
+
+- 当我们的代码在进入try代码块之前就已经return了，那么整个方法就结束了，finally代码块就不会执行
+- 当虚拟机强制停止的时候  exit(0),finally代码块就不会执行
+
+例：
+
+以下两种方式finally代码块都不会执行
+
+```java
+public StringBuilder method1(Boolean flag) {
+    StringBuilder sb = new StringBuilder();
+    if (flag) {
+        sb.append("方法在try代码块之前return\n");
+        return sb;
+    }
+    try {
+
+    } catch (Exception e) {
+        System.out.println("进入try代码块\n");
+    } finally {
+        System.out.println("finally代码块执行\n");
+    }
+    return sb;
+}
+public StringBuilder method2(Boolean flag) {
+    StringBuilder sb = new StringBuilder();
+    if (flag) {
+        System.exit(0);
+    }
+    try {
+
+    } catch (Exception e) {
+        System.out.println("进入try代码块\n");
+    } finally {
+        System.out.println("finally代码块执行\n");
+    }
+    return sb;
+}
+
+@Test
+public void test1() {
+    method1(true);
+    method2(true);
+}
+```
+
+
+
+###### finally对return结果的影响
+
+> finally代码可能会对return的结果产生影响。
+>
+> 对于基本数据类型和一些不可变的引用类型return的结果不受finally的影响
+>
+> 对于可变的提供修改方法的引用类型，return的结果会受到finally的影响
+
+- 对于基本数据类型  和  一些不可变的比如说String
+
+finally代码块执行但是不影响return的结果
+
+```java
+public int method3() {
+    int i = 0;
+    try {
+        return i;
+    } finally {
+        System.out.println("finally代码块执行");
+        i += 1;
+    }
+}
+public String method4() {
+    String str = "123";
+    try {
+        return str;
+    } finally {
+        System.out.println("finally代码块执行");
+        str += "abc";
+    }
+}
+@Test
+public void test2() {
+    int i = method3();
+    System.out.println("method3返回结果：" + i);
+
+    String str = method4();
+    System.out.println("method4返回结果：" + str);
+}
+```
+
+![image-20220808130934740](java成神之路(基础).assets/image-20220808130934740.png)
+
+- 对于可修改的引用类型(比如说StringBuilder)
+
+finally代码会执行且影响了返回的结果
+
+```java
+public StringBuilder method5() {
+    StringBuilder sb = new StringBuilder("");
+    try {
+        return sb.append("123");
+    } finally {
+        System.out.println("finally代码块执行");
+        sb.append("abc");
+    }
+}
+
+@Test
+public void test3() {
+    StringBuilder sb = method5();
+    System.out.println("method5返回结果：" + sb.toString());
+}
+```
+
+![image-20220808131219548](java成神之路(基础).assets/image-20220808131219548.png)
+
+> 所以说我们可以得出一个结论：
+
+return会记住需要返回结果的字面量信息，对于基本数据类型来说就是值，对于引用类型来说就是引用地址的值。对于基本数据类型和不可变引用类型需要通过`=`等号赋值，那就直接修改了引用，而return所记住的引用指向的对象并没有被修改。那么对于可变引用类型来说，return所记住的引用指向的对象可以在finally中被修改。
+
+
+
+###### return和finally代码执行顺序
+
+> 其实在上一个例子中已经有结果了，我们可以发现返回的sb为 123abc。
+>
+> 所以说可以得出的结论是：
+>
+> return  的代码执行在finally代码块之前
+>
+> finally代码执行在return代码之后，在完全return之前
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
