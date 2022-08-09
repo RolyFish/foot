@@ -2819,55 +2819,225 @@ public void test3() {
 
 #### collection
 
-> Collection接口中除了一些关于集合状态的方法合一些对集合操作的方法外，还有两个关于流的方法
+> Collection接口中除了一些关于集合状态的方法合一些对集合操作的方法外，还有两个获取流的方法
 
 <img src="java成神之路(基础).assets/image-20220809150217164.png" alt="image-20220809150217164" style="zoom:50%;" />
 
 ##### 使用stream来对集合进行操作
 
+```java
+@Test
+public void test1() {
+    System.out.println("===============流  转集合===============");
+    List<String> list = new ArrayList<>(Arrays.asList("1", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+    List<String> collect1 = list.stream().collect(Collectors.toList());
+    collect1.stream().forEach(System.out::print);
+    System.out.println();
+
+    System.out.println("===============遍历===============");
+    list.stream().forEach(System.out::print);
+    System.out.println();
+
+    System.out.println("===============过滤===============");
+    List<String> collect2 = list.stream().filter((ele) -> ele.equals("2")).collect(Collectors.toList());
+    collect2.stream().forEach(System.out::print);
+    System.out.println();
+
+    System.out.println("===============映射===============");
+    List<Integer> collect3 = list.stream().map(Integer::valueOf).collect(Collectors.toList());
+    collect3.stream().forEach(System.out::print);
+    System.out.println();
+
+    System.out.println("===============求和 求平均值===============");
+    int sum = list.stream().mapToInt(Integer::valueOf).sum();
+    System.out.println(sum);
+
+    System.out.println("===============去重===============");
+    List<String> collect4 = list.stream().distinct().collect(Collectors.toList());
+    collect4.stream().forEach(System.out::print);
+    System.out.println();
+
+    System.out.println("===============判断===============");
+    final boolean b1 = list.stream().allMatch(ele -> "2".equals(ele));
+    final boolean b2 = list.stream().anyMatch(ele -> "2".equals(ele));
+    System.out.println(b1 + " " + b2);
+    System.out.println();
+
+    System.out.println("===============获取option===============");
+    String s1 = list.stream().findAny().get();
+    String s2 = list.stream().findFirst().get();
+    System.out.println(s1 + " " + s2);
+    System.out.println();
+
+    System.out.println("===============对每一个元素进行操作===============");
+    List<String> collect5 = list.stream().peek(ele -> {
+      if (ele.equals("2")){
+          System.out.println("xxxx");
+      }
+    }).collect(Collectors.toList());
+    collect5.stream().forEach(System.out::print);
+    System.out.println();
+
+}
+```
 
 
 
+#### Collectors
+
+> `Collectors`构造器私有化且未提供获取实例的方法，那么此类无法实例化。这是一个工具类，可以加快我们处理集合的效率。
+
+我们经常需要将一个处理过的Stream转化为集合类，需要调用collect()方法，此方法需要一个参数：Collector，实现Collector接口还是很麻烦的，所以Collectors提供了许多静态方法，给我们构建需要的Collector。
+
++++以下例子基于着两个集合：
+
+```java
+final List<String> list1 = Arrays.asList("a", "ab", "abc", "abcd", "abcd");
+final List<String> list2 = Arrays.asList("1", "12", "123", "1234", "1234");
+```
+
+##### toList
+
+> `Collector.toList`方法，查看源码发现，默认转化为ArrayList。
+
+```java
+List<String> collect1 = list1.stream().filter("a"::equals).collect(Collectors.toList());
+```
+
+##### toSet
+
+> `Collector.toSet`方法，查看源码发现，默认转化为HashSet。  转化为元素不重复集合
+
+```java
+final Set<String> collect2 = list1.stream().collect(Collectors.toSet());
+```
+
+##### toCollection
+
+> 以上的`toList、toSet`方法转化的是特定的集合，那么如果有特殊需求需要转化为自定义集合的话就需要使用`toCollection`方法。
+
+查看源码发现就是自定义集合类型：
+
+```java
+final LinkedList<String> collect3 = list1.stream().collect(Collectors.toCollection(() -> new LinkedList<>()));
+//lambda表达式写法
+final LinkedList<String> collect4 = list1.stream().collect(Collectors.toCollection(LinkedList::new));
+```
+
+##### toMap
+
+> 将集合元素转化为map，默认HashMap。`Collectors.toMap()`方法需要两个参数：keyMapper和valueMapper，两个参数都是`Function`接口的实现类，参数是集合元素，返回结果是对应key  value。
+
+```java
+final Map<String, Integer> map1 = list1.stream().collect(Collectors.toMap(String::toString, String::length));
+```
+
+> 如果转化后的map的key存在重复元素，会报`java.lang.IllegalStateException`异常。需要我们主动合并。也就是`Collectors.toMap`的几个重载
+
+这个合并的大致思路就是，会将存在重复记录的map节点提出来，然后重复记录的key对应的了两个value作为BinaryOperator接口的参数，返回结果类型和两个参数类型都一样。
+
+比如：上面的集合转化成map{ab=2, a=1, abc=3, abcd=4,abcd=4},这个map是存在key重复记录的，是不允许的，那么需要将这个map分为两个map1{ab=2, a=1, abc=3, abcd=4},map2{abcd=4}。然后将两个map对应key重复的记录的value提出来作为BinaryOperator接口apply(T t,T u)的参数，我们这里做一个相加，即apply(4,4) return 4 + 4;。那么最终的结果为 map{ab=2, a=1, abc=3, abcd=8}。
+
+```java
+toMap(Function<? super T, ? extends K> keyMapper,
+                                Function<? super T, ? extends U> valueMapper,
+                                BinaryOperator<U> mergeFunction)
+```
+
+```java
+final Map<String, Integer> map2 = list1.stream().collect(Collectors.toMap(String::toString, String::length, Integer::sum));
+System.out.println(map2);
+```
+
+> 还有一个重载，可以自定义map
+
+```java
+final Map<String, Integer> map3 = list1.stream().collect(Collectors.toMap(String::toString, String::length, Integer::sum, LinkedHashMap::new));
+```
+
+##### collectingAndThen()
+
+> 此方法允许我们对转化后的集合再做一次操作
+
+这里的第二个参数，是一个函数式接口实现类，需要注意 第一个泛型 R是第一步流转集合的结果，也是函数式接口Function的apply(T t)方法的参数，第二个参数RR为apply(T t)方法返回结果，也是最终需要返回的结果，可以是任意的。这里返回集合
+
+```java
+Function<R,RR> finisher
+```
+
+```java
+final List<String> collect5 = list1.stream().collect(Collectors.collectingAndThen(Collectors.toList(),
+        (list -> list.stream().filter("abc"::contains).collect(Collectors.toList()))));
+collect5.forEach(System.out::println);
+```
 
 
 
+##### joining
+
+> 将集合内元素拼接成字符串
+
+参数说明：
+
+第一个参数：分割符号
+
+第二个参数：返回结果字符串前缀
+
+第三个参数：返回结果字符串后缀
+
+```java
+final String joinResult = list1.stream().collect(Collectors.joining(",", "<", ">"));
+System.out.println(joinResult);
+```
 
 
 
+##### counting
+
+> 统计个数
+
+```java
+final Long size = list1.stream().collect(Collectors.counting());
+System.out.println(size);
+```
 
 
 
+##### summarizingDouble/Long/Int()
+
+> 做统计
+
+这里对集合内字符串长度做统计，得出合、最大、最小值
+
+```java
+final IntSummaryStatistics intSummaryStatistics = list1.stream().collect(Collectors.summarizingInt(String::length));
+System.out.println(intSummaryStatistics.getSum());
+System.out.println(intSummaryStatistics.getMax());
+System.out.println(intSummaryStatistics.getMin());
+```
 
 
 
+##### groupBy
 
+> 以一定条件分组，这里以字符串长度分组
 
+```java
+//分组
+final Map<Integer, List<String>> map = list1.stream().collect(Collectors.groupingBy(String::length, Collectors.toList()));
+System.out.println(map);
+```
 
+##### partitioningBy
 
+> 特殊的分组，将集合分为两组，key值为boolean
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```java
+//特殊分组，以boolean作为map的key
+final Map<Boolean, List<String>> map1 = list1.stream().collect(Collectors.partitioningBy(ele -> ele.length() > 2
+));
+System.out.println(map1);
+```
 
 
 

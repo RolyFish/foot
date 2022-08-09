@@ -71,7 +71,7 @@ public class Person {
 
 使用：
 
-view ->首位 bytecode with JclassLib
+view ->show  bytecode with JclassLib
 
 <img src="class文件二进制组成形式.assets/image-20220807175157830.png" alt="image-20220807175157830" style="zoom:50%;" />
 
