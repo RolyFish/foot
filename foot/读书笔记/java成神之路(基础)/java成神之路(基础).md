@@ -3041,25 +3041,123 @@ System.out.println(map1);
 
 
 
+#### Set  &  List
+
+> `Set`和`List`接口都是`Collection`接口的子接口，用于存储同一类型的元素。
+
+List：元素按顺序插入，可重复
+
+Set：元素插入无序，不可重复。Set的实现由HashSet、TreeSet，虽然set插入无序但是TreeSet底层原理是红黑树，元素整体上大小有序。
 
 
 
+####  ArrayList  &  LinkedList  & Vector
+
+> 这三个类都是`List`的实现类。
+
+##### ArrayList
+
+> `ArrayList`底层是一个可边长数组，数据连续，当容量补不足的时候会进行扩容，扩1.5倍，使用Sysytem.arrayCopy()进行浅拷贝。
+>
+> ArrayList实现了`RandomAccess`接口，表明支持随机访问，搜索效率高。
+>
+> `elementData`使用`transient`修饰，优化序列化传输和存储
+>
+> 如果说在使用ArrayList之前知道需要存入集合的元素大致个数，可以一次性将集合扩容足`ensureCapacity(int minCapacity) `,避免频繁扩容导致降低集合效率。
+
+重要属性：
+
+- elementData 存放元素的数组
+- size    集合大小（元素个数）
+
+```java
+transient Object[] elementData;
+private int size;
+private static final int DEFAULT_CAPACITY = 10;
+//private static final Object[] EMPTY_ELEMENTDATA = {};
+//private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
+```
 
 
 
+######  优缺点
+
+优点：
+
+- 搜索效率高
+- 优化了序列话传输和序列化存储。（重写了WriteObject和ReadObject方法，不对null元素序列化传输）
+
+缺点：
+
+- 对插入不友好
+
+插入默认尾插法：如果插入时容量足够，直接在对应位置赋值即可，但是容量如果不足的化，首先需要扩容，扩容时就必须涉及数组的拷贝，效率自然受影响。
+
+如果说插入位置是程序员指定的，那么需要将该位置及其之后的元素都后移一位，然后再赋值，效率也会受影响。
 
 
 
+##### LinkedList
+
+> `LinkedList`除了实现了`List`接口，还实现了`Deque`接口，实现了`offer\peek\poll`等方法，对集合的操作更加灵活。
+>
+> `LinkedList`底层是一个双向链表，数据不连续，没有容量限制。
+>
+> 对插入友好，对访问不友好。`LinkedList`不支持随机访问。
+>
+> 链表的访问效率地下，特别的：如果我们每次访问的元素在链表尾部的时候，那么每次遍历都几乎需要循环整个链表。
+
+重要属性:
+
+- size  集合大小
+- first    头节点
+- last    尾节点
+
+```java
+transient int size = 0;
+transient Node<E> first;
+transient Node<E> last;
+```
+
+###### 优缺点
+
+优点：
+
+- 没有容量限制，添加元素无需考虑扩容，且添加元素只需要修改引用，效率较高
+
+缺点：
+
+- 访问效率低下
+
+##### Vector
+
+> `Vector`的实现和`ArrayList`基本相同，主要存在如下不同处:
+
+- Vector  属于强同步类，而ArrayList非同步类
+- Vector默认每次扩容两倍，ArrayList扩容1.5倍
+- Arraylist对序列话传输和存储做了优化，而Vector没有
+
+> Vector关于扩容
+
+容量增长步数`capacityIncrement`如果不设置，默认每次扩两倍，如果设置，每次扩容capacityIncrement。
+
+```java
+//容量增长步数
+protected int capacityIncrement;
+//扩容关键代码
+int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
+                                 capacityIncrement : oldCapacity);
+```
 
 
 
+#### Collections
 
+> `Collections`的构造函数私有化被`private`修饰，不可实例化，除了构造方法外，存在很多被`static`修饰的静态方法，目的在于对集合进行操作。
 
-
-
-
-
-
+- 排序
+- 反转
+- 搜索
 
 
 
