@@ -3237,12 +3237,32 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
 - 拷贝
 
-  > 将集合中的元素拷贝到另一个集合。
-
-  
+  > 将源集合中的元素拷贝到目标集合。`src`是源集合，`dest`是目标集合。
+  >
+  > 目标集合的`size`需要大于等于源集合，否则会报出`IndexOutofBoundsException`异常。
+  >
+  > 拷贝过后目标集合和源集合共享集合内的元素
 
   ```java
   void copy(List<? super T> dest, List<? extends T> src)
+  ```
+
+  ```java
+  @Test
+  public void test1() {
+      final StringBuffer sb1 = new StringBuffer("a");
+      final StringBuffer sb2 = new StringBuffer("b");
+      final StringBuffer sb3 = new StringBuffer("c");
+      final StringBuffer sb4 = new StringBuffer("d");
+      final StringBuffer sb5 = new StringBuffer("e");
+      final StringBuffer sb6 = new StringBuffer("f");
+      final List<StringBuffer> sbSource = Arrays.asList(sb1, sb2, sb3, sb4, sb5);
+      final List<StringBuffer> sbTarget = Arrays.asList(sb6, sb6, sb6, sb6, sb6, sb6);
+      Collections.copy(sbTarget, sbSource);
+      sb1.append("|update|");
+  
+      sbTarget.forEach(System.out::print);
+  }
   ```
 
 - 最大值最小值
@@ -3280,6 +3300,8 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
   ```
 
 - 转化集合
+
+  > 注意转化为不可变集合后，源集合任然可以进行修改操作并且可以直接影响到,不可变集合的不可变性。因为`Collections`转化不可变集合的操作是将源集合作为转换后不可变集合的属性。
 
   ```java
   //将目标集合转化成不可变集合，如果调用修改Api则会报出UnsupportedOperationException异常
@@ -3322,5 +3344,47 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
   <T> List<T> nCopies(int n, T o);
   ```
 
+  > 生成一个线程安全的集合
   
+  `Collections.SynchronizedCollection`和`Vector`的区别：
+  
+  ①两者实现同步的关键就在于使用`Synchronized`关键字实现，而`Vector`大部分代码使用的是同步方法，也就是锁的`this`。而`Collections.SynchronizedCollection`可以指定锁的对象`mutex`，如果不传默认锁的还是`this`。
+  
+  ②`Vector`的底层是一个对象数组，在其构造函数的重载中，可以直接将一个`Collection`转化为`Vector`，但是如果被转化的集合是一个`LinkedList`的时候，需要改变其底层数据结构，也就是需要调用`toArray()`方法，将链表转化为数组。而`Collections.SynchronizedCollection`是不需要改变集合底层结构的，同样的被转化的集合作为`Collections.SynchronizedCollection`的内部属性。
+  
+  ```java
+  <T> Collection<T> synchronizedCollection(Collection<T> c);
+  //mutex 作为对象监视器。如果主动设置，则锁的是mutex。否则默认锁的this(这也是和Vector的区别)
+  <T> Collection<T> synchronizedCollection(Collection<T> c, Object mutex);
+  ```
+  
+  
+
+#### Set如何保证元素不重复
+
+> `Set`的实现主要有两个，一个是`HashSet`，一个是`TreeSet`。特点是元素不重复
+
+- HashSet
+
+  `HashSet`基于`HashMap`实现，`HashMap`的`key`值不重复，`HashSet`的元素就是`HashMap`的key值。只能存在一个null元素（`hashMap`中，null的hash值为0）。
+
+  其判重方法是：首先使用`hash`值(散列值)判断，如果散列值不相等那么直接就不相等，如果散列值相等再使用`equals()`方法进行安全校验。原因在于：哈希值的比较效率高于对象的`equals()`方法。
+
+- TreeSet
+
+  `TreeSet`基于`TreeMap`实现，`TreeMap`底层是一颗红黑树(红黑树是对平衡二叉查找树的优化)。其内不可存储null元素(会报NPE异常)。
+
+  其判重方式是：①如果元素实现了`Comparable`接口，直接使用元素的`compareTo()`方法。②如果元素没有实现`Comparable`接口必须指定`Comparator`，调用`Comparator.compare()`方法。
+
+  都是子节点与父节点进行比较，小于0放入左子树，大于0放入右子树，等于0替换value值。
+
+
+
+#### hashMap & hashTable
+
+> `HashTable`是一个较为古老的类，是一个线程安全的key - value键值对数据类型，其有一个`Property`子类，一般作为配置文件的工具类。
+>
+> `HashMap`可以认为是单线程环境下`HashTable`的替代品，其在避免哈希冲突、查找效率上都比`HashTable`要强。
+>
+> 一般情况下，`HashTable`已被弃用，单线程环境下使用`HashMap`，多线程环境需要保证线程安全的情况下使用`ConcurrentHashMap`。
 
