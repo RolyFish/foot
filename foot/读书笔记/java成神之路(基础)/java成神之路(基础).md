@@ -3175,6 +3175,31 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
   binarySearch(List<? extends T> list, T key, Comparator<? super T> c);
   ```
 
+  > 返回指定集合，指定元素的出现次数
+
+  ```java
+  static int frequency(Collection<?> c, Object o);
+  ```
+
+  > 返回目标集合在源集合中首次出现的下标。
+  >
+  > 返回目标集合在源集合中首次出现的下标。
+  >
+  > 没有则返回-1
+
+  ```java
+  public static int indexOfSubList(List<?> source, List<?> target) ;
+  public static int lastIndexOfSubList(List<?> source, List<?> target);
+  ```
+
+- 复制集合
+
+  > 将源集合复制到目标集合中
+
+  ```java
+  public static <T> void copy(List<? super T> dest, List<? extends T> src);
+  ```
+
 - 反转
 
   > 将集合元素反转
@@ -3187,7 +3212,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
 - 洗牌
 
-  > 打乱现有元素顺序
+  > 打乱现有元素顺序，达到`洗牌`效果
 
   ```java
   void shuffle(List<?> list, Random rnd);
@@ -3234,6 +3259,8 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 - 集合旋转特定距离
 
   > 什么意思？相当于集合右移  distance % size()。右边被挤出来的元素添加到集合头部。
+  >
+  > 如果`distance`为正数，整体右移，负数整体左移。
 
   比如：
 
@@ -3278,8 +3305,22 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
   ```java
    <T> Set<T> emptySet();
   ```
+
+  > 生成只有一个元素的集合，该集合不可变
+
+  ```java
+  //set
+  <T> Set<T> singleton(T o);
+  <T> List<T> singletonList(T o);
+  <K,V> Map<K,V> singletonMap(K key, V value);
+  ```
+
+  > 生成一个由指定对象的 n 个副本组成的不可变列表
+
+  ```java
+  //n拷贝个数      o 集合元素
+  <T> List<T> nCopies(int n, T o);
+  ```
+
   
-  > 生成只有一个元素的集合，
-
-
 
