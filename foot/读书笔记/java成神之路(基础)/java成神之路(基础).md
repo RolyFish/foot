@@ -3156,30 +3156,130 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 > `Collections`的构造函数私有化被`private`修饰，不可实例化，除了构造方法外，存在很多被`static`修饰的静态方法，目的在于对集合进行操作。
 
 - 排序
-- 反转
+
+  > 调用的就是List的sort方法
+
+  ```java
+  //必须是Comparable的子类
+  void sort(List<T> list);
+  //可自定义比较器
+  void sort(List<T> list, Comparator<? super T> c);
+  ```
+
 - 搜索
 
+  > 二分查找。如果支持随机访问且集合不是很大，调用indexedBinarySearch方法，否则调用iteratorBinarySearch方法。
 
+  ```java
+  binarySearch(List<? extends Comparable<? super T>> list, T key);
+  binarySearch(List<? extends T> list, T key, Comparator<? super T> c);
+  ```
 
+- 反转
 
+  > 将集合元素反转
 
+  ```java
+  void reverse(List<?> list);
+  ```
 
+  
 
+- 洗牌
 
+  > 打乱现有元素顺序
 
+  ```java
+  void shuffle(List<?> list, Random rnd);
+  void shuffle(List<?> list)
+  ```
 
+- 交换
 
+  > 这个方法在reverse中也可能会使用到
 
+  ```java
+  swap(List<?> list, int i, int j);
+  ```
 
+- 填充
 
+  > 填充集合。以某个对象替换集合中的所有元素
 
+  ```java
+  void fill(List<? super T> list, T obj);
+  ```
 
+- 拷贝
 
+  > 将集合中的元素拷贝到另一个集合。
 
+  
 
+  ```java
+  void copy(List<? super T> dest, List<? extends T> src)
+  ```
 
+- 最大值最小值
 
+  > 获取一个集合的极值，如果元素未实现Comparable接口，需要自定义Comparator。
 
+  ```java
+  <T extends Object & Comparable<? super T>> T min(Collection<? extends T> coll);
+  <T> T min(Collection<? extends T> coll, Comparator<? super T> comp);
+  <T extends Object & Comparable<? super T>> T max(Collection<? extends T> coll);
+  <T> T max(Collection<? extends T> coll, Comparator<? super T> comp);
+  ```
+
+- 集合旋转特定距离
+
+  > 什么意思？相当于集合右移  distance % size()。右边被挤出来的元素添加到集合头部。
+
+  比如：
+
+  ```java
+  @Test
+  public void test1(){
+      List<Integer> integers = Arrays.asList(0,1, 2, 3, 4, 5, 6, 7, 8, 9);
+      Collections.rotate(integers,5);
+      integers.stream().forEach(System.out::print);
+  }
+  ```
+
+  ![image-20220811130849708](java成神之路(基础).assets/image-20220811130849708.png)
+
+  ```java
+  public static void rotate(List<?> list, int distance);
+  ```
+
+- 转化集合
+
+  ```java
+  //将目标集合转化成不可变集合，如果调用修改Api则会报出UnsupportedOperationException异常
+  public static <T> Collection<T> unmodifiableCollection(Collection<? extends T> c);
+  public static <K,V> Map<K,V> unmodifiableMap(Map<? extends K, ? extends V> m);
+  //转化为受检查的集合  在添加时会Class.isInstance(o)判断
+  <E> Collection<E> checkedCollection(Collection<E> c,Class<E> type);
+  //转化为同步集合
+  synchronizedCollection(Collection<T> c);
+  ```
+
+- 创建集合
+
+  > 返回的集合类型没有实现add等添加方法，如果做添加元素操作，会报出`UnsupportedOperationException`异常
+
+  ```java
+  //创建只有一个元素的集合
+  public static <T> Set<T> singleton(T o);
+  ```
+
+  > 返回空集合,返回的集合类型没有实现add等添加方法，如果做添加元素操作，会报出`UnsupportedOperationException`异常
+
+  ```java
+   <T> Set<T> emptySet();
+  ```
+  
+  > 生成只有一个元素的集合，
 
 
 
