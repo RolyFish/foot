@@ -3496,11 +3496,64 @@ $$
 
 > `hashTable`对key值的哈希值没做任何处理，会出现一个问题，就是如果key的哈希算法很糟糕的话，会很频繁的出现哈希冲突，通过拉链法解决冲突的话，链表将会拉的很长，且`hashTable`没有截断链表和转化红黑树的操作，如此查询效率将会降低。
 >
-> 所以针对如上`hashMap`做了优化，可以理解为`hashMap`不信任我们写的哈希算法，它自己会做一层处理，
+> 所以针对如上`hashMap`做了优化，可以理解为`hashMap`不信任我们写的哈希算法，它自己会做一层处理，基本思想是将高16位和低16位进行按位异或(哈希值是int类型32位)，如此低16位既代表了整个哈希值的特征，在使用扰动后的哈希值来确定散列下标，可有效降低哈希冲突。
+
+- 扩容
+
+> hashMap的扩容方法是`reSize()`，扩容为2倍。
+>
+> 此方法不仅仅只做了扩容操作，它还会将链表缩短(缩短一倍)，比如在原数组(数组长度为len)下标j处有一个链表长度为5，经resize方法后，会将此链表拆为两份，分别为长度为2和长度为3的链表，分别放在 新数组(2 + len)j处和len + j处。
+
+- 转化红黑树
+
+> 当哈希表的链表过长会影响到查询的效率，所以需要转化为红黑树，利用红黑树的有序性质，可以使得查询效率逼近二分查找。
+
+转化红黑树的条件是：当链表长度等于8且table节点数组长度大于等于64
+
+如果不满足table节点数组长度大于64的话，会进行扩容处理，因为扩容存在缩短链表的操作。
+
+##### loadfactory
+
+> 加载因子为何默认为0.75，在hashMap中容量为2^n^，乘3/4刚好没有小数位
 
 
 
+##### 尽量设置初始容量
 
+> 在创建hashMap的时候建议一次性申请足够多的容量，避免频繁扩容，因为每次扩容都需要重建hash表。
+
+那么初始容量设置多少合适呢？
+
+需要考虑装载因子，hashMap的有效容量为实际容量的0.75，所以设置初始化容量的时候申请大小需要大于实际需要大小。 
+
+在hashMap的putall()方法中就有类型实现：
+
+```java
+//s 为需要容量大小， ft为实际申请容量大小
+float ft = ((float)s / loadFactor) + 1.0F;
+```
+
+在guaua包下也有类型实现：
+
+```java
+public static <K extends @Nullable Object, V extends @Nullable Object>
+    HashMap<K, V> newHashMapWithExpectedSize(int expectedSize) {
+  return new HashMap<>(capacity(expectedSize));
+}
+static int capacity(int expectedSize) {
+    if (expectedSize < 3) {
+      checkNonnegative(expectedSize, "expectedSize");
+      return expectedSize + 1;
+    }
+    if (expectedSize < Ints.MAX_POWER_OF_TWO) {
+      // This is the calculation used in JDK8 to resize when a putAll
+      // happens; it seems to be the most conservative calculation we
+      // can make.  0.75 is the default load factor.
+      return (int) ((float) expectedSize / 0.75F + 1.0F);
+    }
+    return Integer.MAX_VALUE; // any large value
+}
+```
 
 
 
