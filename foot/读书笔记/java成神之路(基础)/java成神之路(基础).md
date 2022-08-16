@@ -3376,7 +3376,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
   其判重方式是：①如果元素实现了`Comparable`接口，直接使用元素的`compareTo()`方法。②如果元素没有实现`Comparable`接口必须指定`Comparator`，调用`Comparator.compare()`方法。
 
-  都是子节点与父节点进行比较，小于0放入左子树，大于0放入右子树，等于0替换value值。
+  都是子节点与父节点进行比较，比较结果小于0作为左孩子，大于0作为右孩子，等于0替换父节点value值。
 
 
 
@@ -3387,4 +3387,174 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 > `HashMap`可以认为是单线程环境下`HashTable`的替代品，其在避免哈希冲突、查找效率上都比`HashTable`要强。
 >
 > 一般情况下，`HashTable`已被弃用，单线程环境下使用`HashMap`，多线程环境需要保证线程安全的情况下使用`ConcurrentHashMap`。
+
+##### 区别
+
+- 线程安全
+
+  > `HashMap`非同步，多线程环境下需要同步，则使用`ConcurrentHashMap`。
+  >
+  > `HashTable`同步，使用`Synchronized`保证，同步方法，锁的是`this`。
+
+- 继承关系
+
+  > `HashMap`是`AbstractMap`的子类，并实现了`Map`接口。
+  >
+  > `HashTable`是`Dictionary`的子类(JDK1.0提出的)，并实现了`Map`接口。
+
+- 是否允许null值
+
+  > `HashMap`键和值都可以添加null值，null值作为键只能出现一次(hashMap的`hash()`方法，null对应的是0)，null值作为value可以出现多次(即多个键值对应value都是null)。
+  >
+  > `HashTable`键和值都可以不可以为null值，在`put`的时候，会对值进行空校验，会调用键的`hashCode()`方法。
+
+- 容量Capacity & 扩容机制
+
+  > `HashMap`容量默认`1<<4`(16)，每次扩容2倍，为2^n^。
+  >
+  > `HashTable`容量默认11，每次扩容2n+1。
+
+- hash值
+
+  > `HashMap`对`key`值的`hashCode`进行了哈希扰动，有效的降低了`HashMap`的哈希冲突。
+  >
+  > `HashTable`直接使用的键的`hashCode`
+
+- 遍历方式
+
+  > `HashMap`的遍历可以通过获取`EntryIterator、ValueIterator、KeyIterator`这些迭代器来遍历。
+  >
+  > `HashTable`的遍历：对于`key 和  value`来说，可以通过`keys()和elementa()`方法获取`Enumeration`进行遍历，对于`Map.entry`可以获取`EntrySet`再进行遍历。
+  >
+  > Iterator支持fast - fail，而`Enumeration`不支持。
+
+##### hashTable相关算法
+
+> 先了解`hashTable`的相关算法，相比于`HashMap`容易理解，同时后续和`HashMap`比较着理解，可以感受`HashMap`设计的巧妙。
+
+> 底层是数组+单向链表
+
+- 如何确定元素散列下标
+
+> hashTable使用的元素的哈希值，通过取余的方式获取散列下标。关键代码如下
+
+哈希值和0x7FFFFFFF按位与，是为了防止负数的出现。和tab.length除取余得到的是 (0 -  tab.length)，随机散列到数组中。
+
+```java
+index = (hash & 0x7FFFFFFF) % tab.length;
+```
+
+- 扩容（reHash）
+
+> 首先了解两个属性`loadFactor`和`threadshold`分别为加载因子和临界值。加载因子默认为0.75，算上哈希冲突，所以说hashmap的存储效率一般不会超过百分之五十。
+
+存在如下关系：
+$$
+threadshold = table.length * loadFactor
+$$
+
+
+> 扩容的目的是为了避免频繁哈希冲突，扩容的时机是当集合元素个数`count`大于临界值`loadfactor`时，进行扩容，扩为2倍加一，`loadfactor`也随之修改。
+>
+> 扩容的方法是，数组容量扩充，新建一个扩充后长度的数组，将旧数组元素放入新创建的数组。
+
+- 序列化
+
+> 序列话传输的时候会剔除空节点，同时这也是必须的，因为`hashTable`不支持key  或  value中任意的null值。
+
+
+
+##### hashMap相关算法
+
+> `hashMap`底层是数组 + 单向链表 + 红黑树
+>
+> `hashMap`是对单线程下`hashTable`的优化。
+>
+> 主要通过  ①位运算  ②截断链表 ③转换红黑树   进行优化
+
+- hashMap的capacity
+
+> `HashMap`的容量为 2^n^。
+
+通过一系列的移位运算和或运算找到任意数离其最近大于它的2^n^值，比如  5 ---> 8   、 11 -->  16、33 ---> 64。
+
+基本思想就是：
+
+5 的二进制表示为 0101，将高位第一位不为0的及所有低位置为1，即  0111，转换后加一，即 1000   => 8
+
+11的二进制表示为 1011，将高位第一位不为0的及所有低位置为1，即  1111，转换后加一，即 0001 0000   => 16
+
+- 如何确定散列下标
+
+> 前提是：`HashMap`的容量为2^n^。散列下标为哈希值和table.length - 1按位与
+
+`hashTable`是通过除取余的方式，同样的`hashMap`也是，也可以通过除取余的方式。
+
+但是当数组的长度为2^n^时候，除取余  =  hash()  &  table.length - 1。
+
+- hashMap的扰动函数
+
+> `hashTable`对key值的哈希值没做任何处理，会出现一个问题，就是如果key的哈希算法很糟糕的话，会很频繁的出现哈希冲突，通过拉链法解决冲突的话，链表将会拉的很长，且`hashTable`没有截断链表和转化红黑树的操作，如此查询效率将会降低。
+>
+> 所以针对如上`hashMap`做了优化，可以理解为`hashMap`不信任我们写的哈希算法，它自己会做一层处理，
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
