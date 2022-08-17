@@ -3555,21 +3555,118 @@ static int capacity(int expectedSize) {
 }
 ```
 
+#### Stream
+
+> 可以使用`Stream`来处理集合，结合`Lambda`表达式和函数式编程可以编写出简洁、高效的代码
+
+##### 特点
+
+- 无存储
+
+  > `Stream`不是一种数据结构，它并不存储数据，它只是数据源的一个视图(操作集合的说明书)，数据源可以是一个集合或数组。
+
+- 简洁
+
+  > `Stream`的特性就是为函数式编程而生，结合函数式编程可以编写出简洁高效的代码。
+
+- 惰式执行
+
+  > `Stream`上的操作不会立刻执行，而是在被消费的时候才会真正执行
+
+- 可消费性
+
+  > `Stream`可被消费，且只能被消费一次。一旦遍历过就会失效。想要在此操作必须重写生成流。
+
+  > 如下test2方法stringStream已被遍历过，再次对其操作会报出`java.lang.IllegalStateException: stream has already been operated upon or closed`错误。
+  >
+  > 必须如test3生成新的流。
+
+```java
+@Test
+public void test2() {
+    final Stream<String> stringStream = Stream.of("1", "2", "3");
+    stringStream.filter("2"::equals);
+    stringStream.forEach(System.out::println);
+}
+@Test
+public void test3() {
+    final Stream<String> stringStream = Stream.of("1", "2", "3");
+    final Stream<String> stringStreamFilter = stringStream.filter("2"::equals);
+    stringStreamFilter.forEach(System.out::println);
+}
+```
 
 
 
+##### Stream操作
+
+> 对于`Stream`流的处理主要有三种关键性操作：创建流、中间操作、最终操作
+
+###### 创建流
+
+- 通过集合类的stream方法创建流
+- 使用Stream.of(T t)创建流
+- 使用Arrays.stream(T[] t)创建流 。 Stream.of(T ...t)底层就是使用此方式
+
+```java
+//通过集合类创建流
+final Collection<String> strings = Arrays.asList("1", "2", "3");
+final Stream<String> stream = strings.stream();
+
+//Stream创建流
+final Stream<String> stringStream = Stream.of("1", "2", "3");
+final Stream<String> a = Stream.of("a");
+
+//Arrays.stream(T[] t)
+final Stream<String> stream1 = Arrays.stream(new String[]{"1", "2", "3"});
+```
 
 
 
+###### 中间操作
+
+> 对`Stream`做处理，包括过滤、映射、排序等
+
+| 操作(Stream opration) | 说明                         | 参数                                    |
+| --------------------- | ---------------------------- | --------------------------------------- |
+| filter                | 过滤                         | Predicate<? super T> predicate          |
+| map                   | 映射                         | Function<? super T, ? extends R> mapper |
+| limit、skip           | 限制                         | long maxSize                            |
+| sorted                | 自然排序或指定比较器         | Comparator<? super T> comparator        |
+| distinct              | 使用元素的equals去除重复元素 |                                         |
+|                       |                              |                                         |
 
 
 
+###### 最终操作
+
+> `Stream`是集合或容器的视图，是对集合或容器的操作描述，但是如果我们想要得到结果的话，就需要使用最终操作来将流转化为我们想要的结果。遍历、统计(个数)、转化集合等。
+
+| 操作    | 说明     | 参数                                 |
+| ------- | -------- | ------------------------------------ |
+| foreach | 遍历     | Consumer<? super T> action           |
+| count   | 计数     |                                      |
+| Collect | 转化集合 | Collector<? super T, A, R> collector |
+
+##### Stream转化
+
+> Stream转化为IntStream、LongStream。。。。
+
+```java
+final IntStream intStream = stream.mapToInt(StringBuffer::length);
+final DoubleStream doubleStream = stream.mapToDouble(StringBuffer::length);
+final LongStream longStream = stream.mapToLong(StringBuffer::length);
+```
 
 
 
+#### 集合工具类
 
+> 许多开源机构为我们提供了操作集合的工具类。
 
+##### apache
 
+> Apache.commons下的commons-collectionsX包对javautil包下的Collections类。
 
 
 
