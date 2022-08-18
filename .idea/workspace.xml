@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0802work">
+    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0818">
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_5,_23_38_[Changes]1/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_5__23_38__Changes_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_9,_22_30_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_9__22_30__Changes_.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MacUse/Mac使用.md" beforeDir="false" afterPath="$PROJECT_DIR$/MacUse/Mac使用.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -11,6 +17,14 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="ProjectId" id="2Ccb78KeUVafiMzq9wsiAXSh4AU" />
   <component name="ProjectViewState">
@@ -41,6 +55,12 @@
       <updated>1659104649873</updated>
       <workItem from="1659104651612" duration="169000" />
       <workItem from="1659435026542" duration="147000" />
+      <workItem from="1659890507701" duration="105000" />
+      <workItem from="1659969602475" duration="1918000" />
+      <workItem from="1660143366549" duration="1366000" />
+      <workItem from="1660490810386" duration="1601000" />
+      <workItem from="1660660411651" duration="2249000" />
+      <workItem from="1660832696278" duration="2033000" />
     </task>
     <task id="LOCAL-00001" summary="0802work">
       <created>1659435136175</created>
@@ -49,11 +69,57 @@
       <option name="project" value="LOCAL" />
       <updated>1659435136175</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="jvm">
+      <created>1659890561272</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1659890561272</updated>
+    </task>
+    <task id="LOCAL-00003" summary="collectors">
+      <created>1660067029357</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1660067029357</updated>
+    </task>
+    <task id="LOCAL-00004" summary="collectors">
+      <created>1660582779319</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1660582779319</updated>
+    </task>
+    <task id="LOCAL-00005" summary="collectors">
+      <created>1660668957167</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1660668957167</updated>
+    </task>
+    <task id="LOCAL-00006" summary="0818">
+      <created>1660756297486</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1660756297486</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ID_ORDER">
+      <list>
+        <option value="Default.Root" />
+        <option value="Default.Author" />
+        <option value="Default.Date" />
+        <option value="Default.Subject" />
+        <option value="Space.CommitStatus" />
+      </list>
+    </option>
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -69,6 +135,9 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="0802work" />
-    <option name="LAST_COMMIT_MESSAGE" value="0802work" />
+    <MESSAGE value="jvm" />
+    <MESSAGE value="collectors" />
+    <MESSAGE value="0818" />
+    <option name="LAST_COMMIT_MESSAGE" value="0818" />
   </component>
 </project>

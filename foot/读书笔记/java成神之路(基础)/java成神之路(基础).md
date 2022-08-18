@@ -3830,21 +3830,62 @@ UnmodifiableBag
 
 
 
+BagUtils
+
+> 协助生成bag，其实调用的就是`XXXBag.xxxBag()`方法，每一个Bag类都会有一个静态方法，用于生成Bag。
+
+```java
+/**
+ * BagUtils  Bag工具类 协助生成Bag
+ */
+final Bag<Object> bag = BagUtils.collectionBag(new HashBag<>());
+```
+
+###### BidiMap
+
+> BidiMap -  提供双向映射，可通过键查找值，也可以通过值查找键
+
+DualHashBidiMap
+
+> 双重hashMap。其内封装了两个hashMap，bidimap的put()方法中key-value有任意重复的此条记录会被覆盖
+
+```java
+/**
+ * bidimap
+ * - bidimap的put()方法中key-value有任意重复的此条记录会被覆盖
+ */
+@Test
+public void testBidiMap() {
+
+    final DualHashBidiMap<String, Integer> dualHashBidiMap = new DualHashBidiMap<>();
+    dualHashBidiMap.put("a", 1);
+    dualHashBidiMap.put("b", 2);
+    dualHashBidiMap.put("c", 3);
+    dualHashBidiMap.put("d", 3);
+    dualHashBidiMap.put("e", 12);
+    dualHashBidiMap.put("e", 123);
+
+    System.out.println(dualHashBidiMap.get("a"));
+    System.out.println(dualHashBidiMap.getKey(1));
+    System.out.println(dualHashBidiMap.getKey(3));
+    System.out.println(dualHashBidiMap.values());
+    System.out.println(dualHashBidiMap.keySet());
+}
+```
+
+```bash
+1
+a
+d
+[1, 2, 3, 123]
+[a, b, d, e]
+```
 
 
 
+###### iterators
 
-
-
-
-
-
-
-
-
-
-
-
+> `iterators`提供了许多迭代包装类使我们很容易迭代集合，并且支持逆向迭代
 
 
 

@@ -71,3 +71,13 @@ zsh的配置文件是.zshrc
 ~~~zsh
 /usr/bin/ruby -e "$(curl -fsSL https://cdn.jsdelivr.net/gh/ineo6/homebrew-install/install)"
 ~~~
+
+
+
+##### mac程序乌及时响应
+
+```bash
+defaults write com.apple.Dock autohide-delay -float 0 && killall Dock
+defaults delete com.apple.Dock autohide-delay && killall Dock
+```
+
