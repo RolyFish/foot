@@ -2600,7 +2600,7 @@ public void test2() {
 
 > java7 开始提供了一个跟好的处理资源的方式：try-with-resources 语句。这是一个类似于语法糖的语法，方便程序员编码，但是经过编译器编译后，都会转化成jvm认识的。
 
-将资源定义在try括号内，便无需我们手动去关闭异常了：
+将资源定义在try括号内，便无需我们手动去关闭资源了：
 
 ```java
 @Test
@@ -3666,7 +3666,181 @@ final LongStream longStream = stream.mapToLong(StringBuffer::length);
 
 ##### apache
 
-> Apache.commons下的commons-collectionsX包对javautil包下的Collections类。
+> Apache.commons下的commons-collectionsX包对java集合框架(java collection framework)做扩展。
+
+![image-20220818094842448](java成神之路(基础).assets/image-20220818094842448.png)
+
+- Bag -  简化了一个对象在集合中存在多个副本的操作
+- BidiMap -  提供双向映射，可通过键查找值，也可以通过值查找键
+- 
+
+
+
+
+
+###### Bag
+
+> `Bag`简化了一个对象存在多个副本的操作。
+
+HashBag  & TreeBag
+
+> hashBag & TreeBag的继承关系如下图所示：
+>
+> TreeBag 相较于HashBag多实现一个接口 ： SortedBag即表现为一个有序的bag。
+>
+> HashBag其内封装了一个HashMap，key是元素，value是元素个数。
+>
+> TreeMap其内封装了一个TreeMap，key是元素，value是元素个数。
+
+![image-20220818151047171](java成神之路(基础).assets/image-20220818151047171.png)
+
+
+
+> hashBag&TreeBag的创建。
+
+```java
+public HashBag() {
+    super(new HashMap<E, MutableInteger>());
+}
+public HashBag(final Collection<? extends E> coll) {
+    this();
+    addAll(coll);
+}
+
+private transient Map<E, MutableInteger> map;
+protected AbstractMapBag(final Map<E, MutableInteger> map) {
+    super();
+    this.map = map;
+}
+```
+
+> hashBag&TreeBag基本使用
+
+```java
+/**
+ * hashBag底层是一个hashMap 元素是key值，添加个数是value
+ * 可以通过add(object,nCopies)方法为每个元素添加n个副本
+ * 如果add两次则会跟新value值（加一）
+ */
+StringBuilder sb1 = new StringBuilder("a");
+StringBuilder sb2 = new StringBuilder("b");
+StringBuilder sb3 = new StringBuilder("c");
+Bag<Object> hashBag = new HashBag<>();
+
+hashBag.add(sb1);
+hashBag.add(sb1);
+hashBag.add(sb2, 3);
+hashBag.add(sb3, 3);
+System.out.println("Bag+元素个数:" + hashBag.size());
+System.out.println("Bag中sb1个数:" + hashBag.getCount(sb1));
+String result1 = hashBag.stream().map(Object::toString).collect(Collectors.joining(",", "[", "]"));
+System.out.println("HashBag 内容：" + result1);
+//可以使用Collection作为构造方法参数
+Bag<Object> hashBag2 = new HashBag<>(Arrays.asList("1", "2", "3"));
+String result3 = hashBag2.stream().map(Object::toString).collect(Collectors.joining(",", "[", "]"));
+System.out.println("hashBag2 内容：" + result3);
+
+/**
+ * TreeBag：底层封装了一个TreeMap。
+ * 其实可依发现HashBag中的元素是无序的，那么TreeBag就是一个有序的Bag
+ */
+TreeBag<String> treeBag = new TreeBag<>(Arrays.asList("99", "2", "3", "7"));
+String result2 = treeBag.stream().map(Object::toString).collect(Collectors.joining(",", "[", "]"));
+System.out.println("TreeBag 内容：" + result2);
+```
+
+
+
+CollectionBag
+
+> `CollectionBag`没有无参构造，必须依赖一个`Bag`类型的参数。`CollectionBag`只是对`Bag`的封装，任何操作实际上操作的是封装的Bag。
+
+```java
+/**
+ * CollectionBag的创建依赖于现有Bag，不可使用Collection作为构造方法参数
+ *
+ * 其内方法是对Bag的一层封装，实际调用的还是Bag的方法
+ */
+Bag<Object> collectionBag = CollectionBag.collectionBag(hashBag);
+String result4 = collectionBag.stream().map(Object::toString).collect(Collectors.joining(",", "[", "]"));
+System.out.println("CollectionBag的内容：" + result4);
+
+Bag<Object> collectionBag2 = CollectionBag.collectionBag(treeBag);
+String result5 = collectionBag2.stream().map(Object::toString).collect(Collectors.joining(",", "[", "]"));
+System.out.println("CollectionBag2的内容：" + result5);
+```
+
+
+
+PredicatedBag & PredicatedSortedBag
+
+> `PredicatedBag`的构造器依赖一个现有Bag和一个`Predicate`，可以对加入进来的元素进行限制，比如不允许添加空元素。
+
+```java
+/**
+ * 创建PredicatedBag也依赖一个现有Bag，以及一个‘判断器’
+ */
+PredicatedBag<Object> predicatedBag = PredicatedBag.predicatedBag(collectionBag, Objects::nonNull);
+String result6 = predicatedBag.stream().map(Object::toString).collect(Collectors.joining(",", "[", "]"));
+System.out.println("predicatedBag的内容:" + result6);
+```
+
+
+
+SynchronizedBag & SynchronizedSortedBag
+
+```java
+/**
+ * SynchronizedBag同步的bag，使用Synchronized同步代码块实现同步。
+ * 可以指定锁对象，如果不指定则锁this
+ */
+SynchronizedBag<Object> synchronizedBag = SynchronizedBag.synchronizedBag(collectionBag);
+SynchronizedSortedBag<Object> synchronizedSortedBag = SynchronizedSortedBag.synchronizedSortedBag(treeBag);
+```
+
+
+
+TransformedBag
+
+> 对原集合进行转化，一般不会用这个，java8提供的`Stream API`有一个Map方法，可以将结果映射。
+
+- transformingBag 方法，只会对后面add进来的元素进行转换，而对之前的初始化的不会转化
+- transformedBag方法，会对后加的以及一开始初始化的都进行转化
+
+```java
+/**
+ * TransformedBag
+ */
+Bag<Object> bag1 = TransformedBag.transformingBag(hashBag, Object::hashCode);
+bag1.add("XX", 3);
+String result8 = bag1.stream().map(Objects::toString).collect(Collectors.joining(",", "[", "]"));
+System.out.println("TransformedBag.transformingBag " + result8);
+
+Bag<Object> bag2 = TransformedBag.transformedBag(hashBag, Object::hashCode);
+bag2.add("xx",3);
+String result9 = bag2.stream().map(Objects::toString).collect(Collectors.joining(",", "[", "]"));
+System.out.println("TransformedBag.transformingBag " + result9);
+```
+
+
+
+UnmodifiableBag
+
+> 不可修改的Bag。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
