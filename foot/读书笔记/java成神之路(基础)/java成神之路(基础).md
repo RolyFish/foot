@@ -3887,19 +3887,70 @@ d
 
 > `iterators`提供了许多迭代包装类使我们很容易迭代集合，并且支持逆向迭代
 
+ArrayItertor
+
+> 数组迭代器，接收一个数组、迭代起始下标、迭代终止下标。
+
+> 只接受迭代数组，因为next()方法会调用，本地静态方法`Array.get(array,index)`
+
+```java
+public static native Object get(Object array, int index)
+    throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+```
+
+> 简单使用
+
+```java
+ /**
+ * ArrayIterator 数组迭代器，接受一个数组、起始下标、终止下标
+ */
+Iterator<Object> arrayIterator1 = new ArrayIterator<>(Arrays.asList("1", "2", "3").toArray(),0,2);
+while (arrayIterator1.hasNext()) {
+    System.out.println(arrayIterator1.next());
+}
+```
 
 
 
+ArrayListIterator
+
+> 接收一个数组，起始下标，终止下标。
+>
+> 对`ArrayIterator`的拓展，支持正向迭代、也支持反向迭代。
+
+```java
+/**
+ * ArrayListIterator 
+ * 支持正向迭代、逆向迭代
+ */
+ArrayListIterator<Object> arrayListIterator2 = new ArrayListIterator<>(Arrays.asList("1", "2", "3","4", "5", "6").toArray(), 2, 6);
+while (arrayListIterator2.hasNext()) {
+    System.out.println(arrayListIterator2.next());
+}
+while (arrayListIterator2.hasPrevious()) {
+    System.out.println(arrayListIterator2.previous());
+}
+```
 
 
 
+BoundedIterator
+
+> 有边界的迭代器，接收三个参数`Iterator`迭代器、`offeset`偏移量、`max`迭代数量。
+>
+> 如下表示从下标2开始、迭代2个元素，结果是 3、4
+
+```java
+List<String> list = Arrays.asList("1", "2", "3", "4", "5");
+BoundedIterator<String> boundedIterator = new BoundedIterator<>(list.iterator(), 2, 2);
+while (boundedIterator.hasNext()) {
+    System.out.println(boundedIterator.next());
+}
+```
 
 
 
-
-
-
-
+Collection
 
 
 
