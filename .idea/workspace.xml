@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0818">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_5,_23_38_[Changes]1/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_5__23_38__Changes_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_9,_22_30_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_9__22_30__Changes_.xml" beforeDir="false" />
+    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0819">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MacUse/Mac使用.md" beforeDir="false" afterPath="$PROJECT_DIR$/MacUse/Mac使用.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -60,7 +55,7 @@
       <workItem from="1660143366549" duration="1366000" />
       <workItem from="1660490810386" duration="1601000" />
       <workItem from="1660660411651" duration="2249000" />
-      <workItem from="1660832696278" duration="2033000" />
+      <workItem from="1660832696278" duration="3859000" />
     </task>
     <task id="LOCAL-00001" summary="0802work">
       <created>1659435136175</created>
@@ -104,7 +99,14 @@
       <option name="project" value="LOCAL" />
       <updated>1660756297486</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="0819">
+      <created>1660842079046</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1660842079046</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -138,6 +140,7 @@
     <MESSAGE value="jvm" />
     <MESSAGE value="collectors" />
     <MESSAGE value="0818" />
-    <option name="LAST_COMMIT_MESSAGE" value="0818" />
+    <MESSAGE value="0819" />
+    <option name="LAST_COMMIT_MESSAGE" value="0819" />
   </component>
 </project>

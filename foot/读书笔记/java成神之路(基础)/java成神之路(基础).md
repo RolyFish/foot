@@ -3672,11 +3672,9 @@ final LongStream longStream = stream.mapToLong(StringBuffer::length);
 
 - Bag -  简化了一个对象在集合中存在多个副本的操作
 - BidiMap -  提供双向映射，可通过键查找值，也可以通过值查找键
-- 
-
-
-
-
+- Iterators - 方便迭代
+- Transforming Decorators   在添加元素时，修改集合元素
+- CompositeCollection  需要统一处理多个集合时可用
 
 ###### Bag
 
@@ -3948,29 +3946,203 @@ while (boundedIterator.hasNext()) {
 }
 ```
 
+CollectionIterator
+
+```java
+//比较器，会影响迭代结果
+private Comparator<? super E> comparator = null;
+//迭代器
+private List<Iterator<? extends E>> iterators = null;
+//待比较的元素
+private List<E> values = null;
+//迭代器是否还有值
+private BitSet valueSet = null;
+private int lastReturned = -1;
+```
+
+```java
+CollatingIterator(final Comparator<? super E> comp, final Iterator<? extends E>[] iterators)
+CollatingIterator(final Comparator<? super E> comp, final Collection<Iterator<? extends E>> iterators)
+```
+
+> 接收一个或多个迭代器和一个比较器，迭代结果会按一定顺序输出(原集合元素顺序不变)。
+
+```java
+System.out.println("CollatingIterator");
+List<String> list1 = Arrays.asList("5", "4", "1", "2", "3");
+List<String> list2 = Arrays.asList("2", "1", "c", "d", "e");
+CollatingIterator<String> collatingIterator = new CollatingIterator<>(String::compareTo, list1.iterator(), list2.iterator());
+while (collatingIterator.hasNext()) {
+    System.out.print(collatingIterator.next());
+}
+```
+
+输出：
+
+> [21]54123[cde]
+
+MapIterator
+
+> util包下的map的迭代，如果想迭代key或value，需要借助entry。
+
+```java
+System.out.println("MapIterator");
+final HashMap<Object, Object> map = new HashMap<>(8);
+map.put("1", "a");
+map.put("2", "b");
+map.put("3", "c");
+map.put("4", "d");
+map.put("5", "e");
+map.put("6", "f");
+map.put("7", "g");
+map.put("8", "h");
+//entry迭代器
+final Iterator<Map.Entry<Object, Object>> iterator =
+        map.entrySet().iterator();
+while (iterator.hasNext()) {
+    final Map.Entry<Object, Object> next = iterator.next();
+    System.out.println("key值:" + next.getKey() + "value值:" + next.getValue());
+}
+//key迭代器
+map.keySet().iterator();
+//value迭代器
+map.values().iterator();
+final HashedMap<Object, Object> hashedMap = new HashedMap<>(map);
+final MapIterator<Object, Object> hashedMapIterator = hashedMap.mapIterator();
+while (hashedMapIterator.hasNext()) {
+    System.out.println(hashedMapIterator.next());
+    System.out.println("key值:" + hashedMapIterator.getKey() + "value值:" + hashedMapIterator.getValue());
+}
+```
 
 
-Collection
+
+###### CollectionUtils
+
+> `cpache`的集合工具类，提供很多有用的方法，此工具类在java8之前很有用，但java8的Stream  api提供了类似功能，因此许多方法都可以用stream代替。
+
+ignor  null
+
+添加元素时忽略null值
+
+```java
+final List<String> listX = new ArrayList<>(Arrays.asList("1", "2", "3", "4", "5"));
+final List<String> listY = new ArrayList<>(Arrays.asList("1", "2", "c", "b", "5"));
+System.out.println(CollectionUtils.addIgnoreNull(listX, null));
+System.out.println(CollectionUtils.addIgnoreNull(listX, "6"));
+```
+
+merge & sort
+
+> 合并排序，如果不指定比较器，则会自然排序，如果指定比较器则按指定比较器来排序
+
+```java
+System.out.println("merge  and  sort");
+final List<String> collate1 = CollectionUtils.collate(listX, listY);
+System.out.println(collate1);
+final List<String> collate2 = CollectionUtils.collate(listX, listY, String::compareTo);
+System.out.println(collate2);
+```
+
+安全空检查
+
+> 很多时候对集合遍历的时候，需要对集合进行安全空检查，CollectionUtils为我们提供了一套方式
+
+```java
+System.out.println("安全空检查");
+System.out.println(CollectionUtils.isEmpty(listX));
+System.out.println(CollectionUtils.isNotEmpty(listX));
+```
+
+交集  并集  外集
+
+```java
+System.out.println("交集" + CollectionUtils.intersection(listX, listY));
+System.out.println("并集" + CollectionUtils.union(listX, listY));
+System.out.println("外集" + CollectionUtils.subtract(listX, listY));
+```
 
 
 
+###### 小结
+
+> java8的Stream可以适用于大部分的集合操作。
+
+交集 外集 并集
+
+```java
+final List<String> collect1 = listX.stream().filter(listY::contains).collect(Collectors.toList());
+System.out.println("交集" + collect1);
+final List<String> collect2 = listX.stream().filter(ele -> !listY.contains(ele)).collect(Collectors.toList());
+System.out.println("外集" + collect2);
+
+System.out.println("Stream 合并集合");
+final ArrayList<List<String>> lists = new ArrayList<>();
+lists.add(listX);
+lists.add(listY);
+final List<Object> collect = lists.stream().flatMap(Collection::stream).collect(Collectors.toList());
+System.out.println("并集"+collect);
+```
+
+其他的诸如过滤、排序、转换(映射)等Stream都可以
 
 
 
+#### Arrays.asList(T ...t)
+
+> 使用此方式创建集合需要注意什么？
+
+- 此方式创建的集合是Arrays的一个子类ArrayList，并未实现增删方法，不可对其进行==增删==操作。
+
+  会报出`java.lang.UnsupportedOperationException`
+
+- 可进行修改操作
+
+- 可将其作为参数，构造真正的ArrayList
 
 
 
+#### 集合中的fail -fast
 
+> fail- fast 快速失败，一种一旦检测出系统异常就会立刻上报的机制，此种机制可使系统避免在有安全隐患的情况下继续运行，常用的比如说参数校验。
+>
+> 看一下集合中的fail-fast机制：
 
+常常出现在迭代中，防止下标越界或迭代不完全，以arrayList为例
 
+expectedModCount此属性在获取迭代器的时候会赋值为modCount，如果在迭代时我们通过修改集合改变modeCount则会报出此异常
 
+```java
+final void checkForComodification() {
+    if (modCount != expectedModCount)
+        throw new ConcurrentModificationException();
+}
+```
 
+> 对集合进行增删操作会触发fail-fast机制
 
+```java
+final List<String> list = new ArrayList<>(Arrays.asList("1", "2", "3"));
+final Iterator<String> iterator = list.iterator();
+while (iterator.hasNext()) {
+  //list.remove("1");
+  //list.add("1");
+  iterator.next();
+}
+```
 
+> foreach也会触发fail-fast机制，因为其底层就是使用迭代器迭代的
 
+如果你安装了阿里代码规约插件的话，那么已经帮你提示出来了
 
+```java
+final List<String> list = new ArrayList<>(Arrays.asList("1", "2", "3"));
+for (String s : list) {
+    list.add("a");
+}
+```
 
+反编译看一下字节码
 
-
-
+![image-20220821180247553](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208211804530.png)
 
