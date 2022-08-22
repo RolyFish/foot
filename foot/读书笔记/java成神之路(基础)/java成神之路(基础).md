@@ -4244,6 +4244,12 @@ System.out.println(list);
 
 > 从名称来看区别在于流的传输方式：字节  or    字符。
 
+有了字节流为何还需要字符流？
+
+字符流可以认为是字节流＋编码方式。编码方式指导字节流如何处理字节，将其组合成字符。原因就在于方便操作，对于中文可能不同的编码方式得到的字节数据是不同的，那么使用字节流读取可能出现乱码的情况，那么有了字符流可以指定编码，指导字节流读几个字节作为一个汉字。
+
+
+
 ##### 位、字节、字符
 
 - Bit   最小二进制单位，0或1.
@@ -4252,19 +4258,239 @@ System.out.println(list);
 
 ##### 字节流
 
-> 操作字节，直接对文件进行操作，无需缓冲区。
+> 操作字节，用于读取单个字节或字节数组，直接对文件进行操作，无需缓冲区（读出来的数据直接就可以用）。
 >
 > 主要操作类是：InputStream和OutputStream的子类
+
+InputStream常用子类：
+
+- FileInputStream：文件输入流，用于读取文件信息到内存中。
+- ByteArrayInputStream：字节数组输入流
+- ObjectInputStream: 对象输入流
+
+
+
+OutputStream常用子类：
+
+- FileOutputStram:文件输出流，用于将数据输出到文件中
+- ByteArrayOutputStream:字节数组输出流
+- ObjectOutputStream:对象输出流
+
+###### FileInputStream & FileOutputStream
+
+> 用于读取文件信息到内存和将内存中的数据输出到文件
+
+查看一下FileInputStream  api
+
+```java
+//文件描述实例，由java创建，不用我们创建
+private final FileDescriptor fd;
+//文件路径
+private final String path;
+//用于读取、写入、映射和操作文件的通道。与FileInputStream唯一关联。底层，不用管
+private FileChannel channel = null;
+//对象锁，阻塞io，使用Synchronized关键字阻塞
+private final Object closeLock = new Object();
+//资源是否关闭
+private volatile boolean closed = false;
+
+//使用文件名创建一个文件输入流会调用FileInputStream(File file)方法
+public FileInputStream(String name) throws FileNotFoundException；
+public FileInputStream(File file) throws FileNotFoundException；
+//打开流，本地方法由c\C++编写，无需主动调用，构造方法已经调用，且是私有方法
+private native void open0(String name) throws FileNotFoundException;
+private void open(String name) throws FileNotFoundException {open0(name);}
+//从流中读取一个字节，声明式异常，需要主动处理
+public int read() throws IOException；
+private native int read0() throws IOException
+//从流中读取off开始读取len个字符到字符数组中指定下标处,并返回读取长度。一般来说从0开始
+private native int readBytes(byte b[], int off, int len) throws IOException;
+public int read(byte b[]) throws IOException {
+    return readBytes(b, 0, b.length);
+}
+//跳过指定长度字符，返回跳过长度。移动指针
+public long skip(long n) throws IOException {
+  return skip0(n);
+}
+private native long skip0(long n) throws IOException;
+//剩余字节数
+public int available() throws IOException {
+  return available0();
+}
+private native int available0() throws IOException;
+//关闭流，必须关闭资源
+public void close() throws IOException；
+```
+
+查看一下FileOutputStream  api
+
+```java
+//是否追加文件内容。默认false，即覆盖
+private final boolean append;
+public FileOutputStream(String name) throws FileNotFoundException；
+public FileOutputStream(String name, boolean append) throws FileNotFoundException；
+public FileOutputStream(File file) throws FileNotFoundException；
+public FileOutputStream(File file, boolean append) throws FileNotFoundException；
+//open  open0
+//写入文件，字节byte可直接转化为int，安全不会溢出，没有负数
+private native void write(int b, boolean append) throws IOException;
+private native void writeBytes(byte b[], int off, int len, boolean append) throws IOException;
+```
+
+
+
+> 常用操作：这里使用try with resource语法趟，编译器会自动帮我们关闭资源，可以反编译查看
+
+```java
+@Test
+public void inputStreamTest1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile/test.txt";
+    try (FileInputStream fin = new FileInputStream(filePath)) {
+        //跳过指定长度字符
+        final long skip = fin.skip(3L);
+        System.out.println(skip);
+        final byte[] bytes = new byte[5];
+        //从1开始读取4个字符，放入字符数组指定下标处
+        final int read = fin.read(bytes, 1, 4);
+        System.out.println(read);
+        for (byte aByte : bytes) {
+            System.out.println(Character.valueOf((char) aByte));
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+@Test
+public void outputStreamTest1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile/test.txt";
+    try (final FileOutputStream fop = new FileOutputStream(filePath, true)) {
+        fop.write("可爱".getBytes());
+        fop.write("abc".getBytes());
+        //刷新流，将此之前的所有数据给操作系统，让操作系统写入硬件设备
+        fop.flush();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+###### ByteArrayInputStream & ByteArrayOutputStream
+
+> 字节数组输入输出流。内部组合一个字节数组，用于缓冲数据。
+
+```java
+@Test
+public void byteArrayInputStreamTest1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile/test.txt";
+    try (final FileOutputStream fop = new FileOutputStream(filePath, true);
+         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("abcd".getBytes(StandardCharsets.UTF_8))) {
+        System.out.println((char)byteArrayInputStream.read());
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+@Test
+public void byteArrayOutputStreamTest1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile/test.txt";
+    try (final FileOutputStream fop = new FileOutputStream(filePath, true);
+         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(1024)) {
+        //写入到字节数组
+        byteArrayOutputStream.write("可可爱爱".getBytes());
+        //一次性写入到，另一个输出流
+        byteArrayOutputStream.writeTo(fop);
+        //刷新流，将此之前的所有数据给操作系统，让操作系统写入硬件设备
+        fop.flush();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+###### ObjecInputStream & ObjectOutputStream
+
+> 对象输入输出流，一般用于序列化操作，又称为序列化流和反序列化流。ObjectOutputStream用于将对象序列化输出到文件中，持久化保存，ObjecInputStream用于将对象从文件中读出来。
+>
+> 一般用于数据传输，或当某个对象实例生命周期已经结束，但是需要保存其状态，以便下此直接反序列化恢复的情况。
+
+首先作为字节流，它拥有字节流的所有相关操作
+
+```java
+@Test
+public void objectOutputStreamTest1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile/objectTest.txt";
+    try (final ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(filePath,false))) {
+        //写入到字节数组
+        objectOutputStream.write("xxx".getBytes());
+        //刷新流，将此之前的所有数据给操作系统，让操作系统写入硬件设备
+        objectOutputStream.flush();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+作为对象流，设计目的就是为了操作对象:
+
+- class类必须实现Serializable接口，否则会报出`java.io.NotSerializableException`异常
+- 序列号serialVersionUID对应唯一类，不可随意修改，在反序列化时会去匹配。如果修改则报出`java.io.InvalidClassException`异常
+- 被transient修饰的属性在序列化时会被忽略
+
+例子：
+
+```java
+@Data
+@Accessors(chain = true)
+class Person   implements Serializable {
+    private static final long serialVersionUID = -8861126921891657698L;
+  
+    String str1;
+    transient String str2;
+    final String str3 = "123";
+    static String str4;
+    int age;
+    Date birthday;
+}
+@Test
+public void objectInputStreamTest1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile/objectTest.txt";
+    try (final ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(filePath))) {
+        final Person o = (Person) objectInputStream.readObject();
+        System.out.println(o);
+    } catch (IOException | ClassNotFoundException e) {
+        e.printStackTrace();
+    }
+}
+@Test
+public void objectOutputStreamTest2() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile/objectTest.txt";
+    try (final ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(filePath, false))) {
+        final Person person = new Person();
+        person.setStr1("str1")
+                .setStr2("str2")
+                .setAge(1)
+                .setBirthday(Calendar.getInstance().getTime());
+        objectOutputStream.writeObject(person);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+
 
 #####  字符流
 
 > 操作字符，需要缓冲区，操作Reader、Writer的子类
 
-##### 字节流转字符流-------
 
-> 字节流可以转化为字符流，涉及两个类`OutputStreamWriter`和`InputStreamReader`。这里是一种装饰器模式的设计，将字节流作为被装饰的对象，转化后的字符流则为具体的装饰器。
->
-> 一般来说此方式都需要指定编码规则。
+
+##### 字节流与字符流转化
+
+> java io包下除了字节流与字符流以外，还包含一组字节流-字符流转化流。
+
+InputStreamReader，是Reader的子类属于字符流，可以将输入的字节流转化为输入的字符流。
+
+OutputStreamWriter，是Writer的子类属于字符流，可以将输出的字符流转换为输出的字节流。
 
 ##### 输入输出流
 
