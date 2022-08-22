@@ -4133,7 +4133,7 @@ while (iterator.hasNext()) {
 
 > foreach也会触发fail-fast机制，因为其底层就是使用迭代器迭代的
 
-如果你安装了阿里代码规约插件的话，那么已经帮你提示出来了
+如果安装了阿里代码规约插件的话，那么已经帮你提示出来了
 
 ```java
 final List<String> list = new ArrayList<>(Arrays.asList("1", "2", "3"));
@@ -4145,4 +4145,178 @@ for (String s : list) {
 反编译看一下字节码
 
 ![image-20220821180247553](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208211804530.png)
+
+
+
+####  集合中的fail - safe
+
+> 为了避免fail-fast机制，可以使用采用fail-safe机制的集合类，这样的类在对集合进行操作的时候不会直接操作集合内容，而是通过拷贝一份，在拷贝的内容上操作，最后需要同步更改，则同步更改。
+
+
+
+##### CopyOnWriteArrayList
+
+> 这就是一个fail-safe集合类。
+>
+> 其内部的add  、reomve、set等操作都使用ReentrantLock保证同步，任何操作都是在拷贝对象数组上进行，最后再替换原集合对象数组。
+
+> COW集合的迭代器:其内部包含了一个源集合对象数组的快照、副本、拷贝(snapshot)，任何迭代都是在此对象数组上完成的。并且由于COW在修改对象数组的时候，COW都会拷贝一份，所以并不会影响迭代器中的拷贝所指向的对象数组
+
+> 使用COW代替ArrayList就不会发生CME异常
+
+```java
+CopyOnWriteArrayList<String> cowList = new CopyOnWriteArrayList<>(Arrays.asList("1","2","3"));
+for (String s : cowList) {
+    if ("1".equals(s)){
+        cowList.remove(s);
+    }
+}
+```
+
+
+
+但是也造成了一个问题：我们对集合的修该，修改对象数组，是对迭代器不可见的，因为在集合修改的时候，会使用System.arrayCopy()方法生成一个新的对象数组。
+
+```java
+CopyOnWriteArrayList<String> cowList = new CopyOnWriteArrayList<>(Arrays.asList("1","2","3"));
+Iterator<String> iterator = cowList.iterator();
+//fail-sfae 集合修改
+for (String s : cowList) {
+    if ("1".equals(s)){
+        cowList.remove(s);
+    }
+}
+//已经修改
+System.out.println(cowList);
+//但对迭代器不可见
+while (iterator.hasNext()) {
+    System.out.println(iterator.next());
+}
+```
+
+打印结果：
+
+```bash
+[2, 3]
+1
+2
+3
+```
+
+
+
+###### 特点
+
+- copy-on-write，写时复制，所有修改操作在快照上操作
+- 同步，使用ReenTrantLock
+- 写时加锁，避免拷贝出多个副本，导致并发写
+- 读时不加锁，读写分离。会导致弱一致性问题：读取的不是最新数据
+
+
+
+##### 循环中remove
+
+> fail-fast机制出现于迭代器中修改集合操作，触发fail-fast机制，导致并发异常。
+
+- forii   普通for循环
+- iterator  的remove方法  （主要思想就是在修改modCount的同时修改expectedModCount）
+- fail-safe集合（fail-safe集合的迭代器一般不支持remove方法，直接使用集合的remove方法）
+- 增强for：fail-fast机制在next方法中调用，在修改集合后避免使用next方法即可
+
+```java
+List<String> list = new ArrayList<>(Arrays.asList("1","2","3"));
+for (String s : list) {
+    if ("1".equals(s)){
+        list.remove(s);
+    }
+    break;
+}
+System.out.println(list);
+```
+
+
+
+### IO
+
+> 文件操作是编程一部分，学习一下IO流。
+
+####  字符流&字节流
+
+> 从名称来看区别在于流的传输方式：字节  or    字符。
+
+##### 位、字节、字符
+
+- Bit   最小二进制单位，0或1.
+- Byte  字节，1 Byte = 8 Bit，取值 [-128,127]
+- Char 字符，1Char = 16Bit，人能直观认识的最小单位，取值 [0,2^16^-1]
+
+##### 字节流
+
+> 操作字节，直接对文件进行操作，无需缓冲区。
+>
+> 主要操作类是：InputStream和OutputStream的子类
+
+#####  字符流
+
+> 操作字符，需要缓冲区，操作Reader、Writer的子类
+
+##### 字节流转字符流-------
+
+> 字节流可以转化为字符流，涉及两个类`OutputStreamWriter`和`InputStreamReader`。这里是一种装饰器模式的设计，将字节流作为被装饰的对象，转化后的字符流则为具体的装饰器。
+>
+> 一般来说此方式都需要指定编码规则。
+
+##### 输入输出流
+
+> 输入输出流是相对于参考系来说的，此参考系为存储数据的介质，往介质中存数据则为输入流，从介质中读出数据则为输出流。
+
+比如：
+
+将文件中数读出来，存到内存中，则为输入流，使用FileInputStream、FileReader
+
+将内存中的数据输出到文件中，则为输出流，使用FileOutputStream、FileWriter
+
+
+
+### 反射
+
+> 反射式java为程序员提供的强大机制，赋予程序可以在运行期间，知道任意类的所有属性和方法，调用或修改任意对象的属性和方法的能力。
+
+#### Class类
+
+> Class类用于封装加载到jvm中的类(包括接口和类)。当一个类被装载进jvm就会生成一个与之唯一对应的Class对象，通过这个Class对象我们就知道此类的所有信息。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
