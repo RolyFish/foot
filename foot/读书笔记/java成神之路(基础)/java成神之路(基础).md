@@ -4267,6 +4267,7 @@ InputStream常用子类：
 - FileInputStream：文件输入流，用于读取文件信息到内存中。
 - ByteArrayInputStream：字节数组输入流
 - ObjectInputStream: 对象输入流
+- FilterInputStream  过滤流
 
 
 
@@ -4275,6 +4276,7 @@ OutputStream常用子类：
 - FileOutputStram:文件输出流，用于将数据输出到文件中
 - ByteArrayOutputStream:字节数组输出流
 - ObjectOutputStream:对象输出流
+- FilterOutputStream  
 
 ###### FileInputStream & FileOutputStream
 
@@ -4475,6 +4477,94 @@ public void objectOutputStreamTest2() {
     }
 }
 ```
+
+
+
+###### FilterInputStream & FilterOutputStream
+
+> 过滤流，装饰器模式，可以对字节流进行包装实现额外功能。
+
+过滤流常用子类：
+
+- DateInputStream ：基本数据类型流，提供基本数据类型读取写入操作方法
+- BufferedInputStream  
+- PushbackInputStream
+- LineNumberInputStream
+
+> DateInputStream ,基本数据类型流，提供对基本数据类型写入、读取操作方法，其对基本字节流做了一个封装，约定如何写入字节，底层还是调用基本字节流写入字节。比如int占32位，4个字节，那么通过移位运算将其拆分为四个字节逐个写入字节，读取时逐个读取，并按写入规则转化数据。
+
+例一：
+
+```java
+@Test
+public void dataOutputStreamTest1() {
+    String filePath = "D:\\File\\Desktop\\blogXX\\foot\\testfile\\dataStreamFile.txt";
+    try (final DataOutputStream dataOutputStream = new DataOutputStream(new FileOutputStream(filePath, false))) {
+        //作为字节流，拥有字节流相关操作，写入字节或字节数组
+        //dataOutputStream.write("开开心心".getBytes(StandardCharsets.UTF_8));
+        dataOutputStream.writeUTF("可可爱爱");
+        dataOutputStream.writeUTF("可可爱爱");
+        dataOutputStream.writeUTF("开开心心");
+        dataOutputStream.flush();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+@Test
+public void dataInputStreamTest1() {
+    String filePath = "D:\\File\\Desktop\\blogXX\\foot\\testfile\\dataStreamFile.txt";
+    try (final DataInputStream dataInputStream = new DataInputStream(new FileInputStream(filePath))) {
+        while (dataInputStream.available()>0){
+            System.out.println(dataInputStream.readUTF());
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+
+
+> BufferedOutputStream  缓冲输出流，其内部维护一个字节数组，数据首先存放于字节数组，当调用flush方法或字节数组已经满了的情况，将字节数组中的字节一次性写入文件。如此不必频繁通过io通道和文件打交道。
+>
+> BufferedInputStream 缓冲输入流，内部有一个缓冲数组，数据读出来先存放于缓存数组中，当真正需要的时候将数据拷贝出来。
+
+例子：
+
+```java
+@Test
+public void bufferedOutputStreamTest1() {
+    String filePath = "D:\\File\\Desktop\\blogXX\\foot\\testfile\\bufferStreamFile.txt";
+    try (final FilterOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(filePath, false), 1024)) {
+        //作为字节流，拥有字节流相关操作，写入字节或字节数组
+        bufferedOutputStream.write("abcde".getBytes(StandardCharsets.UTF_8));
+        bufferedOutputStream.flush();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+@Test
+public void bufferedInputStreamTest1() {
+    String filePath = "D:\\File\\Desktop\\blogXX\\foot\\testfile\\bufferStreamFile.txt";
+    try (final FilterInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(filePath))) {
+         byte[] bytes = new byte[1024];
+        while (bufferedInputStream.available() > 0) {
+            bufferedInputStream.read(bytes);
+            System.out.println(Arrays.toString(bytes));
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+
+
+
+
+
+
+
 
 
 
