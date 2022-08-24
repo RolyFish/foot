@@ -4341,18 +4341,18 @@ private native void writeBytes(byte b[], int off, int len, boolean append) throw
 
 
 
-> 常用操作：这里使用try with resource语法趟，编译器会自动帮我们关闭资源，可以反编译查看
+> 常用操作：这里使用try with resource语法糖，编译器会自动帮我们关闭资源，可以反编译查看
 
 ```java
 @Test
 public void inputStreamTest1() {
     String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile/test.txt";
     try (FileInputStream fin = new FileInputStream(filePath)) {
-        //跳过指定长度字符
+        //跳过指定长度字节
         final long skip = fin.skip(3L);
         System.out.println(skip);
         final byte[] bytes = new byte[5];
-        //从1开始读取4个字符，放入字符数组指定下标处
+        //从1开始读取4个字节，放入字节数组指定下标处
         final int read = fin.read(bytes, 1, 4);
         System.out.println(read);
         for (byte aByte : bytes) {
@@ -4487,7 +4487,7 @@ public void objectOutputStreamTest2() {
 过滤流常用子类：
 
 - DateInputStream ：基本数据类型流，提供基本数据类型读取写入操作方法
-- BufferedInputStream  
+- BufferedInputStream : 缓冲输出流,其内维护一个字节数组，避免每次都和文件交互
 - PushbackInputStream
 - LineNumberInputStream
 
@@ -4529,7 +4529,7 @@ public void dataInputStreamTest1() {
 >
 > BufferedInputStream 缓冲输入流，内部有一个缓冲数组，数据读出来先存放于缓存数组中，当真正需要的时候将数据拷贝出来。
 
-例子：
+例二：
 
 ```java
 @Test
@@ -4560,17 +4560,175 @@ public void bufferedInputStreamTest1() {
 
 
 
-
-
-
-
-
-
-
-
 #####  字符流
 
 > 操作字符，需要缓冲区，操作Reader、Writer的子类
+
+![image-20220824221348711](java成神之路(基础).assets/image-20220824221348711.png)
+
+Read常用子类：
+
+- InptStreamReader ：将字节输入流转为字符输入流
+- StreamDecoder:流解码器
+
+- FileReader  文件输入流
+- BufferedReader：缓存字符输入流
+
+Writer常用子类
+
+- OutputStreamWriter:将字符输出流转化为字节输出流
+
+- FileWriter   文件输出流
+- BufferedReader  缓存字符输出流
+
+
+
+###### InputSteamReader & OutputStreamWriter
+
+> 字节字符转化流。以规定的流解码器去读取字节数组，最后和转化为字符输出，我们只需要指定编码集。
+
+例一：
+
+```java
+@Test
+public void testFileOutputStream1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    try (final OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(new File(filePath, "dataStreamFile.txt")), StandardCharsets.UTF_8)) {
+        outputStreamWriter.write("hhhhhhhhhhhh哈哈哈哈");
+        outputStreamWriter.flush();
+    } catch (IOException e) {
+    }
+}
+@Test
+public void testFileInputStream1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    try (final InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(new File(filePath, "dataStreamFile.txt")), StandardCharsets.UTF_8)) {
+        final char[] buffer = new char[1024];
+        int len = 0;
+        while ((len = inputStreamReader.read(buffer)) > 0) {
+            System.out.println(String.valueOf(buffer, 0, len));
+        }
+    } catch (IOException e) {
+    }
+}
+```
+
+
+
+###### FileReader  & FileWriter
+
+> 文件输入输出流，操作文件的便利类。
+>
+> 对InputStreamReader的封装。无需指定字符集，默认使用系统文件字符集。
+
+查看系统文件字符集：
+
+```java
+
+final String s = AccessController.doPrivileged(
+	new GetPropertyAction("file.encoding"));
+System.out.println(s);
+```
+
+![image-20220824231942206](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208242319424.png)
+
+```java
+@Test
+public void testFileWriter1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    try (final FileWriter fileWriter = new FileWriter(new File(filePath,"dataStreamFile.txt"))){
+        fileWriter.write("12331");
+        //追加写入，返回this，类似于StringBuilder 的append
+        fileWriter.append("xxxxxx").append("追加");
+        //将流刷入操作系统，让操作系统去写入硬件，最终结果是否写入成功由操作系统决定
+        //如果不刷新，流也不关闭，数据不会写入硬件
+        fileWriter.flush();
+    }catch (IOException e){
+    }
+}
+@Test
+public void testFileReader1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    try(final FileReader fileReader = new FileReader(new File(filePath,"dataStreamFile.txt"))){
+        final char[] buffer = new char[1024];
+        int len  = 0;
+        while ((len = fileReader.read(buffer)) > 0) {
+            System.out.println(String.valueOf(buffer,0, len));
+        }
+    }catch (IOException e){
+    }
+}
+```
+
+###### BufferedReader & BufferedWriter
+
+> 缓冲字符流，上面的FileRead存在不可自定义字符编码的问题，那么使用BufferedReader可完美解决此问题。
+>
+> BufferedReader 是对OutputStreamReader的增强和包装，其内提供了读取一行字符的方法，以及将所有字符读出以Stream<String>流的方式返回。以上都是基于字符数组实现，默认容量是8192。
+
+例子：
+
+```java
+@Test
+public void testBufferedWriter1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    try (final BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(filePath, "dataStreamFile.txt")), StandardCharsets.UTF_8))) {
+        bufferedWriter.write("可可爱爱");
+        bufferedWriter.write("快快乐乐");
+        bufferedWriter.write('a');
+        bufferedWriter.write(96);
+        bufferedWriter.write(new char[]{'x','x'});
+        bufferedWriter.write("\n");
+        bufferedWriter.write("\t");
+        //新起一行
+        bufferedWriter.newLine();
+        bufferedWriter.write("开开心心");
+    } catch (IOException e) {
+
+    }
+}
+
+@Test
+public void testBufferedReader1() {
+  String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+  try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filePath, "dataStreamFile.txt")), StandardCharsets.UTF_8))) {
+    final char[] chars = new char[1];
+    final int read = bufferedReader.read();
+    System.out.println(new String(chars, 0, 1));
+    String buffer = "";
+    while ((buffer = bufferedReader.readLine()) != null) {
+      System.out.println(buffer);
+    }
+    //一次性读出来
+    BufferedReader bufferedReader1 = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filePath, "dataStreamFile.txt")), StandardCharsets.UTF_8));
+    bufferedReader1.lines().forEach(System.out::println);
+  } catch (IOException e) {
+
+  }
+}
+```
+
+
+
+###### 字符流需要手动flush
+
+> 如果操作字符流方法内没有自动帮我们flush，那么想要将数据刷入文件需要手动flush
+
+```java
+@Test
+public void testFlush() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    OutputStreamWriter outputStreamWriter = null;
+    try {
+        outputStreamWriter = new OutputStreamWriter(new FileOutputStream(new File(filePath, "dataStreamFile.txt")));
+        //如此写入不了，没有flush 也没有 关闭流
+        outputStreamWriter.write("你好呀");
+    } catch (IOException e) {
+    }
+}
+```
+
+
 
 
 
@@ -4597,10 +4755,43 @@ OutputStreamWriter，是Writer的子类属于字符流，可以将输出的字�
 ### 反射
 
 > 反射式java为程序员提供的强大机制，赋予程序可以在运行期间，知道任意类的所有属性和方法，调用或修改任意对象的属性和方法的能力。
+>
+> Java反射就是在运行状态中，对于任意一个类，都能够知道这个类的所有属性和方法；对于任意一个对象，都能够调用它的任意方法和属性；并且能改变它的属性。而这也是Java被视为动态语言的一个关键性质。
 
 #### Class类
 
 > Class类用于封装加载到jvm中的类(包括接口和类)。当一个类被装载进jvm就会生成一个与之唯一对应的Class对象，通过这个Class对象我们就知道此类的所有信息。
+>
+> 在程序运行时，jvm会检查所需加载的类对应的Class对象是否已经加载，如果没有加载，jvm会根据类名查找对应的Class文件，并将其加载入jvm。
+
+获取Class对象的方式：
+
+- 对象.getClass()方法
+- 类名.class
+- Class.forName("class类全路径")  第二个参数表示是否触发初始化，默认触发，且只触发一次
+
+```java
+@Test
+public void test() {
+    final ClassPerson classPerson = new ClassPerson();
+    //对象.getClass
+    final Class<? extends ClassPerson> aClass = classPerson.getClass();
+    //类名.class
+    final Class<ClassPerson> classPersonClass = ClassPerson.class;
+    try {
+        //Class.forName  第二个参数boolean值表示是否触发初始化
+        final Class<?> aClass1 = Class.forName("com.roily.booknode.javatogod._04reflect.ClassPerson");
+        final Class<?> aClass2 = Class.forName("com.roily.booknode.javatogod._04reflect.ClassPerson", true, ClassLoader.getSystemClassLoader());
+    } catch (Exception e) {
+    }
+}
+```
+
+
+
+#### 反射能干什么
+
+
 
 
 
