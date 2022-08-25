@@ -4762,7 +4762,7 @@ OutputStreamWriter，是Writer的子类属于字符流，可以将输出的字�
 
 > Class类用于封装加载到jvm中的类(包括接口和类)。当一个类被装载进jvm就会生成一个与之唯一对应的Class对象，通过这个Class对象我们就知道此类的所有信息。
 >
-> 在程序运行时，jvm会检查所需加载的类对应的Class对象是否已经加载，如果没有加载，jvm会根据类名查找对应的Class文件，并将其加载入jvm。
+> 在程序运行时，jvm会检查所需加载的类对应的Class对象是否已经加载，如果没有加载，jvm会根据类名查找对应的Class文件，并将其加载入jvm，jvm会保证每个class类只会生成唯一对应的class对象。
 
 获取Class对象的方式：
 
@@ -4782,14 +4782,294 @@ public void test() {
         //Class.forName  第二个参数boolean值表示是否触发初始化
         final Class<?> aClass1 = Class.forName("com.roily.booknode.javatogod._04reflect.ClassPerson");
         final Class<?> aClass2 = Class.forName("com.roily.booknode.javatogod._04reflect.ClassPerson", true, ClassLoader.getSystemClassLoader());
-    } catch (Exception e) {
+   		   System.out.println(VM.current().addressOf(aClass1));
+            System.out.println(VM.current().addressOf(aClass2));
+        } catch (Exception e) {
+        }
+        System.out.println(VM.current().addressOf(aClass));
+        System.out.println(VM.current().addressOf(classPersonClass));
+}
+```
+
+![image-20220825100540111](java成神之路(基础).assets/image-20220825100540111.png)
+
+
+
+#### 反射能干什么
+
+- 使用反射创建实例对象
+- 使用反射获取一个实例对象，所属类的所有信息(类信息[父类、接口、注解]、属性、方法[包括私有方法、构造方法])
+
+
+
+##### 使用反射创建实例
+
+> 除了new关键字可创建实例对象，反射机制也可创建实例。
+>
+> 主要有两种方式：
+>
+> ①class.newInstance()
+>
+> ②获取构造方法，执行构造方法
+
+###### isInstance
+
+isInstance()方法是instanceOf 关键字的平替，如果返回true则可正常转化类型
+
+```java
+/**
+ * Class 类Api isInstance
+ * isInstance方法，是instanceOf的平替
+ */
+@Test
+public void testIsInstance() {
+    System.out.println("如果Object参数为该类实例，返回true" + ClassPerson.class.isInstance(new ClassPerson()));
+    System.out.println("如果Object参数为该类或其任意子类的实例，返回true" + ClassPerson.class.isInstance(new ClassSon()));
+    System.out.println("如果Object参数为该接口实现类，返回true" + InterfaceTest.class.isInstance(new InterfaceTestImpl()));
+    //如果是数组类型，可强制转化不报CastException异常
+    final Object[] objects = new Object[1024];
+    System.out.println(objects.getClass().isInstance(new Integer[11]));
+}
+```
+
+###### newInstance
+
+newInstance()方法创建实例：
+
+```java
+public class ClassPerson {
+    public ClassPerson() {
+         System.out.println("公开构造器");
     }
+}
+public class ClassPersonPrivate {
+    private ClassPersonPrivate() {
+        System.out.println("私有构造器");
+    }
+}
+```
+
+> 如果此类的构造器是public的，则可使用class.newInstance()方法创建实例，且会触发类的初始化。
+>
+>  如果此类的构造器是private的，则不可使用class.newInstance()方法创建实例，会报java.lang.IllegalAccessException异常。
+
+```java
+/**
+ * 如果此类的构造器是public的，则可使用class.newInstance()方法创建实例
+ * 切会触发类的初始化
+ */
+@Test
+public void testNewInstance1() throws InstantiationException, IllegalAccessException {
+    final ClassPerson classPerson = ClassPerson.class.newInstance();
+    System.out.println(classPerson);
+}
+/**
+ * 如果此类的构造器是private的，则不可使用class.newInstance()方法创建实例
+ * 会报java.lang.IllegalAccessException异常
+ */
+@Test
+public void testNewInstance2() throws InstantiationException, IllegalAccessException {
+    final ClassPersonPrivate classPersonPrivate = ClassPersonPrivate.class.newInstance();
+    System.out.println(classPersonPrivate);
 }
 ```
 
 
 
-#### 反射能干什么
+###### getConstractor
+
+> 获取任意Class对象的非私有构造器，可以指定构造参数
+
+```java
+/**
+ * Class的getConstructor方法可以获取，任意类的非私有构造器
+ * 可以指构造参数
+ */
+@Test
+public void testGetConstructor() throws Exception {
+    final Class<ClassPerson> classPersonClass = ClassPerson.class;
+    //无参构造
+    final Constructor<ClassPerson> constructorWithOutParams = classPersonClass.getConstructor(null);
+    final ClassPerson classPerson1 = constructorWithOutParams.newInstance(null);
+    System.out.println(classPerson1);
+    //有参构造
+    final Constructor<ClassPerson> constructorWithParams = classPersonClass.getConstructor(String.class);
+    final ClassPerson classPerson2 = constructorWithParams.newInstance("小可爱");
+    System.out.println(classPerson2);
+}
+```
+
+![image-20220825110704311](java成神之路(基础).assets/image-20220825110704311.png)
+
+> 当然对于private私有构造器，不可以获取。
+>
+> 会报出`java.lang.NoSuchMethodException`异常
+
+```java
+@Test
+public void testGetConstructor2() throws Exception {
+    final Constructor<ClassPersonPrivate> constructor = ClassPersonPrivate.class.getConstructor(null);
+    constructor.newInstance(null);
+}
+```
+
+###### getDeclaredConstructor
+
+> 获取任意类的构造器，如果是private的需要设置为可访问的
+
+```java
+/**
+ * Class的getDeclaredConstructor方法可以获取，任意类的构造器
+ * 可以指构造参数,如果是私有需要设置可访问,否则会爆出IllegalAccessException异常
+ */
+@Test
+public void testGetDeclaredConstructor1() throws Exception {
+    final Constructor<ClassPerson> declaredConstructor1 = ClassPerson.class.getDeclaredConstructor(null);
+    declaredConstructor1.newInstance(null);
+    final Constructor<ClassPersonPrivate> declaredConstructor2 = ClassPersonPrivate.class.getDeclaredConstructor(null);
+    //设置可访问
+    declaredConstructor2.setAccessible(true);
+    declaredConstructor2.newInstance(null);
+}
+```
+
+
+
+##### 属性、方法
+
+> 使用反射操作属性、方法
+
+###### 属性
+
+> 获取属性Field
+
+```java
+//修改name属性为pubilc
+public String name;
+```
+
+> 使用`getField()`方法只能获取`public`属性。
+>
+> 使用`getDeclaredField()`获取所有属性，设置`setAccessible(true)`可对非pulic属性进行访问
+
+```java
+@Test
+public void testField1() throws Exception {
+    //getField获取public 属性
+    final Field name = ClassPerson.class.getField("name");
+    System.out.println("field name :  => " + name.getName());
+    System.out.println("field type :  => " + name.getType());
+}
+@Test
+public void testField2() throws Exception {
+    final Field[] fields =  ClassPerson.class.getDeclaredFields();
+    Arrays.asList(fields).forEach(field -> field.setAccessible(true));
+    for (Field field : fields) {
+        System.out.println("field name :  => " + field.getName());
+        System.out.println("field type :  => " + field.getType());
+    }
+}
+```
+
+> 可通过反射动态修改对象属性
+
+```java
+@Test
+public void testField3() throws Exception {
+    final ClassPerson classPerson = new ClassPerson();
+    System.out.println("ClassPerson =>" + classPerson);
+    //得到所有
+    final Field[] fields = classPerson.getClass().getDeclaredFields();
+    Arrays.asList(fields).forEach(field -> {
+        field.setAccessible(true);
+        Object obj;
+        switch (field.getName()) {
+            case "name":
+                obj = "name";
+                break;
+            case "age":
+                obj = 20;
+                break;
+            case "num":
+                obj = 10;
+                break;
+            case "values":
+                obj = new String[]{"values"};
+                break;
+            default:
+                obj = null;   break;
+        }
+        try {
+            field.set(classPerson,obj);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    });
+    System.out.println(classPerson);
+}
+```
+
+![image-20220825184025386](java成神之路(基础).assets/image-20220825184025386.png)
+
+###### 方法
+
+> 通过反射调用方法
+
+```java
+@Test
+public void testMethod1() throws Exception {
+    final ClassPerson classPerson = new ClassPerson();
+    System.out.println("ClassPerson =>" + classPerson);
+    //获取public方法
+    final Method methodWithoutParam = classPerson.getClass().getMethod("publicMethod");
+    System.out.println("方法名:=>" + methodWithoutParam.getName());
+    methodWithoutParam.invoke(classPerson);
+    //获取public方法
+    final Method methodWithParam = classPerson.getClass().getMethod("publicWithParamMethod", String.class, int.class);
+    System.out.println("方法名:=>" + methodWithParam.getName());
+    methodWithParam.invoke(classPerson, "str", 100);
+}
+```
+
+![image-20220825185606816](java成神之路(基础).assets/image-20220825185606816.png)
+
+
+
+##### 使用反射获取其他信息
+
+> 使用反射获取其他信息
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
