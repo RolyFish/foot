@@ -2445,6 +2445,179 @@ public void seasonUseEnum(Season3 season)
 }
 ```
 
+##### 枚举是单例的最佳实践
+
+> 单例的实现方式存在很多，懒汉式、饿汉式、双重检验锁、静态内部类、枚举
+
+单例的设计主要考虑两个问题：
+
+- 延时加载
+
+  > 在希望使用的时候才进行单例创建，在未正真使用不创建。那么双重检验锁、静态内部类符合需求
+
+- 线程安全
+
+  > 单例实现的复杂问题在于需要考虑线程安全问题，同时兼虑性能。懒汉式非线程安全。
+
+1、懒汉式可实现，但非线程安全
+
+2、饿汉式不行，饿汉式单例的创建由类加载器实现，但线程安全
+
+3、懒汉式配合Synchronized可实现，但影响性能(会对访问单例也进行加锁操作,但访问是没有线程安全问题的)
+
+4、双重检验锁可延时加载：是对懒汉式+锁机制的优化。避免读时加锁
+
+5、静态内部类可实现且线程安全，也是类加载器保证的线程安全	
+
+###### 为何枚举是单例的最佳实现？
+
+- 枚举天生单例，且线程安全，枚举作为内部类可实现延时加载。
+- 枚举可避免序列化、或反射 破坏单例 （枚举的序列化是定制的，序列化时会将枚举项名记录）
+
+以上编写枚举反编译查看枚举中的每一个枚举项都被final static 修饰，且在static代码块中初始化，这也就是饿汉式单例的实现。
+
+###### 尝试使用反射破坏单例
+
+我们知道单例的实现，重点在于构造函数私有化，并提供获取实例的方法，那么我们就来破坏构造方法的私有性
+
+首先写一个单例类：
+
+```java
+public class SingleDemo implements Serializable {
+    private static final long serialVersionUID = -6489201409969990006L;+
+    private static SingleDemo singleDemo;
+    //构造方法私有化
+    private SingleDemo() {
+    }
+    public static SingleDemo getInstance() {
+        if (null == singleDemo){
+            singleDemo = new SingleDemo();
+        }
+        return singleDemo;
+    }
+}
+```
+
+```java
+@Test
+public void testSingle() {
+    final SingleDemo instance1 = SingleDemo.getInstance();
+    final SingleDemo instance2 = SingleDemo.getInstance();
+    System.out.println(instance1 == instance2);
+}
+```
+
+![image-20220826013226826](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260141690.png)
+
+反射破坏单例：
+
+```java
+final SingleDemo instance1 = SingleDemo.getInstance();
+final Constructor<? extends SingleDemo> declaredConstructor = instance1.getClass().getDeclaredConstructor();
+declaredConstructor.setAccessible(true);
+final SingleDemo singleDemo = declaredConstructor.newInstance(null);
+System.out.println(instance1 == singleDemo);
+```
+
+![image-20220826013415047](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260141341.png)###### 序列化破坏单例
+
+先执行test1，再执行test2
+
+```java
+@Test
+public void test1() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    final SingleDemo instance1 = SingleDemo.getInstance();
+    try (final ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(new File(filePath, "object.txt")))) {
+        //将instance写入文件
+        objectOutputStream.writeObject(instance1);
+        objectOutputStream.flush();
+    } catch (IOException e) {
+    }
+}
+@Test
+public void test2() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    final SingleDemo instance1 = SingleDemo.getInstance();
+    SingleDemo sngleDemo = null;
+    try (final ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(new File(filePath, "object.txt")))) {
+        //将instance写入文件
+        sngleDemo = (SingleDemo) objectInputStream.readObject();
+    } catch (IOException | ClassNotFoundException e) {
+    }
+    System.out.println(sngleDemo == instance1);
+    System.out.println(sngleDemo);
+    System.out.println(instance1);
+}
+```
+
+![image-20220826014043371](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260152931.png)
+
+
+
+###### 枚举可避免以上问题
+
+> 尝试使用反射破坏枚举单例：枚举的构造方法除枚举自定义的还有Enum类中的code。
+>
+> 会报出`IllegalArgumentException`异常，不可以使用反射创建枚举对象。
+
+```java
+@Test
+public void test2() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    final Constructor<? extends SignalEnum> declaredConstructor = SignalEnum.SIGNAL_ENUM.getClass().getDeclaredConstructor(String.class,int.class);
+    declaredConstructor.setAccessible(true);
+    final SignalEnum signalEnum = declaredConstructor.newInstance("signalEnum",2);
+    System.out.println(signalEnum == SignalEnum.SIGNAL_ENUM);
+    System.out.println(SignalEnum.SIGNAL_ENUM);
+    System.out.println(signalEnum);
+}
+```
+
+![image-20220826015207256](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260152336.png)
+
+> 尝试使用序列化破坏枚举单例
+
+先执行testx  再执行testy
+
+结果是true，表示序列化不会破坏枚举单例。
+
+```java
+@Test
+public void testx() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    final SignalEnum signalEnum = SignalEnum.SIGNAL_ENUM;
+    try (final ObjectOutputStream objectOutputStream = new ObjectOutputStream(
+            new FileOutputStream(new File(filePath, "object2.txt")))) {
+        //将instance写入文件
+        objectOutputStream.writeObject(signalEnum);
+        objectOutputStream.flush();
+    } catch (IOException e) {
+    }
+}
+
+@Test
+public void testy() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/myfoot/foot/testfile";
+    final SignalEnum signalEnum = SignalEnum.SIGNAL_ENUM;
+    SignalEnum signalEnum2 = null;
+    try (final ObjectInputStream objectInputStream = new ObjectInputStream(
+            new FileInputStream(new File(filePath, "object2.txt")))) {
+        //将instance写入文件
+        signalEnum2 = (SignalEnum) objectInputStream.readObject();
+    } catch (IOException | ClassNotFoundException e) {
+    }
+    System.out.println(signalEnum == signalEnum2);
+    System.out.println(signalEnum);
+    System.out.println(signalEnum2);
+}
+```
+
+![image-20220826015618559](java成神之路(基础).assets/image-20220826015618559.png)
+
+原因：
+
+
+
 
 
 ### 异常处理
@@ -4791,7 +4964,7 @@ public void test() {
 }
 ```
 
-![image-20220825100540111](java成神之路(基础).assets/image-20220825100540111.png)
+![image-20220825100540111](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252320148.png)
 
 
 
@@ -4899,7 +5072,7 @@ public void testGetConstructor() throws Exception {
 }
 ```
 
-![image-20220825110704311](java成神之路(基础).assets/image-20220825110704311.png)
+![image-20220825110704311](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252320961.png)
 
 > 当然对于private私有构造器，不可以获取。
 >
@@ -5009,7 +5182,7 @@ public void testField3() throws Exception {
 }
 ```
 
-![image-20220825184025386](java成神之路(基础).assets/image-20220825184025386.png)
+![image-20220825184025386](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252320662.png)
 
 ###### 方法
 
@@ -5031,7 +5204,7 @@ public void testMethod1() throws Exception {
 }
 ```
 
-![image-20220825185606816](java成神之路(基础).assets/image-20220825185606816.png)
+![image-20220825185606816](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252320034.png)
 
 
 
@@ -5039,31 +5212,190 @@ public void testMethod1() throws Exception {
 
 > 使用反射获取其他信息
 
+```java
+/**
+ * 使用反射获取其他信息
+ */
+@Test
+public void testGetOtherInfo() throws FileNotFoundException {
+    final String string = new String();
+    final Class<TestClass> testClassClass = TestClass.class;
+    System.out.println("类名  => " + testClassClass.getSimpleName());
+    System.out.println("类全限定名  => " + testClassClass.getName());
+    System.out.println("包名  => " + testClassClass.getPackage());
+    //获取类加载器，我们写的类，一般都是应用类加载器，也叫app加载器
+    System.out.println("类加载器  =>");
+    //其他加载器，扩展类加载器ext,引导类加载器我们得不到会返回null
+    System.out.println("扩展类加载器 =>" + testClassClass.getClassLoader().getParent());
+    System.out.println("扩展类加载器 =>" + testClassClass.getClassLoader().getParent().getParent());
+    //注意如果注解的保留策略需设置为@Retention(RetentionPolicy.RUNTIME)
+    System.out.println("runtime注解，运行期由VM保留  => " + testClassClass.getAnnotation(AnnotationTest.class));
+    for (Class<?> anInterface : testClassClass.getInterfaces()) {
+        System.out.println("获取接口  => " + anInterface);
+    }
+    System.out.println("获取父类  => " + testClassClass.getSuperclass());
+    System.out.println("获取类路径下，也就是classes根目录下的某个资源文件输入流   => " + testClassClass.getResourceAsStream("/test.properties"));
+
+}
+```
+
+![image-20220825234832246](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252348911.png)
+
+#### 工厂模式 + 反射实现ioc
+
+> `Spring IOC`的实现就是基于反射 + 工厂模式实现的。
 
 
 
+##### 不使用反射
 
+> 不使用反射利用工厂模式创建bean，这里就以简单工厂模式实现
 
+```java
+public interface Fruit {
+    /**
+     * 描述
+     */
+    void describe();
+}
+public class Apple implements Fruit{
+    String name;
+    @Override
+    public void describe() {
+        System.out.println(this.name);
+    }
+}
+public class Banana implements Fruit{
+    String name;
+    @Override
+    public void describe() {
+        System.out.println(this.name);
+    }
+}
+public class Orange implements Fruit{
+    String name;
+    @Override
+    public void describe() {
+        System.out.println(this.name);
+    }
+}
+```
 
+```java
+public class MyCustomizeFactory {
+		//bean工厂
+    final static HashMap<String, Object> mapFactory = new HashMap<>();
+    public static Fruit getInstance(String beanName) {
+        Fruit fruit = (Fruit) mapFactory.get(beanName);
+        if (!ObjectUtils.isEmpty(fruit)) {
+            return fruit;
+        }
+        switch (beanName) {
+            case "Apple":
+                fruit = new Apple(beanName);
+                break;
+            case "Orange":
+                fruit = new Orange(beanName);
+                break;
+            case "Banana":
+                fruit = new Banana(beanName);
+                break;
+            default:
+                System.out.println("error");
+                break;
+        }
+        mapFactory.put(beanName, fruit);
+        return fruit;
+    }
+}
+```
 
+> 测试
 
+```java
+public static void main(String[] args) {
+    final Fruit apple = MyCustomizeFactory.getInstance("Apple");
+    System.out.println(apple);
+    final Fruit banana = MyCustomizeFactory.getInstance("Banana");
+    System.out.println(banana);
+}
+```
 
+> 如此实现存在一个问题：如果添加实现类的话需要修改工厂代码，不符合开闭原则
 
+![image-20220826002732640](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260027034.png)
 
+##### 使用反射
 
+> 我们只需要知道此类的全限定名即可通过反射创建此对象
 
+```java
+public static Fruit getInstanceWithReflect(String name, String className) {
+        Fruit fruit = (Fruit) mapFactory.get(className);
+        if (!ObjectUtils.isEmpty(fruit)) {
+            return fruit;
+        }
+        try {
+            fruit = (Fruit) Class.forName(className).newInstance();
+        } catch (Exception e) {
+            System.out.println("error");
+        }
+        mapFactory.put(name, fruit);
+        return fruit;
+    }
+```
 
+> 测试
 
+```java
+ final Fruit apple = MyCustomizeFactory.getInstanceWithReflect("apple","com.roily.booknode.javatogod._04reflect.factoryioc.Apple");
+        System.out.println(apple.getClass());
+        final Fruit banana = MyCustomizeFactory.getInstanceWithReflect("banana","com.roily.booknode.javatogod._04reflect.factoryioc.Banana");
+        System.out.println(banana.getClass());
+        final Fruit orange = MyCustomizeFactory.getInstanceWithReflect("orange","com.roily.booknode.javatogod._04reflect.factoryioc.Orange");
+        System.out.println(orange.getClass());
+```
 
+> 结合配置文件，一次性创建工厂，之后只需去工厂取bean即可
 
+创建bean配置文件
 
+![image-20220826005204288](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260052813.png)
 
+工厂类添加方法
 
+```java
+public static Fruit getInstanceWithReflect(String name) {
+    return (Fruit) mapFactory.get(name);
+}
+```
 
+测试：
 
+程序运行触发初始化，对应bean只创建一次放入工厂，想要就去拿
 
+```java
+static {
+    final InputStream in = ClientTest.class.getResourceAsStream("/bean.properties");
+    final Properties properties = new Properties();
+    try {
+        properties.load(in);
+        properties.keySet().forEach(ele -> MyCustomizeFactory.getInstanceWithReflect((String) ele, (String) properties.get(ele)));
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+public static void main(String[] args) {
+    final Fruit apple = MyCustomizeFactory.getInstanceWithReflect("Apple");
+    System.out.println(apple.getClass());
+    final Fruit banana = MyCustomizeFactory.getInstanceWithReflect("Banana");
+    System.out.println(banana.getClass());
+    final Fruit orange = MyCustomizeFactory.getInstanceWithReflect("Orange");
+    System.out.println(orange.getClass());
+}
+```
 
-
+![image-20220826005421217](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260054512.png)
 
 
 
