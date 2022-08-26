@@ -2472,7 +2472,7 @@ public void seasonUseEnum(Season3 season)
 ###### 为何枚举是单例的最佳实现？
 
 - 枚举天生单例，且线程安全，枚举作为内部类可实现延时加载。
-- 枚举可避免序列化、或反射 破坏单例 （枚举的序列化是定制的，序列化时会将枚举项名记录）
+- 枚举可避免序列化、或反射 破坏单例 （枚举的序列化是定制的，序列化时会将枚举项名记录，反序列化时会根据枚举项名称找到对应枚举项）
 
 以上编写枚举反编译查看枚举中的每一个枚举项都被final static 修饰，且在static代码块中初始化，这也就是饿汉式单例的实现。
 
@@ -2519,7 +2519,9 @@ final SingleDemo singleDemo = declaredConstructor.newInstance(null);
 System.out.println(instance1 == singleDemo);
 ```
 
-![image-20220826013415047](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260141341.png)###### 序列化破坏单例
+![image-20220826013415047](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260141341.png)
+
+###### 序列化破坏单例
 
 先执行test1，再执行test2
 
@@ -2615,6 +2617,14 @@ public void testy() {
 ![image-20220826015618559](java成神之路(基础).assets/image-20220826015618559.png)
 
 原因：
+
+枚举类型拒绝反射创建实例。
+
+枚举类型在序列话的时候会将枚举项，对应名称序列化，而具体信息不会序列话，在反序列化时，会根据枚举项名称，调用valueOf方法返回枚举项。
+
+
+
+
 
 
 
@@ -5396,6 +5406,205 @@ public static void main(String[] args) {
 ```
 
 ![image-20220826005421217](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260054512.png)
+
+
+
+#### 范型
+
+> Java范型时JDK5引入的特性，允许在定义类、接口和方法的时候可以使用类型参数。声明的类型参数会在使用的时候替换为具体的类型。
+>
+> 范型是java提供的语法糖，我们所定义的范型在编译期间都会被类型擦除，使用泛型可提高代码的复用性。Java的集合框架都使用了范型，我们平常所定义的List<String>、List<Iteger>这两个集合类型是相同的，在编译的时候会进行类型擦除，擦除后的类型变为原始类型List。
+
+##### 类型擦除(type erasue)
+
+###### 例子
+
+> 写几个例子，反编译查看
+
+例一：
+
+```java
+final List<String> list = new ArrayList<>(10);
+list.add("可可爱爱");
+System.out.println(list.get(0));
+```
+
+反编译后：
+
+```java
+List list = new ArrayList(10);
+list.add("\u53EF\u53EF\u7231\u7231");
+System.out.println((String)list.get(0));
+```
+
+> 编译过后List<String>的类型被擦除，也就是说只有List类型，而不存在List<String>这个类型。中间对于元素的具体操作，通过类型转化实现。
+
+例二：
+
+```java
+/**
+ * 指定范型类型，那么CompareTo方法也必须指定类型，如果不指定那么就会替换为其左边界Object
+ * 编译后Comparable<MyNumericValue>的类型被擦除，变为Comparable<Object>
+ * 那么直接导致未能实现compareTo方法
+ * 编译器检测到了，就给生成一个桥接方法compareTo(Object object)
+ */
+class MyNumericValue implements Comparable<MyNumericValue> {
+    private int value;
+    @Override
+    public int compareTo(MyNumericValue o) {
+        return this.value - o.value;
+    }
+}
+class MyNumericValue2 implements Comparable {
+    private int value;
+    @Override
+    public int compareTo(Object o) {
+        return 0;
+    }
+}
+```
+
+反编译查看：
+
+```java
+class MyNumericValue implements Comparable {
+    MyNumericValue() {
+    }
+    public int compareTo(MyNumericValue o) {
+        return value - o.value;
+    }
+    public volatile int compareTo(Object obj) {
+        return compareTo((MyNumericValue) obj);
+    }
+    private int value;
+}
+//
+class MyNumericValue2 implements Comparable {
+    MyNumericValue2() {
+    }
+    public int compareTo(Object o) {
+        return 0;
+    }
+    private int value;
+}
+```
+
+> 对于一些范型接口的使用，如果接口的抽象方法的入参、出参是范型类型的话，如果在类型擦除时导致未能实现接口方法时，需要编译器生成桥接方法，通过此桥接方法调用原始方法。
+
+例三：
+
+```java
+public <T extends List<E>, E extends Comparable<E>> void max(List<E> list) {
+    E max = list.get(0);
+    for (E e : list) {
+        if (e.compareTo(max) > 0) {
+            max = e;
+        }
+    }
+    System.out.println("最大值=>" + max);
+}
+```
+
+反编译查看：
+
+```java
+public void max(List list) {
+    Comparable max = (Comparable) list.get(0);
+    Iterator iterator = list.iterator();
+    do {
+        if (!iterator.hasNext())
+            break;
+        Comparable e = (Comparable) iterator.next();
+        if (e.compareTo(max) > 0)
+            max = e;
+    } while (true);
+    System.out.println((new StringBuilder()).append("\u6700\u5927\u503C=>").append(max).toString());
+}
+```
+
+>  E extends Comparable<E>限定了范型边界，那么首先将所有的范型E替换为最左边界 Comparable<E>，然后进行类型擦除得到最终擦除后的结果 Comparable。
+>
+> 增强for循环底层使用的是迭代器进行遍历。
+
+###### 小结
+
+> 类型擦除指的是通过类型参数合并，将范型类型实例关联到一份字节码文件上，编译器只为范型类生成一份字节码文件。
+>
+> 类型擦除的过程中jvm会将范型java代码转化为普通java代码，编译器直接操作的是字节码。
+
+##### 范型带来的问题
+
+> java的违范型机制，类似于语法糖，它方便了我们编写代码，并提高了代码的可复用性，那么复杂的工作就是由jvm待做。
+
+###### 重载
+
+> 重载的条件是方法名相同、参数列表不同。那么如果对于相同的方法名，使用List<String>、List<Integer>，可以进行重载么？
+>
+> 显然是不行的，因为之前我们就说过jvm中只有List这一种类型，并不存在List<String>、List<Integer>,因为编译会进行类型擦除，
+
+idea直接提示，两个方法拥有相同的范型，编译不可通过。
+
+`'method1(List<String>)' clashes with 'method1(List<Integer>)'; both methods have same erasure`
+
+```java
+public void method1(List<String> list){
+}
+public void method1(List<Integer> list){
+}
+```
+
+
+
+##### 范型通配符
+
+###### 常用通配符
+
+> 范型符号都有对应含义，常用范型符号如下：
+
+- E     element    (在集合框架中表示元素的意思)
+
+- T     Type    java类
+- K     key   (键值)
+- V     value   （value值）
+- N   number    数值类型
+- ？   未知java类型（无限制通配符类型）
+
+> Object是所有类的父类，Object的引用可以指向任意类型的实例。在是哟个的时候需要强制转化。
+>
+> 而java范型是一种伪范型，在编译期间就已经确定类型，所以无需转化。
+
+###### 限定通配符和非限定通配符
+
+非限定通配符：除限定通配符以外的范型表示
+
+限定通配符：
+
+限定通配符对类型进行限制，java中有两种限定通配符：
+
+- 表示上界，<? extends T>，即类型必须为T或T的子类
+- 表示下界,<>  super T>,   即类型必须为T或T的父类
+
+
+
+###### 限定通配符对取放值的影响
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
