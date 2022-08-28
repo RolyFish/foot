@@ -120,7 +120,7 @@ class Daughter extends Person {
 }
 ```
 
-![image-20220729135114407](java成神之路(基础).assets/image-20220729135114407.png)
+![image-20220729135114407](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260159591.png)
 
 
 
@@ -306,7 +306,7 @@ abstract class AbstractPersonX implements IPerson{
 
 > 菱形问题：假设B和C都继承自A，B和C都继承了父类A的所有属性和方法，如果java支持多继承的话，此刻有一个D继承自B和C，那么类D就同时拥有类B和类C的所有属性和方法，并且类D继承了两份来自于A的属性和方法，拥有同名属性和相同方法签名的方法是通过不了编译的，且如果通过编译，在调用的时候也会产生歧义。
 
-<img src="java成神之路(基础).assets/image-20220728231808420.png" alt="image-20220728231808420" style="zoom:50%;" />
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250770.png" alt="image-20220728231808420" style="zoom:50%;" />
 
 ##### java可以多实现
 
@@ -460,13 +460,13 @@ class ClassD implements InterfaceC, InterfaceD {
 
 > 继承(Inheritance)是一种联结类与类的层次模型。指的是一个类(子类、子接口)继承另外一个类(父类、父接口)的功能。并且可以增加自己新的功能的能力。继承是一种`AS-a`的关系。
 
-![image-20220729130759731](java成神之路(基础).assets/image-20220729130759731.png)
+![image-20220729130759731](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250283.png)
 
 组合
 
 > 组合(Composition)体现的是整体与部分、拥有的关系，即`has-a`关系。
 
-![image-20220729131252923](java成神之路(基础).assets/image-20220729131252923.png)
+![image-20220729131252923](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282251014.png)
 
 
 
@@ -745,7 +745,7 @@ public void test1() {
 }
 ```
 
-![image-20220730124812628](java成神之路(基础).assets/image-20220730124812628.png)
+![image-20220730124812628](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282251391.png)
 
 - 对于基本数据类型来说，值传递没有异议
 
@@ -759,11 +759,11 @@ public void test1() {
 
 void referenceType1(StringBuilder sb)方法
 
-<img src="java成神之路(基础).assets/image-20220730125529126.png" alt="image-20220730125529126" style="zoom:67%;" />
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282251594.png" alt="image-20220730125529126" style="zoom:67%;" />
 
 void referenceType2(StringBuilder sb)方法
 
-<img src="java成神之路(基础).assets/image-20220730125718516.png" alt="image-20220730125718516" style="zoom: 67%;" />
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282251668.png" alt="image-20220730125718516" style="zoom: 67%;" />
 
 
 
@@ -859,7 +859,7 @@ public void test2() {
 }
 ```
 
-![image-20220730161454604](java成神之路(基础).assets/image-20220730161454604.png)
+![image-20220730161454604](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282251646.png)
 
 ###### 浮点数
 
@@ -926,7 +926,7 @@ int i2 = i;
 
 对其进行反编译可以发现确实自动帮我们转化了：
 
-![image-20220731161053533](java成神之路(基础).assets/image-20220731161053533.png)
+![image-20220731161053533](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282251870.png)
 
 > 还有就是集合的泛型是一个对象类型，但是我们在编码的时候可以直接将基本数据类型放入，因为编译器会帮我们自动装箱。
 
@@ -937,7 +937,7 @@ ints.add(10);
 
 反编译看：
 
-![image-20220731161803912](java成神之路(基础).assets/image-20220731161803912.png)
+![image-20220731161803912](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282251026.png)
 
 ###### 问题
 
@@ -1023,7 +1023,7 @@ public void testCache() {
 }
 ```
 
-![image-20220731163829088](java成神之路(基础).assets/image-20220731163829088.png)
+![image-20220731163829088](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282251176.png)
 
 
 
@@ -1041,7 +1041,7 @@ public void testCache2() {
 }
 ```
 
-![image-20220731163644314](java成神之路(基础).assets/image-20220731163644314.png)
+![image-20220731163644314](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252694.png)
 
 
 
@@ -1201,7 +1201,7 @@ public void test() throws JsonProcessingException {
 }
 ```
 
-![image-20220801145946307](java成神之路(基础).assets/image-20220801145946307.png)
+![image-20220801145946307](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252654.png)
 
 > 对于boolean isSuccess 不同的JSON序列化工具，生成的JSON字符串并不是一样的。那么如果对于同一对象使用不同序列化工具序列化和反序列化会产生什么结果？
 
@@ -1227,7 +1227,7 @@ public void testSer() throws IOException {
 }
 ```
 
-![image-20220801152221308](java成神之路(基础).assets/image-20220801152221308.png)
+![image-20220801152221308](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252408.png)
 
 > 还是Gson出现的问题，对于同一个类，使用不同的序列化工具进行，序列话和反序列化，对象会产生前后不一致问题。
 
@@ -1285,9 +1285,9 @@ str1 += "123";
 
 图示：
 
-<img src="java成神之路(基础).assets/image-20220731210311597.png" alt="image-20220731210311597" style="zoom:67%;" />
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252745.png" alt="image-20220731210311597" style="zoom:67%;" />
 
-<img src="java成神之路(基础).assets/image-20220731210337273.png" alt="image-20220731210337273" style="zoom:67%;" />
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252053.png" alt="image-20220731210337273" style="zoom:67%;" />
 
 
 
@@ -1341,7 +1341,7 @@ class TestFinal {
 
 结果很意外，被final修饰的属性其值可以被改变，且其内存地址也发生了改变，也就是sb的引用也别修改了
 
-![image-20220731214248215](java成神之路(基础).assets/image-20220731214248215.png)
+![image-20220731214248215](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252499.png)
 
 同理我们尝试修改String的字符数组：
 
@@ -1372,7 +1372,7 @@ public void test3() throws NoSuchFieldException, IllegalAccessException {
 - 可以修改String的属性字符数组的值，且不会修改其引用
 - String str2 = "123";为何值为”abc“，这里我只能猜测，String的缓存池中记录着这么一个 ”123“字符串，但是其内部的字符数组指向的是['a','b','c']
 
-![image-20220731215113520](java成神之路(基础).assets/image-20220731215113520.png)
+![image-20220731215113520](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252628.png)
 
 
 
@@ -1455,7 +1455,7 @@ public String substring(int beginIndex, int endIndex) {
 
 图示：
 
-![image-20220731235844909](java成神之路(基础).assets/image-20220731235844909.png)
+![image-20220731235844909](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252536.png)
 
 
 
@@ -1489,7 +1489,7 @@ public String substring(int beginIndex, int endIndex) {
 }
 ```
 
-![image-20220801000754715](java成神之路(基础).assets/image-20220801000754715.png)
+![image-20220801000754715](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252644.png)
 
 
 
@@ -2020,7 +2020,7 @@ public void test2() throws IOException, ClassNotFoundException {
 
 > 结果也如我们说的一样
 
-![image-20220801235653264](java成神之路(基础).assets/image-20220801235653264.png)
+![image-20220801235653264](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252970.png)
 
 ##### instanceof
 
@@ -2038,7 +2038,7 @@ public void test() {
 }
 ```
 
-![image-20220802000331345](java成神之路(基础).assets/image-20220802000331345.png)
+![image-20220802000331345](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252444.png)
 
 
 
@@ -2170,7 +2170,7 @@ public class AboutStatic {
 }
 ```
 
-<img src="java成神之路(基础).assets/image-20220802164043054.png" alt="image-20220802164043054" style="zoom:67%;" />
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252302.png" alt="image-20220802164043054" style="zoom:67%;" />
 
 ###### 静态类
 
@@ -2507,7 +2507,7 @@ public void testSingle() {
 }
 ```
 
-![image-20220826013226826](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260141690.png)
+![image-20220826013226826](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253867.png)
 
 反射破坏单例：
 
@@ -2519,7 +2519,7 @@ final SingleDemo singleDemo = declaredConstructor.newInstance(null);
 System.out.println(instance1 == singleDemo);
 ```
 
-![image-20220826013415047](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260141341.png)
+![image-20220826013415047](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253301.png)
 
 ###### 序列化破坏单例
 
@@ -2553,7 +2553,7 @@ public void test2() {
 }
 ```
 
-![image-20220826014043371](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260152931.png)
+![image-20220826014043371](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253856.png)
 
 
 
@@ -2614,7 +2614,7 @@ public void testy() {
 }
 ```
 
-![image-20220826015618559](java成神之路(基础).assets/image-20220826015618559.png)
+![image-20220826015618559](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282245977.png)
 
 原因：
 
@@ -2672,7 +2672,7 @@ public void test2()   {
 
 查看 IOUtils.readLines()方法：发现此方法声明了受检异常：
 
-![image-20220808104023792](java成神之路(基础).assets/image-20220808104023792.png)
+![image-20220808104023792](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250788.png)
 
 ##### 非受检异常
 
@@ -2740,7 +2740,7 @@ public void test1() {
 }
 ```
 
-![image-20220808111542845](java成神之路(基础).assets/image-20220808111542845.png)
+![image-20220808111542845](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250911.png)
 
 如果我们包含前一个异常信息，在异常抛出的时候可以，追溯到肯本原因：
 
@@ -2752,7 +2752,7 @@ public void test1() {
 }
 ```
 
-![image-20220808111646319](java成神之路(基础).assets/image-20220808111646319.png)
+![image-20220808111646319](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250767.png)
 
 #### try-with-resources
 
@@ -2803,7 +2803,7 @@ public void test4() {
 
 发现编译器帮我们做了：
 
-![image-20220808114543526](java成神之路(基础).assets/image-20220808114543526.png)
+![image-20220808114543526](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250315.png)
 
 #### finally  & return
 
@@ -2901,7 +2901,7 @@ public void test2() {
 }
 ```
 
-![image-20220808130934740](java成神之路(基础).assets/image-20220808130934740.png)
+![image-20220808130934740](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253522.png)
 
 - 对于可修改的引用类型(比如说StringBuilder)
 
@@ -2925,7 +2925,7 @@ public void test3() {
 }
 ```
 
-![image-20220808131219548](java成神之路(基础).assets/image-20220808131219548.png)
+![image-20220808131219548](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253387.png)
 
 > 所以说我们可以得出一个结论：
 
@@ -2949,7 +2949,7 @@ return会记住需要返回结果的字面量信息，对于基本数据类型�
 
 > 集合相关简单关系如下图，没有列出所有的集合类
 
-![image-20220809103023147](java成神之路(基础).assets/image-20220809103023147.png)
+![image-20220809103023147](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253243.png)
 
 
 
@@ -2980,7 +2980,7 @@ public void test1() {
 }
 ```
 
-![image-20220809125359887](java成神之路(基础).assets/image-20220809125359887.png)
+![image-20220809125359887](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253517.png)
 
 使用trySplit方法将集合分割为多个小集合：每一次trySplit都会跟新 Spliterator的index属性
 
@@ -2998,13 +2998,13 @@ public void test3() {
 }
 ```
 
-![image-20220809145504844](java成神之路(基础).assets/image-20220809145504844.png)
+![image-20220809145504844](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253994.png)
 
 #### collection
 
 > Collection接口中除了一些关于集合状态的方法合一些对集合操作的方法外，还有两个获取流的方法
 
-<img src="java成神之路(基础).assets/image-20220809150217164.png" alt="image-20220809150217164" style="zoom:50%;" />
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253664.png" alt="image-20220809150217164" style="zoom:50%;" />
 
 ##### 使用stream来对集合进行操作
 
@@ -3476,7 +3476,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
   }
   ```
 
-  ![image-20220811130849708](java成神之路(基础).assets/image-20220811130849708.png)
+  ![image-20220811130849708](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253438.png)
 
   ```java
   public static void rotate(List<?> list, int distance);
@@ -3851,7 +3851,7 @@ final LongStream longStream = stream.mapToLong(StringBuffer::length);
 
 > Apache.commons下的commons-collectionsX包对java集合框架(java collection framework)做扩展。
 
-![image-20220818094842448](java成神之路(基础).assets/image-20220818094842448.png)
+![image-20220818094842448](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282254261.png)
 
 - Bag -  简化了一个对象在集合中存在多个副本的操作
 - BidiMap -  提供双向映射，可通过键查找值，也可以通过值查找键
@@ -3873,7 +3873,7 @@ HashBag  & TreeBag
 >
 > TreeMap其内封装了一个TreeMap，key是元素，value是元素个数。
 
-![image-20220818151047171](java成神之路(基础).assets/image-20220818151047171.png)
+![image-20220818151047171](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282254561.png)
 
 
 
@@ -4747,7 +4747,7 @@ public void bufferedInputStreamTest1() {
 
 > 操作字符，需要缓冲区，操作Reader、Writer的子类
 
-![image-20220824221348711](java成神之路(基础).assets/image-20220824221348711.png)
+![image-20220824221348711](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282254476.png)
 
 Read常用子类：
 
@@ -4813,7 +4813,7 @@ final String s = AccessController.doPrivileged(
 System.out.println(s);
 ```
 
-![image-20220824231942206](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208242319424.png)
+![image-20220824231942206](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282254532.png)
 
 ```java
 @Test
@@ -5557,7 +5557,7 @@ public void method1(List<Integer> list){
 
 ##### 范型通配符
 
-###### 常用通配符
+###### 常用泛型符号
 
 > 范型符号都有对应含义，常用范型符号如下：
 
@@ -5569,36 +5569,87 @@ public void method1(List<Integer> list){
 - N   number    数值类型
 - ？   未知java类型（无限制通配符类型）
 
-> Object是所有类的父类，Object的引用可以指向任意类型的实例。在是哟个的时候需要强制转化。
+> 对于普通泛型符号(除？以外)，必须预先声明类型才可以使用，也就是在我们使用的时候必须确定类型，否则编译报错。
+
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208281522005.png" alt="image-20220828152230268" style="zoom:50%;" />
+
+> 而对于?通配符来说无需事先声明，表示任意类型。正是因为无需声明类型，那么对于编译器来说它不知道如何对类型进行强转，就造成了此方式的泛型无法添加元素，且获取得到的元素也只能是Object类型。
 >
-> 而java范型是一种伪范型，在编译期间就已经确定类型，所以无需转化。
+> 如下List<?> list 表示此方法可以接受任意类型的集合对象
 
-###### 限定通配符和非限定通配符
+```java
+class  TestClass2 {
+    public void test(List<?> list){
+        //list.add("");
+        final Object o = list.get(0);
+        System.out.println(o);
+    }
+    public static void main(String[] args) {
+        final TestClass2 testClass2 = new TestClass2();
+        testClass2.test(new ArrayList<Integer>(Arrays.asList(1,2)));
+        testClass2.test(new ArrayList<String>(Arrays.asList("1","2")));
+        testClass2.test(new ArrayList<Comparable>(Arrays.asList(1,2)));
+    }
+}
+```
 
-非限定通配符：除限定通配符以外的范型表示
 
-限定通配符：
+
+###### 限定通配符
+
+> 对于非限定通配符来说，也有不好的地方，它不限制类型，那么在方法逻辑中想使用指定类型的方法时需要强制转化，如此可能出现`ClassCastException`异常。
+
+```java
+class TestClassC<T> {
+    T t;
+    public void test(T t1,T t2){
+        final Comparable t1c = (Comparable) t1;
+        System.out.println(t1c.compareTo(t2));
+    }
+}
+```
+
+
+
+> 如上我们可以限定test的参数类型为Comparable的实现类。所以java为我们引入了限定通配符
 
 限定通配符对类型进行限制，java中有两种限定通配符：
 
-- 表示上界，<? extends T>，即类型必须为T或T的子类
-- 表示下界,<>  super T>,   即类型必须为T或T的父类
+- 表示上界，<? extends T>
 
+  > 泛型类型必须为T或T的派生类（可以是接口、也可以是子类）这里没有用任何意义上的继承关系。
+  >
+  > <? extends T>表示可接收任意T即T的派生类类型。
+  >
+  > 用于取值。
 
+![image-20220828164524819](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208281645961.png)
 
-###### 限定通配符对取放值的影响
+- 表示下界,<？  super T>,   即类型必须为T或T的父类型
 
+  > 泛型类型必须为T或T的父类。
+  >
+  > <? super T>表示可接收任意T即T的父类类型。
+  >
+  > 用于存值。
 
+![image-20220828165307611](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208281653029.png)
 
+> 指定类型就不行了，因为String不是Fruit的父类类型
 
+![image-20220828165336604](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208281653641.png)
 
+> 关于存取值问题
 
+![image-20220828170849157](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282256806.png)
 
+小结：
 
-
-
-
-
+> 如果对于泛型没有限制，并且集合类型支持存取的话，直接使用非限定通配符T E等。
+>
+> 如果对于泛型有限制，则使用限定通配符 extents支持取，super支持存。
+>
+> ？对于取是不友好的，因为？表示任意java类型，那么取出来的一定是Object，而Object没有意义，强转存在ClassCastExpression异常风险。
 
 
 
