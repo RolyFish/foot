@@ -5407,17 +5407,15 @@ public static void main(String[] args) {
 
 ![image-20220826005421217](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260054512.png)
 
-
-
-#### 范型
+### 范型
 
 > Java范型时JDK5引入的特性，允许在定义类、接口和方法的时候可以使用类型参数。声明的类型参数会在使用的时候替换为具体的类型。
 >
 > 范型是java提供的语法糖，我们所定义的范型在编译期间都会被类型擦除，使用泛型可提高代码的复用性。Java的集合框架都使用了范型，我们平常所定义的List<String>、List<Iteger>这两个集合类型是相同的，在编译的时候会进行类型擦除，擦除后的类型变为原始类型List。
 
-##### 类型擦除(type erasue)
+#### 类型擦除(type erasue)
 
-###### 例子
+##### 例子
 
 > 写几个例子，反编译查看
 
@@ -5526,13 +5524,13 @@ public void max(List list) {
 >
 > 增强for循环底层使用的是迭代器进行遍历。
 
-###### 小结
+##### 小结
 
 > 类型擦除指的是通过类型参数合并，将范型类型实例关联到一份字节码文件上，编译器只为范型类生成一份字节码文件。
 >
 > 类型擦除的过程中jvm会将范型java代码转化为普通java代码，编译器直接操作的是字节码。
 
-##### 范型带来的问题
+#### 范型带来的问题
 
 > java的违范型机制，类似于语法糖，它方便了我们编写代码，并提高了代码的可复用性，那么复杂的工作就是由jvm待做。
 
@@ -5553,11 +5551,9 @@ public void method1(List<Integer> list){
 }
 ```
 
+#### 范型通配符
 
-
-##### 范型通配符
-
-###### 常用泛型符号
+##### 常用泛型符号
 
 > 范型符号都有对应含义，常用范型符号如下：
 
@@ -5593,9 +5589,7 @@ class  TestClass2 {
 }
 ```
 
-
-
-###### 限定通配符
+##### 限定通配符
 
 > 对于非限定通配符来说，也有不好的地方，它不限制类型，那么在方法逻辑中想使用指定类型的方法时需要强制转化，如此可能出现`ClassCastException`异常。
 
@@ -5651,39 +5645,254 @@ class TestClassC<T> {
 >
 > ？对于取是不友好的，因为？表示任意java类型，那么取出来的一定是Object，而Object没有意义，强转存在ClassCastExpression异常风险。
 
+### 设计模式
+
+> 简单了解
+
+#### 代理模式
+
+> 框架的灵魂就是代理＋反射，代理和反射几乎是所有框架的基础。了解一下代理模式。
+
+##### 静态代理
+
+> 要求代理角色和真实角色实现同一接口、代理角色将真实角色组合进来、代理角色对真实角色方法进行增强。
+
+###### 简单实现
+
+- 定义抽象接口
+
+  ```java
+  public interface SellGoods {
+      void doSell();
+  }
+  ```
+
+- 定义真实角色
+
+  ```java
+  public class GoodsOwner implements SellGoods {
+      @Override
+      public void doSell() {
+          System.out.println("小杨哥的品牌方");
+      }
+  }
+  ```
+
+- 代理角色
+
+  ```java
+  @Data
+  public class XiaoYangGe implements SellGoods {
+      //小杨哥代理的品牌方
+      private SellGoods sellGoods;
+      @Override
+      public void doSell() {
+          prev();
+          sellGoods.doSell();
+          last();
+      }
+      private void prev(){
+          System.out.println("测评、口碑、流量");
+      }
+      private void last(){
+          System.out.println("质保");
+      }
+      @Test
+      public void test(){
+          //代理对象
+          final XiaoYangGe xiaoYangGe = new XiaoYangGe();
+          //代理对象组合真实对象
+          xiaoYangGe.setSellGoods(new GoodsOwner());
+          //代理对象对真实对象做增强
+          xiaoYangGe.doSell();
+      }
+  }
+  ```
+
+![image-20220829140457256](java成神之路(基础).assets/image-20220829140457256.png)
+
+###### 优缺点
+
+优点：
+
+- 简单、直观
+
+缺点：
+
+- 只能代理一类角色，不通用，不利于扩展
 
 
 
+##### 动态代理
 
+> 动态代理的目的就是为了解决静态代理的却点。达到通用且易于扩展。
 
+分为
 
+- jdk动态代理
 
+- CGLIB动态代理
 
+Jdk动态代理，借助Proxy类和InvocationHandler接口，实现动态生成代理对象的能力。
 
+Cglib动态代理，运行时在内存中生成一个子类对象，实现对目标对象的代理。
 
+注意点：
 
+jdk动态代理有一个限制，那就是被代理类必须实现一个或多个接口。
 
+如果被代理类没有实现接口的化可以使用Cglib动态代理。
 
+###### jdk动态代理
 
+> jdk动态代理需要借助一个类Proxy和一个接口InvocationHandler。
+>
+> Proxy用于生成代理对象，InvocationHandler称为代理对象的调用处理程序。
 
+以下实现将 SellGoods 替换为 Object，则可以代理所有实现接口的类的实例。
 
+实现：
 
+```java
+@Data
+public class SellGoodsInvocationHandler implements InvocationHandler {
+    //代理谁？
+    private SellGoods sellGoods;
+    /**
+     * 生成代理对象
+     */
+    public Object newProxyInstance() {
+        return Proxy.newProxyInstance(sellGoods.getClass().getClassLoader(), sellGoods.getClass().getInterfaces(), this);
+    }
+    /**
+     * 代理对象对真实对象增强
+     *
+     * @param proxy  代理对象
+     * @param method 被代理对象method实例，内部包含被代理对象方法信息
+     * @param args   method参数
+     * @return
+     * @throws Throwable
+     */
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        //代理对象实现接口
+        System.out.println("代理对象实现接口:");
+        for (Class<?> anInterface : proxy.getClass().getInterfaces()) {
+            System.out.println(anInterface.getName());
+        }
+        prev();
+        //invoke 第一个参数：被代理对象实例，第二个参数，被代理对象方法参数
+        Object returnVal = method.invoke(sellGoods,args);
+        last();
+        return returnVal;
+    }
+    private void prev() {
+        System.out.println(sellGoods.getClass().getName() + "类被代理，前置方法");
+    }
+    private void last() {
+        System.out.println(sellGoods.getClass().getName() + "类被代理，后置方法");
+    }
+    @Test
+    public void test(){
+        final SellGoodsInvocationHandler sellGoodsInvocationHandler = new SellGoodsInvocationHandler();
+        sellGoodsInvocationHandler.setSellGoods(new GoodsOwner());
+        final SellGoods sellGoodsProxy = (SellGoods)sellGoodsInvocationHandler.newProxyInstance();
+        sellGoodsProxy.doSell();
+    }
+}
+```
 
+![image-20220829171302109](java成神之路(基础).assets/image-20220829171302109.png)
 
+###### CGLIB
 
+> 当JDK动态代理用不了了，可以用CGLIB动态代理。
+>
+> CGLIB(Code Generation Library) 是一个第三方代码生成类库，运行时在内存中动态生成一个子类对象从而实现对目标对象功能的扩展。
+>
+> CGLIB动态代理是通过继承来实现对目标对象的增强的，所以某个被final修饰的方法，是无法被代理的。
 
+实现：
 
+> 一个类，被代理类，一个被final修饰的方法，一个普通方法
 
+```java
+public class Obj {
+    /**
+     * 定义两个方法
+     * 一个是普通方法，一个是被final修饰的方法
+     */
+    final public void doSomeThing() {
+        System.out.println("被final修饰的方法");
+    }
 
+    public void doOtherThing() {
+        System.out.println("普通方法");
+    }
+}
+```
 
+> 拦截器
 
+```java
+public class MyMethodInterceptor implements MethodInterceptor {
+    /**
+     * 拦截方法
+     *
+     * @param o           the enhanced obj  已被增强对象
+     * @param method      intercepted Method 被拦截方法
+     * @param objects     参数列表，基本类型会替换为包装类型
+     * @param methodProxy 代理方法
+     */
+    @Override
+    public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+        System.out.println("被代理方法名称:" + method.getName());
+        System.out.println("=====开始增强=====");
+        final Object o1 = methodProxy.invokeSuper(o, objects);
+        System.out.println("=====增强结束=====");
+        return o1;
+    }
+}
+```
 
+> 生成代理对象
 
+```java
+@Data
+public class CgLibProxy {
+    private Class<? extends Object> object;
+    public Object getProxy() {
+        //创建Enhancer对象，类似于JDK动态代理的Proxy类
+        Enhancer enhancer = new Enhancer();
+        //设置目标类的字节码文件,很明显使用反射实现
+        enhancer.setSuperclass(object);
+        //设置借助哪个拦截器实现（也就是做哪些增强）
+        enhancer.setCallback(new MyMethodInterceptor());
+        //这里的creat方法就是正式创建代理类
+        return enhancer.create();
+    }
+}
+```
 
+> 测试：
 
+- 可实现增强
+- 不可增强被final修饰的方法
 
-
-
+```java
+public static void main(String[] args) {
+    //在指定目录下生成动态代理类，我们可以反编译看一下里面到底是一些什么东西
+    System.setProperty(DebuggingClassWriter.DEBUG_LOCATION_PROPERTY, "D:\\java\\java_workapace2");
+    CgLibProxy cgLibProxy = new CgLibProxy();
+    cgLibProxy.setObject(Obj.class);
+    //这里的creat方法就是正式创建代理类
+    Obj proxy = (Obj)cgLibProxy.getProxy();
+    //调用代理类的final方法
+    proxy.doSomeThing();
+    //调用代理类的非final方法
+    proxy.doOtherThing();
+}
+```
 
 
 
