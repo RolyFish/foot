@@ -5709,7 +5709,7 @@ class TestClassC<T> {
   }
   ```
 
-![image-20220829140457256](java成神之路(基础).assets/image-20220829140457256.png)
+![image-20220829140457256](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300005131.png)
 
 ###### 优缺点
 
@@ -5802,7 +5802,7 @@ public class SellGoodsInvocationHandler implements InvocationHandler {
 }
 ```
 
-![image-20220829171302109](java成神之路(基础).assets/image-20220829171302109.png)
+![image-20220829171302109](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300005024.png)
 
 ###### CGLIB
 
@@ -5896,15 +5896,254 @@ public static void main(String[] args) {
 
 
 
+### 序列化
+
+> 序列化是指将对象的状态信息转化为可存储或可传输的形式的过程。用于网络传输和RPC调用过程中的信息媒介。反序列化是序列化的逆过程。
+
+#### java的序列化
+
+> java中对象信息都存储与jvm运行时堆内存中，一旦jvm停止运行，java对象信息也将丢失。序列化是一种持久化手段，可以将对象信息以文件的信息存储于磁盘中，当我们想再次使用的时候可以将序列化的信息读出来，反序列化还原对象信息。
+
+- java想要实现序列化必须实现Serializable接口
+- java序列化存储的是对象信息，只存储成员变量信息，类变量信息不会被存储
+- 借助ObjectOutputStream和ObjectInputStream对对象进行序列化和反序列化
+- 序列化与反序列化要求SerialVersionUID序列化与反序列化前后必须相同
+- Transient表示瞬时的意思，即被它修饰的属性不会参与序列化过程
+- 可以在类中添加writeObject和readObject方法来定制对象的序列化和反序列化
+- 可序列化类的子类都可序列化
+
+##### Serializable接口
+
+> Java中想要实现序列化必须实现Serializable接口。如果没有实现序列化接口却尝试使用序列化的话会报出`NotSerializableException`异常。
+>
+> `Serializable`接口没有任何方法，类似于一个标识接口，但是想要实现序列化必须实现此接口。当我们没有定制序列化时默认使用`ObjectOutputStream的defaultWriteObject()`和`InputOutputStream的defaultReadObject()`方法进行序列化。
+>
+> 序列化时想要序列化父类属性，那么父类也必须实现序列化接口
+
+例子：序列化时想要序列化父类属性，那么父类也必须实现序列化接口
+
+```java
+@Data
+public class ClassParent implements Serializable {
+  private static final long serialVersionUID = 1L;
+    public String value1;
+}
+@Data
+@ToString(callSuper = true)
+class ClassSon extends ClassParent {
+  private static final long serialVersionUID = 1L;
+    public String value2;
+}
+
+```
+
+```java
+/**
+ * 想要序列化父类属性，父类也需要实现序列化接口
+ */
+@Test
+public void test2() {
+    String filePath = "/Users/rolyfish/Desktop/MyFoot/foot/testfile";
+    final ClassSon classSon = new ClassSon();
+    classSon.setValue1("Parent");
+    classSon.setValue2("Son");
+    try (final ObjectOutputStream objectOutputStream =
+                 new ObjectOutputStream(new FileOutputStream(new File(filePath, classSon.getClass().getSimpleName() + ".txt")))) {
+        objectOutputStream.writeObject(classSon);
+        objectOutputStream.flush();
+    } catch (IOException e) {
+    }
+
+    try (final ObjectInputStream objectInputStream =
+                 new ObjectInputStream(new FileInputStream(new File(filePath, classSon.getClass().getSimpleName() + ".txt")))) {
+        final Object o = objectInputStream.readObject();
+        System.out.println(o);
+    } catch (IOException e) {
+    } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+![image-20220830010017176](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300100164.png)
+
+##### Externalizable
+
+> `Externalizable`接口继承自`Serializable`接口，与`Serializable`接口不同的是`Externalizable`接口定义了两个方法，在使用`Externalizable`接口进行序列化操作的时候必须实现这两个方法，否则序列化操作后所有属性都会变成默认值。
+
+注意：
+
+使用`Externalizable`接口进行序列化的时候，会调用类的无参构造器，再将对象的属性填充到此对象中，所以说使用`Externalizable`接口进行序列化需要一个public的无参构造器。
+
+例子：
+
+```java
+@Data
+public class ClassExternalizable implements Externalizable {
+    private static final long serialVersionUID = -7287239868922811345L;
+    String value;
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(value);
+    }
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        this.value = (String) in.readObject();
+    }
+    @Test
+    public void test2() {
+        String filePath = "/Users/rolyfish/Desktop/MyFoot/foot/testfile";
+        final ClassExternalizable classExternalizable = new ClassExternalizable();
+        classExternalizable.setValue("ClassExternalizable");
+        try (final ObjectOutputStream objectOutputStream =
+                     new ObjectOutputStream(new FileOutputStream(new File(filePath, ClassExternalizable.class.getSimpleName() + ".txt")))) {
+            objectOutputStream.writeObject(classExternalizable);
+            objectOutputStream.flush();
+        } catch (IOException e) {
+        }
+        try (final ObjectInputStream objectInputStream =
+                     new ObjectInputStream(new FileInputStream(new File(filePath, ClassExternalizable.class.getSimpleName() + ".txt")))) {
+            final Object o = objectInputStream.readObject();
+            System.out.println(o);
+        } catch (IOException e) {
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+![image-20220830013944110](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300139614.png)
+
+##### SeriaVersionUID
+
+> 序列号，在序列化的时候会将类的序列号存储，在反序列化的时候会检查序列号是否一致，如果一致才会进行接下来的序列化操作。如果不一致则会抛出`InvalidCastException`异常。
+
+例子：
+
+> 先执行testWrite ，然后修改SerialVersionUID，再执行testRead
+
+```java
+@Data
+public class ClassSerialVersionUID implements Serializable {
+    private static final long serialVersionUID = 2221061315871513751L;
+
+    String value;
+    @Test
+    public void testWrite() {
+        String filePath = "/Users/rolyfish/Desktop/MyFoot/foot/testfile";
+        final ClassSerialVersionUID classSerialVersionUID = new ClassSerialVersionUID();
+        classSerialVersionUID.setValue("classSerialVersionUID");
+        try (final ObjectOutputStream objectOutputStream =
+                     new ObjectOutputStream(new FileOutputStream(new File(filePath, ClassSerialVersionUID.class.getSimpleName() + ".txt")))) {
+            objectOutputStream.writeObject(classSerialVersionUID);
+            objectOutputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+```java
+@Data
+public class ClassSerialVersionUID implements Serializable {
+    private static final long serialVersionUID = 123123151L;
+    String value;
+    @Test
+    public void testRead() {
+        String filePath = "/Users/rolyfish/Desktop/MyFoot/foot/testfile";
+        try (final ObjectInputStream objectInputStream =
+                     new ObjectInputStream(new FileInputStream(new File(filePath, ClassSerialVersionUID.class.getSimpleName() + ".txt")))) {
+            final ClassSerialVersionUID classSerialVersionUID = (ClassSerialVersionUID) objectInputStream.readObject();
+            System.out.println(classSerialVersionUID);
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+> 会报出InvalidCastException异常，且友好提示二进制流中的序列号id和本地类中的序列号id不一致。
+
+![image-20220830015417052](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300154672.png)
 
 
 
+###### SerialVersionUID哪来的
+
+> 如果在编写java类时没有显示定义一个`SerialVersionUID`，那么编译器会为根据Class类的属性特征生成一个序列号，如果此类不发生改变那么经过多次编译也不会报错，如果此类发生改变（添加字段、修改字段），那么在反序列化时会报错。所以说一般我们会自定义一个序列号
+
+借助idea生成序列号：
+
+在设置的检查项可以设置缺省序列号时的告警级别，
+
+![image-20220830020226044](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300202768.png)
+
+编写class类不添加序列号会有警告提示：
+
+快捷键 opt + enter
+
+![image-20220830020400580](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300204003.png)
 
 
 
+##### 定制序列化策略
 
+> java在序列化的时候会首相检查，当前类是否存在`writeObject`和`readObject`方法，如果有则优先使用自定义的序列化策略，否则才会使用默认的`defaultWriteObject  和 defaultReadObject`方法。
+>
+> 所以定制序列化策略也就是自己添加`writeObject 和 readObject`方法。
 
+###### ArrayList
 
+> 首先可以查看一下ArrayList的序列化策略。
+>
+> ArrayList底层是一个对象数组，且该属性被transient修饰，也就是不参与序列化，那么他是如何保存对象信息的呢？就是自定义序列化策略，ArrayList添加了`writeObject 和 readObject`方法。且ArrayList优化了序列化策略，它只会保存非null元素，而null元素则会被忽略。
 
+###### 自定义序列化策略
 
+> 上面我们聊Externalizable时就已经涉及了。
+
+```java
+@Data
+public class ClassCustomizeSerializable implements Serializable {
+    private static final long serialVersionUID = 2936590571416558935L;
+    transient Date date;
+    String value;
+    private void writeObject(ObjectOutputStream out)
+            throws java.io.IOException {
+        out.writeObject(Optional.ofNullable(date).orElse(Calendar.getInstance().getTime()));
+        out.writeObject(value);
+    }
+    private void readObject(ObjectInputStream in)
+            throws java.io.IOException, ClassNotFoundException {
+        final Object o1 = in.readObject();
+        final Object o2 = in.readObject();
+        date = (Date) ((o1 instanceof Date) ? o1 : o2);
+        value = (String) ((o1 instanceof String) ? o1 : o2);
+    }
+    @Test
+    public void test() {
+        final ClassCustomizeSerializable classCustomizeSerializable = new ClassCustomizeSerializable();
+        classCustomizeSerializable.setValue("classCustomizeSerializable");
+        String filePath = "/Users/rolyfish/Desktop/MyFoot/foot/testfile";
+        try (final ObjectOutputStream objectOutputStream =
+                     new ObjectOutputStream(new FileOutputStream(new File(filePath, ClassCustomizeSerializable.class.getSimpleName() + ".txt")))) {
+            objectOutputStream.writeObject(classCustomizeSerializable);
+            objectOutputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try (final ObjectInputStream objectInputStream =
+                     new ObjectInputStream(new FileInputStream(new File(filePath, ClassCustomizeSerializable.class.getSimpleName() + ".txt")))) {
+            ClassCustomizeSerializable o = (ClassCustomizeSerializable) objectInputStream.readObject();
+            System.out.println(o);
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+![image-20220830022442495](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300224278.png)
 
