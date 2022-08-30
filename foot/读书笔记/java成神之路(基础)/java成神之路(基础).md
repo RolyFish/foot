@@ -6269,36 +6269,190 @@ public enum ElementType {
 
 ##### @Retention
 
-> 保留策略，表示该注解保留策略或生命周期。
+> 保留策略，注解只是保留在代码中、还是编译进class文件中、还是在运行期间保留在虚拟机中（可以通过反射访问）
 >
 > 有一个RetentionPolicy value属性，RetentionPolicy 是一个枚举类型。
 
 ```java
 public enum RetentionPolicy {
-    /**
-     * Annotations are to be discarded by the compiler.
-     */
     //表示只保留在javaDoc中，会被编译器忽略，被编译器忽略自然也不会加载进虚拟机
     SOURCE,
-
-    /**
-     * Annotations are to be recorded in the class file by the compiler
-     * but need not be retained by the VM at run time.  This is the default
-     * behavior.
-     */
     //表示会被编译器编译生成class文件，但不会由VM在运行时保留
     CLASS,
-
-    /**
-     * Annotations are to be recorded in the class file by the compiler and
-     * retained by the VM at run time, so they may be read reflectively.
-     *
-     * @see java.lang.reflect.AnnotatedElement
-     */
     //会编译、也会由VM在运行时保留，注解为此保留策略可通过反射获取注解信息
     RUNTIME
 }
 ```
+
+
+
+####  java内置注解
+
+> Java内部定义了一套注解，共有10个，6 个在 java.lang 中，剩下 4 个在 java.lang.annotation 中，
+>
+> 除了三面提供的四个元注解(四个元注解都在 java.lang.annotation中)，还有6个在`java.lang`包下。
+
+##### Deprecated
+
+> 注释于构造器、属性、本地变量、方法、包、接口、方法上，表示过时的意思。
+>
+> 使用过时的类、方法、属性等，会有一个横线标识、不影响使用。
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value={CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, PACKAGE, PARAMETER, TYPE})
+public @interface Deprecated {
+}
+```
+
+
+
+##### @SuppressWarnings
+
+> @SuppressWarnings("all")，抑制警告，`all`代表抑制所有警告，包括未检测警告、过时警告等。
+
+
+
+#####  @Override
+
+> 注解于方法上，表示重写方法。
+
+##### @SafeVarargs
+
+> 注释于构造方法或方法上，忽略任何使用参数为泛型变量的方法或构造函数调用产生的警告
+
+
+
+##### @FunctionalInterface
+
+> 注释于接口上，表示为一个函数式接口。
+
+##### @Repeatable
+
+> 注释于注解上，表示该注解可重复声明多次。
+
+![image-20220830204849836](java成神之路(基础).assets/image-20220830204849836.png)
+
+使用:
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public   @interface Persons {
+   Person[] value();
+}
+```
+
+```java
+@Repeatable(Persons.class)
+public  @interface Person{
+    String role() default "";
+}
+```
+
+```java
+@Person(role = "男的")
+@Person(role = "打工族")
+public class MeClass {
+}
+```
+
+
+
+#### 简单使用
+
+> 定义一个注解最重要的就是设置@Target和@Retention。分别表示该注解可以放在哪里和该注解的保留策略。
+
+- RetentionPolicy.RUNTIME   会编译、也会由VM在运行时保留，注解为此保留策略可通过反射获取注解信息
+- @Target如果不指定，表示该注解可放于任何地方。如果指定那么就只可以放在指定地方
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface MyDefinitionAnnotation {
+}
+```
+
+##### 通过反射获取注解信息
+
+> 如果不设置@Retention(RetentionPolicy.RUNTIME)的话是获取不到注解信息的
+
+```java
+@MyDefinitionAnnotation
+public class MyTestClass {   
+}
+public static void main(String[] args) {
+    final Annotation[] annotations = MyTestClass.class.getAnnotations();
+    for (Annotation annotation : annotations) {
+        System.out.println(annotation.annotationType().getSimpleName());
+    }
+}
+```
+
+![image-20220830230013493](java成神之路(基础).assets/image-20220830230013493.png)
+
+##### 注解可定义属性并赋默认值
+
+> 注解可定义属性并可以给属性赋予默认值，可以通过属性来控制，类、方法、字段的行为。
+
+以下例子我们通过AnnotationWithValue注解实现了类似于@Value注解的作用
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AnnotationWithValue {
+
+    String value() default "默认值";
+
+}
+```
+
+```java
+@Data
+public class TestClass {
+
+    @AnnotationWithValue(value = "注解赋值")
+    public String value1;
+
+    @AnnotationWithValue
+    public String value2;
+
+    @Test
+    public void test() throws NoSuchFieldException, IllegalAccessException {
+
+        final TestClass testClass = new TestClass();
+        final Field value1 = TestClass.class.getField("value1");
+        final String str1 = value1.getAnnotation(AnnotationWithValue.class).value();
+        value1.set(testClass,str1);
+        final Field value2 = TestClass.class.getField("value2");
+        final String str2 = value2.getAnnotation(AnnotationWithValue.class).value();
+        value2.set(testClass,str2);
+        System.out.println(testClass);
+    }
+}
+```
+
+![image-20220831000337366](java成神之路(基础).assets/image-20220831000337366.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
