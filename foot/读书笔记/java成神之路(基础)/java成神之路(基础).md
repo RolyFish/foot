@@ -6147,3 +6147,160 @@ public class ClassCustomizeSerializable implements Serializable {
 
 ![image-20220830022442495](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208300224278.png)
 
+### 注解
+
+> Java 注解（Annotation）又称 Java 标注，是 JDK5.0 引入的一种注释机制。
+
+从以下几点了解：
+
+- 注解语法
+- 元注解
+- java内置注解
+- 简单使用
+
+#### 注解语法
+
+> 注解的定义很简单，使用`@interface`声明，表示一个注解。
+
+```java
+public @interface MyDefinitionAnnotation {
+}
+```
+
+> 反编译查看，可得结论
+>
+> - 所定义的注解就是一个接口
+> - 此接口继承自`Annotation`接口
+>
+> 所以定义注解时无需关系底层实现，编译器和虚拟机会帮我们完成底层的实现。
+
+jad反编译：
+
+```java
+public interface MyDefinitionAnnotation extends Annotation{
+}
+```
+
+
+
+#### 元注解
+
+> 可以定义其他注解的注解叫做元注解。
+
+元注解有四个：
+
+- @Target
+- @Retention
+- @Documented
+- @Inherited
+
+##### @Documented&@Inherited 
+
+> 这两个注解分别表示，是否在JavaDoc中保存注解和是否允许子类继承父类注解。
+>
+> 这两个注解没有内部属性，都被
+>
+> ```java
+> @Retention(RetentionPolicy.RUNTIME)
+> @Target(ElementType.ANNOTATION_TYPE)
+> ```
+>
+> 注释，保留策略为Runtime，即会被VM加载进内存，可反射获取、类型属性为`ElementType.ANNOTATION_TYPE`即只可定义在注解上。
+
+##### @Target
+
+> @Target注解只可用于注解类型上、可保留进javadoc、保留策略为RUNTIME。
+>
+> 此注解有一个属性，为数组表示被@Target修饰的注解可用于什么地方，如果不使用@Targer注释则表示该注解可用于任何地方。
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Target {
+    ElementType[] value();
+}
+```
+
+> ElementType枚举值说明：
+
+常用的：TYPE、FIELD、METHOD
+
+```java
+public enum ElementType {
+    /** Class, interface (including annotation type), or enum declaration */
+    //标注此注解可用于 类、接口、注解、以及枚举上（注解就是接口、枚举就是类）
+    TYPE,
+    /** Field declaration (includes enum constants) */
+    //标注此注解可用于字段属性上
+    FIELD,
+    /** Method declaration */
+    //标注此注解可用于方法上
+    METHOD,
+    /** Formal parameter declaration */
+    //标注此注解可用于方法参数上，比如@Valid @RequestBody
+    PARAMETER,
+    /** Constructor declaration */
+    //标注此注解可用于构造方法上
+    CONSTRUCTOR,
+    /** Local variable declaration */
+     //标注此注解可用于本地变量
+    LOCAL_VARIABLE,
+    /** Annotation type declaration */
+     //标注此注解可用于注解上，元注解都有此属性
+    ANNOTATION_TYPE,
+    /** Package declaration */
+    //可用于package-info.java中
+    PACKAGE,
+    /**
+     * Type parameter declaration
+     *
+     * @since 1.8
+     */
+    TYPE_PARAMETER,
+    /**
+     * Use of a type
+     *
+     * @since 1.8
+     */
+    TYPE_USE
+}
+```
+
+##### @Retention
+
+> 保留策略，表示该注解保留策略或生命周期。
+>
+> 有一个RetentionPolicy value属性，RetentionPolicy 是一个枚举类型。
+
+```java
+public enum RetentionPolicy {
+    /**
+     * Annotations are to be discarded by the compiler.
+     */
+    //表示只保留在javaDoc中，会被编译器忽略，被编译器忽略自然也不会加载进虚拟机
+    SOURCE,
+
+    /**
+     * Annotations are to be recorded in the class file by the compiler
+     * but need not be retained by the VM at run time.  This is the default
+     * behavior.
+     */
+    //表示会被编译器编译生成class文件，但不会由VM在运行时保留
+    CLASS,
+
+    /**
+     * Annotations are to be recorded in the class file by the compiler and
+     * retained by the VM at run time, so they may be read reflectively.
+     *
+     * @see java.lang.reflect.AnnotatedElement
+     */
+    //会编译、也会由VM在运行时保留，注解为此保留策略可通过反射获取注解信息
+    RUNTIME
+}
+```
+
+
+
+
+
