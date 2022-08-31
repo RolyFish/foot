@@ -6436,19 +6436,233 @@ public class TestClass {
 
 
 
+#### 注解+反射实现自动装配
+
+> Spring的自动装配原理就是  注解 + 反射，自动装配就是获取字段上的@Value、@AutoWrite注解并进行赋值操作。实现的步骤如下：
+
+- 想使用反射创建对象的化，即必须获取待装配的，类的全限定名。即如何扫描待装配的类
+- 自定义一套注解
+- 最后就是创建bean并装配属性
+
+#####  如何扫描类
+
+> 如何扫描待装配的类。这里的思路是，首先有一个启动类，获取启动类所在目录及其子目录下所有类全限定名称，放入一个List中。
+>
+> 方式为文件操作。
+
+下面的方法目的是为了获取启动类所在目录，以便后面扫描此路径。
+
+- 获取路径
+- 将 .  替换为 \
+
+```java
+public static void run() throws FileNotFoundException {
+    //获取类路径，到****/classes/
+    final String classPath = ResourceUtils.getURL("classpath:").getPath();
+    //获取package名com.xx.xx.xx
+    final String packageName = ScannerPackage.class.getPackage().getName();
+    //replace正则匹配进行替换，. --> \\.   File.separator 在win下为\会被当成转译字符
+    final String packageNameNew =
+            packageName.replaceAll("\\.", Matcher.quoteReplacement(File.separator));
+    //当前类所在包路径
+    String rootPath = String.join("", classPath, packageNameNew);
+    final File rootFile = new File(rootPath);
+    dir(Collections.singletonList(rootFile));
+    for (String path : classPaths) {
+        System.out.println(path);
+    }
+}
+```
+
+记录所有类全限定名称：
+
+```java
+public static List<String> classPaths = new ArrayList<>();
+/**
+ * 扫描某路径下的所有文件
+ */
+public static void dir(List<File> dirList) {
+    //遍历当前类，将文件分组，文件夹一组、非文件夹一组。非文件夹记录进集合，文件夹继续操作
+    final HashMap<Boolean, List<File>> fileMap =
+            dirList.stream().collect(Collectors.groupingBy(File::isDirectory, HashMap::new, Collectors.toList()));
+    //文件
+    final List<File> fileList = fileMap.get(false);
+    final List<File> dir2List = fileMap.get(true);
+    files(Optional.ofNullable(fileList).orElse(Collections.emptyList()));
+    if (!CollectionUtils.isEmpty(dir2List)) {
+        //文件夹
+        for (File file : dir2List) {
+            dir(Arrays.asList(Optional.ofNullable(file.listFiles()).orElse(new File[0])));
+        }
+    }
+}
+public static void files(List<File> fileList) {
+    final List<String> fileNameList = fileList.stream().map(file -> {
+        //得到 com/xx/xx
+        final String str1 = file.getPath().split("classes" + Matcher.quoteReplacement(File.separator))[1];
+        final String str2 = str1.replaceAll(Matcher.quoteReplacement(File.separator), ".");
+        final String str3 = str2.substring(0, str2.lastIndexOf("."));
+        return str3;
+    }).collect(Collectors.toList());
+    classPaths.addAll(fileNameList);
+}
+```
+
+测试一下：
+
+```java
+public static void main(String[] args) throws FileNotFoundException {
+    run();
+}
+```
+
+![image-20220831161805033](java成神之路(基础).assets/image-20220831161805033.png)
 
 
 
+##### 自定义一套注解
+
+> 我们已经获取启动类所在目录下的所有类的全限定的名称，那么创建类已经不是问题了。
+>
+> 接下来定义一套自己的注解。
 
 
 
+######  RolyValue
+
+> 模拟@Value
+
+```java
+/**
+ * @Date: 2022/08/31/15:55
+ * @Description: @Value替代品   可用于方法、字段上
+ */
+@Target({ElementType.FIELD,ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RolyValue {
+    String value() default "";
+}
+```
+
+> 测试一下
+
+创建一个Bean对象，存在三个属性
+
+```java
+public class RolyValueBean {
+    @RolyValue(value = "RolyValue给的值value1")
+    String value1;
+    @RolyValue(value = "RolyValue给的值value2")
+    String value2;
+    
+    String value3;
+   //toString
+}
+```
+
+单元测试，循环给字段赋值：
+
+如果字段不是public的则需要设置AccessAble
+
+```java
+@Test
+public void testRolyValue() throws IllegalAccessException {
+    final RolyValueBean rolyValueBean = new RolyValueBean();
+    System.out.println("原对象: ==>" + rolyValueBean);
+    final Field[] declaredFields = rolyValueBean.getClass().getDeclaredFields();
+    for (Field declaredField : declaredFields) {
+        if (!declaredField.isAccessible()) {
+            declaredField.setAccessible(true);
+        }
+        final RolyValue rolyValue = declaredField.getAnnotation(RolyValue.class);
+        if (null != rolyValue) {
+            declaredField.set(rolyValueBean, rolyValue.value());
+        }
+    }
+    System.out.println("处理后: ==>" + rolyValueBean);
+}
+```
+
+![image-20220831163503151](java成神之路(基础).assets/image-20220831163503151.png)
+
+###### RolyComponent
+
+> 自定义组件注解，模拟@Component。
+
+```java
+@Target({ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RolyComponent {
+
+}
+```
 
 
 
+###### RolyBean
+
+> 模拟@Bean
+
+```java
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RolyBean {
+	//bean名称
+    String value() default "";
+}
+```
 
 
 
+###### RolyValid
 
+> 模拟@Valid 。此注解作用于方法字段上，判断方法类型。
+
+```java
+@Target({ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RolyValid {
+    Class<? extends Object> value() default Object.class;
+}
+```
+
+测试:
+
+定义这么一个方法：使用@RolyValid限定此方法参数类型为String。这里故意给一个StringBuilder
+
+```java
+public void method(@RolyValid(value = String.class) StringBuilder sb){
+}
+```
+
+```java
+public void testRolyValid() throws IllegalAccessException {
+    final Method[] declaredMethods = RolyValueBean.class.getDeclaredMethods();
+    for (Method declaredMethod : declaredMethods) {
+        if (declaredMethod.isAccessible()) {
+            declaredMethod.setAccessible(true);
+        }
+        final Parameter[] parameters = declaredMethod.getParameters();
+        for (Parameter parameter : parameters) {
+            final RolyValid declaredAnnotation = parameter.getDeclaredAnnotation(RolyValid.class);
+            if (null != declaredAnnotation) {
+                if (!parameter.getType().equals(declaredAnnotation.value())) {
+                    throw new RuntimeException(declaredMethod.getName() +
+                            "方法参数不合法:" +
+                            "require:" + declaredAnnotation.value() +
+                            "given:" + parameter.getType());
+                }
+            }
+        }
+    }
+}
+```
+
+![image-20220831170816999](java成神之路(基础).assets/image-20220831170816999.png)
+
+
+
+##### 实现
 
 
 
