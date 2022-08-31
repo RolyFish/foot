@@ -6156,6 +6156,7 @@ public class ClassCustomizeSerializable implements Serializable {
 - 注解语法
 - 元注解
 - java内置注解
+- 注解的继承性
 - 简单使用
 
 #### 注解语法
@@ -6185,7 +6186,7 @@ public interface MyDefinitionAnnotation extends Annotation{
 
 #### 元注解
 
-> 可以定义其他注解的注解叫做元注解。
+> 元注解起到对其他注解进行说明的作用，可以定义其他注解
 
 元注解有四个：
 
@@ -6332,7 +6333,7 @@ public @interface Deprecated {
 
 > 注释于注解上，表示该注解可重复声明多次。
 
-![image-20220830204849836](java成神之路(基础).assets/image-20220830204849836.png)
+![image-20220830204849836](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312252848.png)
 
 使用:
 
@@ -6357,6 +6358,41 @@ public  @interface Person{
 public class MeClass {
 }
 ```
+
+
+
+#### 注解的继承
+
+> 注解的继承是指什么意思？
+
+首先看一个例子：
+
+结论表明如果一个注解被@Inherited 注释的话，那么子类可以继承得到父类的注解
+
+```java
+@Target(value = ElementType.TYPE)
+@Retention(value = RetentionPolicy.RUNTIME)
+@Inherited // 声明注解具有继承性
+@interface AnnotationInherited {
+    String value() default "";
+}
+```
+
+```java
+@AnnotationInherited
+public class SuperClass {
+}
+public class SonClass extends SuperClass{
+}
+```
+
+```java
+public static void main(String[] args) {
+    System.out.println(Arrays.asList(SonClass.class.getAnnotations()));
+}
+```
+
+![image-20220831224956656](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312250324.png)
 
 
 
@@ -6390,7 +6426,7 @@ public static void main(String[] args) {
 }
 ```
 
-![image-20220830230013493](java成神之路(基础).assets/image-20220830230013493.png)
+![image-20220830230013493](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312252822.png)
 
 ##### 注解可定义属性并赋默认值
 
@@ -6432,7 +6468,7 @@ public class TestClass {
 }
 ```
 
-![image-20220831000337366](java成神之路(基础).assets/image-20220831000337366.png)
+![image-20220831000337366](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312252339.png)
 
 
 
@@ -6516,7 +6552,7 @@ public static void main(String[] args) throws FileNotFoundException {
 }
 ```
 
-![image-20220831161805033](java成神之路(基础).assets/image-20220831161805033.png)
+![image-20220831161805033](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312252895.png)
 
 
 
@@ -6583,7 +6619,7 @@ public void testRolyValue() throws IllegalAccessException {
 }
 ```
 
-![image-20220831163503151](java成神之路(基础).assets/image-20220831163503151.png)
+![image-20220831163503151](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312253378.png)
 
 ###### RolyComponent
 
@@ -6658,17 +6694,167 @@ public void testRolyValid() throws IllegalAccessException {
 }
 ```
 
-![image-20220831170816999](java成神之路(基础).assets/image-20220831170816999.png)
+![image-20220831170816999](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312253494.png)
 
 
 
 ##### 实现
 
+> 目录结构：
+
+![image-20220831231917742](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312319401.png)
 
 
 
+> 定义两个个待初始化类
 
+```java
+@RolyComponent
+public class UserDao {
+    @RolyValue("@RolyValue给的值")
+    String name;
+    //没有设置属性
+    String other;
+}
+@RolyService
+public class UserService {
+    @RolyValue("@RolyValue给的值")
+    String name;
+    String other;
+}
+```
 
+> bean工厂或者叫做上下文，负责初始化bean并加入容器。
+
+下面省略的方法即是获取启动类所在目录的class全限定名称，在上文都有提到
+
+```java
+public class BeanFactory {
+    //扫描启动类所在包下所有类，将类的全限定名称保存在此list中
+    public static List<String> classPaths = new ArrayList<>();
+    //bean工厂
+    private static Map<String, Object> beanFactory = new HashMap<>();
+    static {
+        try {
+            init();
+            initBean();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void init() throws FileNotFoundException {
+       。。。
+    }
+
+    /**
+     * 扫描某路径下的所有文件
+     */
+    public static void dir(List<File> dirList) {
+   。。。
+    }
+
+    public static void files(List<File> fileList) {
+     。。。
+    }
+
+    public static void initBean() {
+        System.out.println("+++++++++++++创建类放入bean容器中++++++++++++");
+        for (String classPath : classPaths) {
+            createBeanByName(classPath);
+        }
+        System.out.println("++++++++++++++++++++++++++++++++++++++++++");
+    }
+
+    private static void createBeanByName(String classPath) {
+        Class<?> beanClass;
+        try {
+            //默认触发初始化
+            beanClass = Class.forName(classPath);
+            //判断是否需要创建
+            if (!shouldInit(beanClass)) {
+                return;
+            }
+            final Object bean = beanClass.newInstance();
+            //注入属性
+            initProperty(bean);
+            beanFactory.put(beanClass.getSimpleName(), bean);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void initProperty(Object bean) throws IllegalAccessException {
+        //获取所有的Field
+        final List<Field> fields = Arrays.asList(bean.getClass().getDeclaredFields());
+
+        for (Field field : fields) {
+            //设置允许访问
+            if (!field.isAccessible()) {
+                field.setAccessible(true);
+            }
+            //获取RolyValue注解的属性
+            final RolyValue declaredAnnotation = field.getDeclaredAnnotation(RolyValue.class);
+            if (null != declaredAnnotation) {
+                field.set(bean, declaredAnnotation.value());
+            }
+
+        }
+    }
+
+    /**
+     * 判断beanClass是否需要 自动注入 也就是是否包含@RolyComponent注解
+     *
+     * @param beanClass
+     * @return
+     */
+    public static boolean shouldInit(Class beanClass) {
+
+        final List<Annotation> annotations = Arrays.asList(beanClass.getDeclaredAnnotations());
+        if (annotations.isEmpty()) {
+            return false;
+        } else {
+            final List<? extends Class<? extends Annotation>> annotationTypes = annotations.stream().map(Annotation::annotationType).collect(Collectors.toList());
+            if (annotationTypes.contains(RolyComponent.class)) {
+                return true;
+            }
+            for (Annotation annotation : annotations) {
+                if (annotation.annotationType() == RolyComponent.class) {
+                    return true;
+                }
+                return shouldInit(annotation.annotationType());
+            }
+        }
+        return false;
+    }
+    public static Map<String, Object> objList() {
+        return beanFactory;
+    }
+    public static Object getObjByName(String name) {
+
+        return beanFactory.get(name);
+    }
+}
+```
+
+> 启动类，负责触发类的初始化
+
+这里容器里的bean都是单例的，也可以自定义Scope注解来设置bean声明周期
+
+```java
+public class DemoApplication {
+    /**
+     * 启动类
+     */
+    public static void main(String[] args) throws FileNotFoundException, ClassNotFoundException {
+        Class.forName("com.roily.booknode.javatogod._07Annotation.a03.demo.BeanFactory");
+        System.out.println(BeanFactory.objList());
+        System.out.println("容器中的bean实例都是单例的:" + BeanFactory.getObjByName("UserDao") == BeanFactory.getObjByName("UserDao"));
+    }
+}
+```
+
+![image-20220831231756424](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312317518.png)
 
 
 
