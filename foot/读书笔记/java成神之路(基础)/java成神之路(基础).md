@@ -6858,3 +6858,261 @@ public class DemoApplication {
 
 
 
+### 时间处理
+
+#### 时区
+
+> 人们一般通过日出日落来定义时间，地球是圆的各个地方日出日落时间不等，所以定义时区概念，一个区域使用同一个时区。
+>
+> 地球被划分为24个时区，相邻时区之间时间相差一小时。（向西减一小时、向东加一小时）所以我们比漂亮国等西方国家时间要快。
+>
+> 但是呢，我们国家东西跨度很大，差不多横跨5个时区，但是为了方便管理，我们国家统一使用东八区。
+
+#### 时间戳
+
+> 时间戳是指格林威治时间1970-01-01 00：00：00（北京时间1970-01-01 08：00：00）起至现在的总毫秒数
+
+```java
+final Date time = Calendar.getInstance().getTime();
+final long timeStamp = time.getTime();
+System.out.println("当前时间：=>" + time);
+System.out.println("当前时间戳：=>" + timeStamp);
+final Date date = new Date(timeStamp + 1000);
+System.out.println("使用时间戳创建日期：=>" + date);
+```
+
+![image-20220901111621031](java成神之路(基础).assets/image-20220901111621031.png)
+
+#### 格林威治时间
+
+> 英文简称GMT。
+>
+> 用GMT + 8表示中国时间，中国位于东八区，时间比格林威治时间快8小时。
+>
+> GMT 已经被 UTC取代，可以理解为一个东西。
+
+CST（China Standard Time）中国标准时间。
+
+CST  =  GMT/UTC + 8
+
+
+
+#### 时间格式化
+
+> 可以实现Date ---> String，String  ---> Date。
+>
+> 可以将日期对象
+
+##### SimpleDateFormat
+
+> 使用SimpleDateFormat的format方法，将一个Date类型转化成String类型，并且可以指定输出格式。
+
+```java
+final Date time = Calendar.getInstance().getTime();
+final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+final String format = simpleDateFormat.format(time);
+System.out.println(format);
+```
+
+![image-20220901124353128](java成神之路(基础).assets/image-20220901124353128.png)
+
+##### 自定义输出格式
+
+> 可以使用SimpleDateFormat自定义日期格式化输出格式。首先了解一下DateFormat给的模式字母。
+
+A~Z 和a~z。其他未使用到的字母作为保留。
+
+![image-20220901130030922](java成神之路(基础).assets/image-20220901130030922.png)
+
+> 常用的一个格式就是 年年年年-月月-日日  时时：分分：秒秒 对应模式字母表示就是：`yyyy-MM-dd hh:mm:ss`。
+>
+> 大小写不要混淆，大小写字母也对应着不同表示。
+>
+> 模式字母的个数代表输出字符串的长度。
+
+例子：
+
+```java
+final Date time = Calendar.getInstance().getTime();
+System.out.println("date的toString：===>" + time);
+
+System.out.println("模式字符串:==>>  yyyy-MM-dd HH:mm:ss");
+SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+System.out.println(simpleDateFormat.format(time));
+
+//从后往前截取  2022 ==>> 22
+System.out.println("模式字符串:==>>  yy-M-dd HH:mm:ss");
+simpleDateFormat = new SimpleDateFormat("yy-M-dd HH:mm:ss");
+System.out.println(simpleDateFormat.format(time));
+
+//w代表周  大写代表月中的周 小写代表年中的周
+System.out.println("模式字符串:==>>  yyyy-MM-dd WW周/月 ww周/年 HH:mm:ss");
+simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd WW周/月 ww周/年 HH:mm:ss");
+System.out.println(simpleDateFormat.format(time));
+
+//d代表天  大写代表年中的天 小写代表月中的天
+System.out.println("模式字符串:==>>   yyyy-MM-dd DD天/年 dd天/月 HH:mm:ss");
+simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd DD天/年 dd天/月 HH:mm:ss");
+System.out.println(simpleDateFormat.format(time));
+
+//F代表月份中的星期（不好用） 一般用EE代表周几
+System.out.println("模式字符串:==>>  yyyy-MM-dd FF/月 EE/周 HH:mm:ss");
+simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd FF/月 EE/周 HH:mm:ss");
+System.out.println(simpleDateFormat.format(time));
+
+//a上下午标志 am pm
+System.out.println("模式字符串:==>>  yyyy-MM-dd aa HH:mm:ss");
+simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd aa HH:mm:ss");
+System.out.println(simpleDateFormat.format(time));
+
+//小时数 HH 24小时制 hh 12小时制
+System.out.println("模式字符串:==>>  yyyy-MM-dd HH:mm:ss aa hh:mm:ss");
+simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss aa hh:mm:ss");
+System.out.println(simpleDateFormat.format(time));
+
+//ss秒数  SS毫秒数
+System.out.println("模式字符串:==>>  yyyy-MM-dd HH:mm:ss aa hh:mm:ss");
+simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SS毫秒");
+System.out.println(simpleDateFormat.format(time));
+
+//时区信息
+System.out.println("模式字符串:==>>  yyyy-MM-dd zzzz ZZZZ");
+simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd zzzz ZZZZ");
+System.out.println(simpleDateFormat.format(time));
+```
+
+![image-20220901132440802](java成神之路(基础).assets/image-20220901132440802.png)
+
+##### 输出其他时区时间
+
+> 指定时区输出时间。。
+
+我们比纽约快了12小时
+
+```java
+SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss 时区:zzzz");
+System.out.println("系统时区:===>>" + simpleDateFormat.format(Calendar.getInstance().getTime()));
+simpleDateFormat.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+System.out.println("America/New_York:===>>" + simpleDateFormat.format(Calendar.getInstance().getTime()));
+```
+
+![image-20220901133221969](java成神之路(基础).assets/image-20220901133221969.png)
+
+
+
+#####  DateFormart非线程安全
+
+> DateFormat是非线程安全类，如果将DateFormait作为全局共享的格式化时间类的话，需要加锁。
+
+测试：
+
+定义一个全局的SimpleDateFormat，作为全局共享的格式化时间工具类.
+
+定义两个线程安全额的HashSet用于存放Calender和格式化后的日期字符串
+
+定义1000个线程去格式化时间
+
+> 可以发现格式化后的日期字符串没有达到预期数量，也就是多线程环境下，当前线程可能获取其他线程的数据。
+
+```java
+public class TestDFIsNotSyn {
+    /**
+     * 定义一个全局的SimpleDateFormat
+     */
+    private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    final static Set<Calendar> calendars = Collections.synchronizedSet(new HashSet<>());
+    final static Set<String> dates = Collections.synchronizedSet(new HashSet<>());
+    public static void main(String[] args) throws InterruptedException {
+        for (int i = 0; i < 1000; i++) {
+            int finalI = i;
+            new Thread(() -> {
+                Calendar calendar = Calendar.getInstance();
+                calendar.add(Calendar.DATE, finalI);
+                calendars.add(calendar);
+                final String format = simpleDateFormat.format(calendar.getTime());
+                dates.add(format);
+            }).start();
+        }
+        Thread.sleep(5000);
+        System.out.println(calendars.size());
+        System.out.println(dates.size());
+    }
+}
+```
+
+![image-20220901183737158](java成神之路(基础).assets/image-20220901183737158.png)
+
+
+
+#####  java中时间处理
+
+> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
