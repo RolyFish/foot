@@ -7003,6 +7003,16 @@ System.out.println("America/New_York:===>>" + simpleDateFormat.format(Calendar.g
 #####  DateFormart非线程安全
 
 > DateFormat是非线程安全类，如果将DateFormait作为全局共享的格式化时间类的话，需要加锁。
+>
+> JDK文档明确指出，SimpleDateFormat不应该在多线程环境下使用。
+
+![image-20220902170545946](java成神之路(基础).assets/image-20220902170545946.png)
+
+SimpleDateFormat非线程安全，必须为每一个线程创建独立的实例。如果必须同步使用一个日期格式，必须在外部加锁。
+
+![image-20220902171057527](java成神之路(基础).assets/image-20220902171057527.png)
+
+具体原因就是Format个方法，每一个SimpleDateFormat内部维护一个Calandar实例，如果当前线程设置了calandar，没来得及返回，另一个线程就获得了该SimpleDateFormat实例，如此就会造成线程安全问题。
 
 测试：
 
@@ -7042,19 +7052,59 @@ public class TestDFIsNotSyn {
 
 ![image-20220901183737158](java成神之路(基础).assets/image-20220901183737158.png)
 
+#### java中时间处理
+
+> java旧的关于时间处理的类Date涉及存在较大缺陷，因此后续版本中添加了Calendar和TimeZone类来完善对于时间的处理。
+
+##### 旧
+
+> 旧版本的时间处理类`java.util.Date`存在较大缺陷
+
+- 结构很乱，在`java.util`和`java.sql`包下都存在`Date`类，名称相同，可读性不好。并且对于日期进行格式化的类在`java.text`包下。
+- 不支持时区设置，`Java.util.Date`不提供国际化处理
 
 
-#####  java中时间处理
 
-> 
+##### 新
 
+> java8中对时间处理进行了完善。集中在`java.time`包下
 
+- Instant：时间戳
+- Duration：时间差
 
+```java
+final Duration durationDay = Duration.ofDays(1);
+System.out.println("间隔一天，多少秒：" + durationDay.get(durationDay.getUnits().get(0)));
+System.out.println(24 * 60 * 60);
 
+final Duration durationMin = Duration.ofMinutes(5);
+System.out.println("间隔5分钟，多少秒：" + durationMin.get(durationMin.getUnits().get(0)));
+System.out.println(5 * 60);
 
+final Duration plus = durationMin.plus(1, durationDay.getUnits().get(0));
+System.out.println("加一秒，多少秒：" + plus.get(plus.getUnits().get(0)));
 
+final Duration minus = durationDay.minus(Duration.ofMinutes(10).getSeconds(), durationDay.getUnits().get(0));
+System.out.println("减10分钟" + minus.getSeconds());
+```
 
+- LocalDate：只包含日期 年月日
 
+```java
+System.out.println("当下日期:=>"+LocalDate.now());
+System.out.println("自定义日期:=>"+LocalDate.of(1999, Month.FEBRUARY,1));
+System.out.println("withXXX修改日期:=>"+LocalDate.of(1999, Month.FEBRUARY,1).withMonth(12));
+```
+
+- LocalTime：当下时间   时分秒 精确到毫秒
+
+```java
+System.out.println("当下时间:=>"+ LocalTime.now());
+System.out.println("自定义时间:=>"+LocalTime.of(12, 0,1,1));
+System.out.println("withXXX修改时间:=>"+LocalTime.of(12, 0,1,1).withHour(13));
+```
+
+- LocalDateTime：localdate + localTime    年月日 时分秒
 
 
 
