@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0830">
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_28,_14_24_[Changes]/shelved.patch" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" afterDir="false" />
     </list>
@@ -31,7 +32,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="Errors" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -58,7 +59,9 @@
       <workItem from="1660832696278" duration="3859000" />
       <workItem from="1661667836964" duration="1497000" />
       <workItem from="1661787423056" duration="1709000" />
-      <workItem from="1661953837429" duration="1615000" />
+      <workItem from="1661953837429" duration="1655000" />
+      <workItem from="1662190268090" duration="1208000" />
+      <workItem from="1662308623396" duration="31000" />
     </task>
     <task id="LOCAL-00001" summary="0802work">
       <created>1659435136175</created>
@@ -123,7 +126,14 @@
       <option name="project" value="LOCAL" />
       <updated>1661797521570</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="0830">
+      <created>1661960203620</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1661960203620</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

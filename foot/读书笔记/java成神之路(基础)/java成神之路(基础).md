@@ -6881,7 +6881,7 @@ final Date date = new Date(timeStamp + 1000);
 System.out.println("使用时间戳创建日期：=>" + date);
 ```
 
-![image-20220901111621031](java成神之路(基础).assets/image-20220901111621031.png)
+![image-20220901111621031](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209042254952.png)
 
 #### 格林威治时间
 
@@ -6914,7 +6914,7 @@ final String format = simpleDateFormat.format(time);
 System.out.println(format);
 ```
 
-![image-20220901124353128](java成神之路(基础).assets/image-20220901124353128.png)
+![image-20220901124353128](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209042253108.png)
 
 ##### 自定义输出格式
 
@@ -6922,7 +6922,7 @@ System.out.println(format);
 
 A~Z 和a~z。其他未使用到的字母作为保留。
 
-![image-20220901130030922](java成神之路(基础).assets/image-20220901130030922.png)
+![image-20220901130030922](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209042253534.png)
 
 > 常用的一个格式就是 年年年年-月月-日日  时时：分分：秒秒 对应模式字母表示就是：`yyyy-MM-dd hh:mm:ss`。
 >
@@ -6981,7 +6981,7 @@ simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd zzzz ZZZZ");
 System.out.println(simpleDateFormat.format(time));
 ```
 
-![image-20220901132440802](java成神之路(基础).assets/image-20220901132440802.png)
+![image-20220901132440802](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209042253376.png)
 
 ##### 输出其他时区时间
 
@@ -6996,7 +6996,7 @@ simpleDateFormat.setTimeZone(TimeZone.getTimeZone("America/New_York"));
 System.out.println("America/New_York:===>>" + simpleDateFormat.format(Calendar.getInstance().getTime()));
 ```
 
-![image-20220901133221969](java成神之路(基础).assets/image-20220901133221969.png)
+![image-20220901133221969](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209042253676.png)
 
 
 
@@ -7010,7 +7010,7 @@ System.out.println("America/New_York:===>>" + simpleDateFormat.format(Calendar.g
 
 SimpleDateFormat非线程安全，必须为每一个线程创建独立的实例。如果必须同步使用一个日期格式，必须在外部加锁。
 
-![image-20220902171057527](java成神之路(基础).assets/image-20220902171057527.png)
+![image-20220902171057527](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209042253473.png)
 
 具体原因就是Format个方法，每一个SimpleDateFormat内部维护一个Calandar实例，如果当前线程设置了calandar，没来得及返回，另一个线程就获得了该SimpleDateFormat实例，如此就会造成线程安全问题。
 
@@ -7050,7 +7050,7 @@ public class TestDFIsNotSyn {
 }
 ```
 
-![image-20220901183737158](java成神之路(基础).assets/image-20220901183737158.png)
+![image-20220901183737158](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209042253994.png)
 
 #### java中时间处理
 
@@ -7070,7 +7070,12 @@ public class TestDFIsNotSyn {
 > java8中对时间处理进行了完善。集中在`java.time`包下
 
 - Instant：时间戳
-- Duration：时间差
+- Duration：时间段
+- LocalDate：日期
+- LocalTime：时间
+- LocalDateTime：时间  日期
+- Period：日期段
+- 
 
 ```java
 final Duration durationDay = Duration.ofDays(1);
@@ -7106,19 +7111,59 @@ System.out.println("withXXX修改时间:=>"+LocalTime.of(12, 0,1,1).withHour(13)
 
 - LocalDateTime：localdate + localTime    年月日 时分秒
 
+```java
+System.out.println("当下时间:=>"+ LocalDateTime.now().toString().replaceAll("T"," "));
+System.out.println("自定义时间:=>"+LocalDateTime.of(LocalDate.now(),LocalTime.now()));
+System.out.println("withXXX修改时间:=>"+LocalDateTime.of(LocalDate.now(),LocalTime.now()).withDayOfMonth(1));
+```
+
+- Period： 日期段
+
+```java
+final Period period = Period.of(1, 05, 20);
+System.out.println("创建时期:=>" + period);
+
+final Period between = Period.between(LocalDate.of(1999, 5, 20), LocalDate.of(2022, 9, 2));
+System.out.println("间隔日期,用于计算年龄:=>" + between);
+
+final Period period1 = period.withDays(10);
+System.out.println("withday修改day: =>" + period1);
+
+final Period period2 = period.plusDays(1);
+System.out.println("plus加一天、minu减一天: =>" + period2);
+```
+
+- ZoneOffset：时区偏移量
+
+```java
+System.out.println("默认时区偏移量：+》" + ZoneOffset.systemDefault());
+```
+
+- ZonedDateTime:带时区的时间
+
+```java
+System.out.println("带时区的时间：=》" + ZonedDateTime.now());
+```
+
+- Clock
+
+```java
+System.out.println("默认时钟:+>" + Clock.systemDefaultZone());
+final Clock America = Clock.system(ZoneId.of("America/Los_Angeles"));
+System.out.println("美国时钟:+>" + America);
+final LocalDateTime now = LocalDateTime.now(America);
+System.out.println("美国时间:+>" + now);
+```
 
 
 
+### 编码
 
+> 编码规则是字节到字符、字符到字节的规则。如果规则不统一则会出现乱码的现在想。
 
+#### ASCLL
 
-
-
-
-
-
-
-
+> 
 
 
 
