@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0830">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_8_28,_14_24_[Changes]/shelved.patch" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,6 +60,8 @@
       <workItem from="1661953837429" duration="1655000" />
       <workItem from="1662190268090" duration="1208000" />
       <workItem from="1662308623396" duration="31000" />
+      <workItem from="1662311748618" duration="18000" />
+      <workItem from="1662390195820" duration="637000" />
     </task>
     <task id="LOCAL-00001" summary="0802work">
       <created>1659435136175</created>
@@ -133,7 +133,14 @@
       <option name="project" value="LOCAL" />
       <updated>1661960203620</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="0830">
+      <created>1662311762550</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1662311762550</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
