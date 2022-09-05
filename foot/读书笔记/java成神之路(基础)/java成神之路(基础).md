@@ -7163,29 +7163,683 @@ System.out.println("美国时间:+>" + now);
 
 #### ASCLL
 
-> 
+> ASCII（ American Standard Code for InformationInterchange， 美国信息交换标准代码） 是基于拉丁字母的⼀套电脑编码系统， 主要⽤于显⽰现代英语和其他西欧语⾔。
+
+标准ASCII 码也叫基础ASCII码， 使⽤7 位⼆进制数（ 剩下的1位⼆进制为0） 来表⽰所有的⼤写和⼩写字母， 数字0 到9、 标点符号， 以及在美式英语中使⽤的特殊控制字符。
+
+其中：
+
+0～31及127(共33个)是控制字符或通信专⽤字符（ 其余为可显⽰字符） ， 如控制符： LF（ 换⾏） 、 CR（ 回车） 、 FF（ 换页） 、 DEL（ 删除） 、 BS（ 退格)、 BEL（ 响铃） 等； 通信专⽤字符： SOH（ ⽂头） 、 EOT（ ⽂尾） 、 ACK（ 确认） 等；
+
+ASCII值为8、 9、 10 和13 分别转换为退格、 制表、 换⾏和回车字符。 它们并没有特定的图形显⽰， 但会依不同的应⽤程序，⽽对⽂本显⽰有不同的影响
+
+32～126(共95个)是字符(32是空格） ， 其中48～57为0到9⼗个阿拉伯数字。
+
+65～90为26个⼤写英⽂字母， 97～122号为26个⼩写英⽂字母， 其余为⼀些标点符号、 运算符号等。
 
 
 
+#### Unicode
+
+> Unicode又称万国码，是计算机领域的一项标准，囊括了世界上大部分文字系统。
+
+ASCII码，只有256个字符，美国人倒是没啥问题了，他们用到的字符几乎都包括了，但是世界上不只有美国程序员啊，所以需要一种更加全面的字符集。
+
+Unicode（中文：万国码、国际码、统一码、单一码）是计算机科学领域里的一项业界标准。它对世界上大部分的文字系统进行了整理、编码，使得计算机可以用更为简单的方式来呈现和处理文字。
+
+Unicode伴随着通用字符集的标准而发展，同时也以书本的形式对外发表。Unicode至今仍在不断增修，每个新版本都加入更多新的字符。目前最新的版本为2018年6月5日公布的11.0.0，已经收录超过13万个字符（第十万个字符在2005年获采纳）。Unicode涵盖的数据除了视觉上的字形、编码方法、标准的字符编码外，还包含了字符特性，如大小写字母。
+
+Unicode发展由非营利机构统一码联盟负责，该机构致力于让Unicode方案取代既有的字符编码方案。因为既有的方案往往空间非常有限，亦不适用于多语环境。
+
+Unicode备受认可，并广泛地应用于计算机软件的国际化与本地化过程。有很多新科技，如可扩展置标语言（Extensible Markup Language，简称：XML）、Java编程语言以及现代的操作系统，都采用Unicode编码。
+
+Unicode可以表示中文。
 
 
 
+#### 有了Unicode为啥还需要UTF-8
+
+> Unicode 是字符集。UTF-8 是编码规则。
+>
+> 由于Unicode囊括了大部分文字系统，所以对于单个文字的表示可能占有3到4个字节，而对于英文字符和一些简单的文字系统，就必须高位补0，极大浪费内存。
+>
+> UTF-8使用可变长度字节来储存 Unicode字符，例如ASCII字母继续使用1字节储存，重音文字、希腊字母或西里尔字母等使用2字节来储存，而常用的汉字就要使用3字节。辅助平面字符则使用4字节
+
+广义的 Unicode 是一个标准，定义了一个字符集以及一系列的编码规则，即 Unicode 字符集和 UTF-8、UTF-16、UTF-32 等等编码规则。
+
+Unicode 是字符集。UTF-8 是编码规则。
+
+unicode虽然统一了全世界字符的二进制编码，但没有规定如何存储。
+
+如果Unicode统一规定，每个符号就要用三个或四个字节表示，因为字符太多，只能用这么多字节才能表示完全。
+
+一旦这么规定，那么每个英文字母前都必然有二到三个字节是0，因为所有英文字母在ASCII中都有，都可以用一个字节表示，剩余字节位置就要补充0。
+
+如果这样，文本文件的大小会因此大出二三倍，这对于存储来说是极大的浪费。这样导致一个后果：出现了Unicode的多种存储方式。
+
+UTF-8就是Unicode的一个使用方式，通过他的英文名Unicode Tranformation Format就可以知道。
+
+==UTF-8使用可变长度字节来储存 Unicode字符，例如ASCII字母继续使用1字节储存，重音文字、希腊字母或西里尔字母等使用2字节来储存，而常用的汉字就要使用3字节。辅助平面字符则使用4字节。==
+
+一般情况下，同一个地区只会出现一种文字类型，比如中文地区一般很少出现韩文，日文等。所以使用这种编码方式可以大大节省空间。比如纯英文网站就要比纯中文网站占用的存储小一些。
+
+#### UTF8、UTF16、UTF32区别
+
+Unicode 是容纳世界所有文字符号的国际标准编码，使用四个字节为每个字符编码。
+
+UTF 是英文 Unicode Transformation Format 的缩写，意为把 Unicode 字符转换为某种格式。UTF 系列编码方案（UTF-8、UTF-16、UTF-32）均是由 Unicode 编码方案衍变而来，以适应不同的数据存储或传递，它们都可以完全表示 Unicode 标准中的所有字符。目前，这些衍变方案中 UTF-8 被广泛使用，而 UTF-16 和 UTF-32 则很少被使用。
+
+UTF-8 使用一至四个字节为每个字符编码，其中大部分汉字采用三个字节编码，少量不常用汉字采用四个字节编码。因为 UTF-8 是可变长度的编码方式，相对于 Unicode 编码可以减少存储占用的空间，所以被广泛使用。
+
+UTF-16 使用二或四个字节为每个字符编码，其中大部分汉字采用两个字节编码，少量不常用汉字采用四个字节编码。UTF-16 编码有大尾序和小尾序之别，即 UTF-16BE 和 UTF-16LE，在编码前会放置一个 U+FEFF 或 U+FFFE（UTF-16BE 以 FEFF 代表，UTF-16LE 以 FFFE 代表），其中 U+FEFF 字符在 Unicode 中代表的意义是 ZERO WIDTH NO-BREAK SPACE，顾名思义，它是个没有宽度也没有断字的空白。
+
+UTF-32 使用四个字节为每个字符编码，使得 UTF-32 占用空间通常会是其它编码的二到四倍。UTF-32 与 UTF-16 一样有大尾序和小尾序之别，编码前会放置 U+0000FEFF 或 U+0000FFFE 以区分。
 
 
 
+#### 有了UTF8为什么还需要GBK？
+
+其实UTF8确实已经是国际通用的字符编码了，但是这种字符标准毕竟是外国定的，而国内也有类似的标准指定组织，也需要制定一套国内通用的标准，于是GBK就诞生了。
 
 
 
+#### GBK、GB2312、GB18030之间的区别
+
+三者都是支持中文字符的编码方式，最常用的是GBK。
+
+以下内容来自CSDN，介绍的比较详细。
+
+GB2312（1980年）：16位字符集，收录有6763个简体汉字，682个符号，共7445个字符； 优点：适用于简体中文环境，属于中国国家标准，通行于大陆，新加坡等地也使用此编码； 缺点：不兼容繁体中文，其汉字集合过少。
+
+GBK（1995年）：16位字符集，收录有21003个汉字，883个符号，共21886个字符； 优点：适用于简繁中文共存的环境，为简体Windows所使用（代码页cp936），向下完全兼容gb2312，向上支持 ISO-10646 国际标准 ；所有字符都可以一对一映射到unicode2.0上； 缺点：不属于官方标准，和big5之间需要转换；很多搜索引擎都不能很好地支持GBK汉字。
+
+GB18030（2000年）：32位字符集；收录了27484个汉字，同时收录了藏文、蒙文、维吾尔文等主要的少数民族文字。 优点：可以收录所有你能想到的文字和符号，属于中国最新的国家标准； 缺点：目前支持它的软件较少。
 
 
 
+#### URL编解码
+
+网络标准RFC 1738做了硬性规定 :只有字母和数字[0-9a-zA-Z]、一些特殊符号“$-_.+!*'(),”[不包括双引号]、以及某些保留字，才可以不经过编码直接用于URL;
+
+除此以外的字符是无法在URL中展示的，所以，遇到这种字符，如中文，就需要进行编码。
+
+所以，把带有特殊字符的URL转成可以显示的URL过程，称之为URL编码。
+
+反之，就是解码。
+
+URL编码可以使用不同的方式，如escape，URLEncode，encodeURIComponent。
 
 
 
+#### Big Endian和Little Endian
+
+字节序，也就是字节的顺序，指的是多字节的数据在内存中的存放顺序。
+
+在几乎所有的机器上，多字节对象都被存储为连续的字节序列。例如：如果C/C++中的一个int型变量 a 的起始地址是&a = 0x100，那么 a 的四个字节将被存储在存储器的0x100, 0x101, 0x102, 0x103位置。
+
+根据整数 a 在连续的 4 byte 内存中的存储顺序，字节序被分为大端序（Big Endian） 与 小端序（Little Endian）两类。
+
+Big Endian 是指低地址端 存放 高位字节。 Little Endian 是指低地址端 存放 低位字节。
+
+Java采用Big Endian来存储数据、C\C++采用Little Endian。在网络传输一般采用的网络字节序是BIG-ENDIAN。和Java是一致的。
+
+所以在用C/C++写通信程序时，在发送数据前务必把整型和短整型的数据进行从主机字节序到网络字节序的转换，而接收数据后对于整型和短整型数据则必须实现从网络字节序到主机字节序的转换。如果通信的一方是JAVA程序、一方是C/C++程序时，则需要在C/C++一侧使用以上几个方法进行字节序的转换，而JAVA一侧，则不需要做任何处理，因为JAVA字节序与网络字节序都是BIG-ENDIAN，只要C/C++一侧能正确进行转换即可（发送前从主机序到网络序，接收时反变换）。如果通信的双方都是JAVA，则根本不用考虑字节序的问题了。
 
 
 
+### 语法糖
 
+> 语法糖（Syntactic Sugar），也称糖衣语法，是指编程语言提供一种简易语法，这种语法不会改变程序逻辑，因此借助语法糖可编写出简洁的代码。
+>
+> 以下了解java语法糖。
+
+#### 解语法糖
+
+Java虚拟机并不支持语法糖。这些语法糖在编译阶段就会被还原成简单的基础语法结构，这个过程就是解语法糖。
+
+Java 中最常用的语法糖主要有泛型、变长参数、条件编译、自动拆装箱、内部类等。本文主要来分析下这些语法糖背后的原理。一步一步剥去糖衣，看看其本质。
+
+
+
+#### Switch支持String与枚举
+
+> switch可支持的数据类型有：char, byte, short, int, Character, Byte, Short, Integer, String, or an enum
+
+char只占用1个字节8位，可以和int平替，switch的时候也是先将char转为int再进行switch的：
+
+```java
+char c1 = 'a';
+switch (c1) {
+    case 'a':
+        break;
+}
+```
+
+反编译得到：
+
+```java
+char c1 = 'a';
+switch(c1){
+case 97: // 'a'
+    break;
+}
+```
+
+
+
+##### switch支持String
+
+> switch可以认为只支持int类型。
+>
+> switch对于String的支持，是首先获取String类型的hashCode，对hashCode进行switch，再通过equals进行安全校验
+
+```java
+String str = "abc";
+switch (str) {
+    case "123":
+        break;
+    case "abc":
+        break;
+    default:
+        break;
+}
+```
+
+反编译:
+
+```java
+String str = "abc";
+String s = str;
+byte byte0 = -1;
+switch(s.hashCode())
+{
+case 48690: 
+    if(s.equals("123"))
+        byte0 = 0;
+    break;
+case 96354: 
+    if(s.equals("abc"))
+        byte0 = 1;
+    break;
+}
+switch(byte0)
+{
+case 0: // '\0'
+case 1: // '\001'
+default:
+    return;
+}
+```
+
+
+
+##### switch支持enum
+
+> switch可以认为只支持int类型。
+>
+> switch对于enum的支持，首先enum只是继承自Enum类的特殊Java类，编译器会为每一个枚举项设置对应编号，在switch的时候会使用此编号进行switch
+
+```java
+enum Season{
+    SPRING,SUMMER;
+}
+```
+
+```java
+public void switchSupportEnum(Season season) {
+    switch (season) {
+        case SPRING:
+            break;
+        case SUMMER:
+            break;
+        default:
+            break;
+    }
+}
+```
+
+分别反编译枚举和switch方法：
+
+枚举：
+
+以下可获取信息：
+
+- 枚举类是继承自Enum的特殊java类，编译器会将其还原至jvm支持的编码规范
+- 枚举类中，每一个枚举项都是一个public static final的静态常量，且还有一个静态常量数组。这些属性都会在静态代码块钟完成初始化
+- 构造方法有两个字段：name和ordinal，分别表示枚举项名称和枚举项编号
+
+```java
+final class Season extends Enum
+{
+    public static Season[] values()
+    {
+        return (Season[])$VALUES.clone();
+    }
+    public static Season valueOf(String name)
+    {
+        return (Season)Enum.valueOf(com/roily/booknode/javatogod/_09sugar/Season, name);
+    }
+    private Season(String s, int i)
+    {
+        super(s, i);
+    }
+
+    public static final Season SPRING;
+    public static final Season SUMMER;
+    private static final Season $VALUES[];
+    static 
+    {
+        SPRING = new Season("SPRING", 0);
+        SUMMER = new Season("SUMMER", 1);
+        $VALUES = (new Season[] {
+            SPRING, SUMMER
+        });
+    }
+}
+```
+
+switch方法：
+
+编译器会自动生成一个静态内部类，静态内部类中会初始化一个int数组，此int数组会和枚举的ordinal编号一一对应，最后完成switch
+
+```java
+public void switchSupportEnum(Season season){
+    static class _cls1{
+        static final int $SwitchMap$com$roily$booknode$javatogod$_09sugar$Season[];
+        static {
+            $SwitchMap$com$roily$booknode$javatogod$_09sugar$Season = new int[Season.values().length];
+            $SwitchMap$com$roily$booknode$javatogod$_09sugar$Season[Season.SPRING.ordinal()] = 1;
+            $SwitchMap$com$roily$booknode$javatogod$_09sugar$Season[Season.SUMMER.ordinal()] = 2;
+        }
+    }
+    switch(_cls1..SwitchMap.com.roily.booknode.javatogod._09sugar.Season[season.ordinal()]){
+    case 1: // '\001'
+    case 2: // '\002'
+    default:
+        return;
+    }
+}
+```
+
+
+
+#### 范型
+
+> java范型使得一份字节码可表示多种类型，有可重用的作用。比如List<String>和List<Integer>都映射到唯一字节码List。不存在List<String>和List<Integer>类型，在加载进jvm时，回进行类型擦除，变为原始类型，在需要的时候进行类型强转。
+
+> 通常情况下，一个编译器处理泛型有两种方式：`Code specialization`和`Code sharing`。C++和C#是使用`Code specialization`的处理机制，而Java使用的是`Code sharing`的机制。
+
+- Code specialization 
+
+  为每一个范型创建单独字节码
+
+-   Code sharing
+
+  所有范型共享一份字节码
+
+> Code sharing方式为每个泛型类型创建唯一的字节码表示，并且将该泛型类型的实例都映射到这个唯一的字节码表示上。将多种泛型类形实例映射到唯一的字节码表示是通过类型擦除（`type erasue`）实现的。
+
+> 类型擦除的主要过程如下： 1.将所有的泛型参数用其最左边界（最顶级的父类型）类型替换。 2.移除所有的类型参数。
+
+```java
+public void method1(List<String> list){
+    final String s = list.get(0);
+    list.add("123");
+}
+/**
+ * extends适合get
+ * @param list
+ */
+public void method2(List<? extends String> list){
+    final String s = list.get(0);
+    list.add(null);
+}
+/**
+ * extends适合add
+ * @param list
+ */
+public void method3(List<? super String> list){
+    //得到obj没有意义
+    final Object o =  list.get(0);
+    //强转可能会造成，Cast异常
+    final Comparable s = (Comparable) list.get(0);
+    list.add("null");
+
+}
+```
+
+jad反编译：
+
+```java
+public void method1(List list)
+{
+    String s = (String)list.get(0);
+    list.add("123");
+}
+
+public void method2(List list)
+{
+    String s = (String)list.get(0);
+    list.add(null);
+}
+
+public void method3(List list)
+{
+    Object o = list.get(0);
+    Comparable s = (Comparable)list.get(0);
+    list.add("null");
+}
+```
+
+
+
+#### 自动装箱拆箱
+
+> java允许基本数据类型的包装类型直接指向基本数据类型，基本数类型直接指向基本数据类型包装类型。
+>
+> 此过程称为装箱、拆箱
+
+自动装箱的过程会调用 valueOf方法
+
+自动拆箱过程会调用xxxValue()方法
+
+```java
+//自动装箱
+Integer i = 10;
+//自动拆箱
+int i2 = i;
+//自动拆箱
+Integer i3 = 10;
+for (Integer integer = 0; integer < i3; integer++) {
+}
+```
+
+反编译：
+
+```java
+Integer i = Integer.valueOf(10);
+int i2 = i.intValue();
+Integer i3 = Integer.valueOf(10);
+for(Integer integer = Integer.valueOf(0); integer.intValue() < i3.intValue();)
+{
+    Integer integer1 = integer;
+    Integer integer2 = integer = Integer.valueOf(integer.intValue() + 1);
+    Integer _tmp = integer1;
+}
+```
+
+#### 可变长参数
+
+> 方法的参数可设置为可变长参数，允许添加个数不同的参数。但可变长参数必须设置才方法参数的最后一个，使用三个点定义。
+>
+> 当调用此方法时，会将可变长参数转化为数组，再调用此方法
+
+```java
+void method2(String str, Integer... integers) {
+
+}
+```
+
+```java
+transient void method2(String s, Integer ainteger[]){
+}
+```
+
+
+
+#### 内部类
+
+> 普通内部类和静态内部类，都属于语法糖。允许再一个类内部定义其他类，一但编译成功就会生成多份字节码。以下例子就会生成
+>
+> TestInnerClass.class   
+>
+> TestInnerClass$StaticInnerClass.class
+>
+> TestInnerClass$InnerClass.class
+>
+> 三份字节码
+
+```java
+public class TestInnerClass {
+    class InnerClass{
+    }
+    static class StaticInnerClass{
+    }
+}
+```
+
+
+
+#### 条件编译
+
+> 根据条件编译代码。属于编译器编译期间对代码的优化。
+
+```java
+//包装类型需要转换所以无论如何都会编译
+final Boolean flag1 = false;
+if (flag1) {
+    System.out.println("flag1");
+}else {
+    System.out.println("flag1   xxxx");
+}
+
+//基本数据类型，无需转化，编译期间就知道对应值，会舍弃其中一个分支
+final boolean flag2 = true;
+if (flag2) {
+    System.out.println("flag2");
+}else {
+    System.out.println("flag2   XXX");
+}
+
+//flag3为false  编译器会舍弃这个分之
+final boolean flag3 = false;
+if (flag3) {
+    System.out.println("flag3");
+}else {
+    System.out.println("flag3  xxx");
+}
+```
+
+反编译：
+
+可以发现对于编译期间就可得知的值，编译器会做出条件编译优化：
+
+```java
+Boolean flag1 = Boolean.valueOf(false);
+if(flag1.booleanValue())
+    System.out.println("flag1");
+else
+    System.out.println("flag1   xxxx");
+boolean flag2 = true;
+System.out.println("flag2");
+boolean flag3 = false;
+System.out.println("flag3  xxx");
+```
+
+#### Assert断言
+
+> 一般用于方法入参检查
+
+```java
+public void testAssert(int num, StringBuilder sb) {
+    assert num > 0 && null != sb;
+}
+```
+
+反编译：
+
+需要开启断言，如果不满足条件将抛出异常。
+
+```java
+public void testAssert(int num, StringBuilder sb)
+{
+    if(!$assertionsDisabled && (num <= 0 || null == sb))
+        throw new AssertionError();
+    else
+        return;
+}
+```
+
+#### 数值字面量
+
+> 无论是整数还是浮点数允许插入下划线方便阅读，编译时会去掉下划线
+
+```java
+int num1 = 100_0_0_000;
+//一般以千为单位
+int num2 = 10_000_000;
+float f = 10_000.0_100_100_001f;
+```
+
+反编译
+
+```java
+int num1 = 0x989680;
+int num2 = 0x989680;
+float f = 10000.01F;
+```
+
+
+
+#### 增强for循环
+
+> 增强for循环提供简单的遍历方式，底层使用迭代器，所以说禁止在增强for循环中对使用集合api元素进行增删操作。
+>
+> 只能使用迭代器提供的添加方法
+
+```java
+final ArrayList<String> strings = new ArrayList<>(Arrays.asList("1", "2", "3"));
+for (String string : strings) {
+    System.out.println(string);
+}
+
+System.out.println("---------------");
+//即便添加元素，当前迭代也是迭代不出来的。光标会后移
+final ListIterator<String> iterator = strings.listIterator();
+while (iterator.hasNext()){
+    final String next = iterator.next();
+    System.out.println(next);
+    if (next.equals("2")){
+        iterator.add("a");
+    }
+}
+```
+
+反编译增强for循环：
+
+```java
+ArrayList strings = new ArrayList(Arrays.asList(new String[] {
+    "1", "2", "3"
+}));
+String string;
+for(Iterator iterator2 = strings.iterator(); iterator2.hasNext(); System.out.println(string))
+    string = (String)iterator2.next();
+```
+
+
+
+#### try with resources
+
+> 在进行资源连接以及关闭操作时，需要手动在finally代码块中独立进行，即便使用apache工具类提供的关闭资源方法也非常麻烦。
+>
+> 因此java提供try  with  resources方式，可以自动为我们关闭资源，前提是资源的创建需要在try()括号内。
+
+普通资源关闭操作：
+
+繁琐，需要多重try  cache
+
+```java
+String filePath = "E://1.txt";
+FileReader fr = null;
+try {
+    fr = new FileReader(filePath);
+}catch (IOException e){
+}finally {
+    try {
+        IOUtils.close(fr);
+    } catch (IOException e) {
+    }
+}
+```
+
+使用try with resources:
+
+代码就简洁了很多
+
+```java
+String filePath = "E://1.txt";
+try(FileReader fr = new FileReader(filePath)) {
+}catch (IOException e){
+}
+```
+
+反编译查看：我们偷的懒，编译器都帮我们做了
+
+```java
+public void method1()
+{
+    String filePath = "E://1.txt";
+    try
+    {
+        FileReader fr = new FileReader(filePath);
+        Throwable throwable = null;
+        if(fr != null)
+            if(throwable != null)
+                try
+                {
+                    fr.close();
+                }
+                catch(Throwable throwable1)
+                {
+                    throwable.addSuppressed(throwable1);
+                }
+            else
+                fr.close();
+    }
+    catch(IOException ioexception) { }
+}
+```
+
+
+
+#### Lambda表达式
+
+> Lambda表达式，是java8特性，合理使用一下可以写出简洁高效的代码。
+>
+> 外部类 --> 内部类 --> 静态内部类  --> 匿名内部类 --> lambda表达式，一步步的简化接口实现的方式。
+>
+> 但是Lambda并不是匿名内部类的语法糖，lambda表达式的实现，是借助于Jvm提供的几个Api实现的。
+
+```java
+Comparator<String> c = (v1,v2)->{
+  return   v1.compareTo(v2);
+};
+```
+
+反编译：使用CRF，jad不可以反编译lambda表达式，太久不更新了：
+
+CRF的使用：
+
+- 下载CRF.jar包
+-  使用  java -jar CRF.jar  XXXX.class --option  
+
+CRF存在很多可选参数，可使用 ` java -jar .\cfr-0.152.jar --help`查看
+
+使用`java -jar .\cfr-0.152.jar .\TestLambda.class --decodelambdas false`命令反编译：
+
+可以发现会调用`LambdaMetafactory.metafactory`此方法，并且在第3、5个参数声明入参类型和出参数类型，在第四个参数指定方法实现。
+
+```java
+public class TestLambda {
+    public void method1() {
+        Comparator c = (Comparator)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;Ljava/lang/Object;)I, lambda$method1$0(java.lang.String java.lang.String
+        ), (Ljava/lang/String;Ljava/lang/String;)I)();
+    }
+    private static /* synthetic */ int lambda$method1$0(String v1, String v2) {
+        return v1.compareTo(v2);
+    }
+}
+```
 
 
 
