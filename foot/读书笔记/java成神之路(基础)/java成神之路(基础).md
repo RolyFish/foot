@@ -7849,7 +7849,9 @@ public class TestLambda {
 }
 ```
 
+![image-20220906004444580](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209060044591.png)
 
+当使用int、double定义BigDecimal时equals返回true，当使用String定义BigDecimal时可能返回false。
 
 ### Lambda表达式
 
@@ -7861,7 +7863,9 @@ public class TestLambda {
 >
 > 使用 Lambda 表达式可以使代码变的更加简洁紧凑。
 
+Lambda表达式结合Stream api对集合进行处理，简洁而又高效。
 
+Lambda表达式结合一些函数式接口，使用起来非常方便。
 
 #### 语法
 
@@ -7871,16 +7875,12 @@ public class TestLambda {
 (parameters) ->{ statements; }
 ```
 
-
-
 #### 特性
 
 - **可选类型声明：**不需要声明参数类型，编译器可以统一识别参数值。
 - **可选的参数圆括号：**一个参数无需定义圆括号，但多个参数需要定义圆括号。
 - **可选的大括号：**如果主体包含了一个语句，就不需要使用大括号。
 - **可选的返回关键字：**如果主体只有一个表达式返回值则编译器会自动返回值，大括号需要指定表达式返回了一个数值。
-
-
 
 #### 实例
 
@@ -7907,9 +7907,127 @@ x -> 2 * x
 
 
 
+### BigDecimal
+
+> BigDecimal用于解决浮点数精度问题。
+
+#### (0.1d + 0.2d) ！= 0.3d
+
+> 浮点数存在精度问题，只能表示大概数值，不能精确表示
+
+现象：
+
+```java
+double d1 = 0.1d;
+double d2 = 0.2d;
+System.out.println(d1 + d2);
+System.out.println((d1 + d2) == 0.3d);
+```
+
+![image-20220906002546839](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209060025441.png)
+
+#### 借助BigDecimal
+
+> 借助bigDecimal解决浮点数精度问题
+
+```java
+double d1 = 0.1d;
+double d2 = 0.2d;
+double d3 = 0.3d;
+final BigDecimal bigDecimal1 = BigDecimal.valueOf(d1);
+final BigDecimal bigDecimal2 = BigDecimal.valueOf(d2);
+
+final BigDecimal result = bigDecimal1.add(bigDecimal2);
+System.out.println(result);
+System.out.println(result.compareTo(BigDecimal.valueOf(d3)) == 0);
+```
+
+![image-20220906003717302](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209060037744.png)
+
+#### BigDecimal使用CompareTo判等
+
+> BigDecimal的判等，首先 `==`肯定不能用，equals方法会首先比较精度1.0和1.00的scale不等，直接返回false，应该使用CompareTo方式进行判等。
+
+```java
+final BigDecimal bigDecimal1 = new BigDecimal("1.0");
+final BigDecimal bigDecimal2 = new BigDecimal("1.00");
+
+System.out.println(bigDecimal1 == bigDecimal2);
+System.out.println(bigDecimal1.equals(bigDecimal2));
+System.out.println(bigDecimal1.compareTo(bigDecimal2) == 0);
+```
+
+因为使用String定义BigDecimal时，若精度不同，也就是多了几个0，字符数组的长度是不同的，那么BigDecimal的Scale即精度就会不同，而equals时回收先进行scale的对比。
+
+equals的javadoc也给出解释：
+
+当前BigDecimal和指定对象进行equals的时候，不同于compareTo，equals方法只有在两个BigDecimal的值和精度都相等的情况下两个对象才相等(因此2.0 不等于 2.00)。前提是使用String定义BigDecimal。
+
+```doc
+Compares this BigDecimal with the specified Object for equality. Unlike compareTo, this method considers two compareTo objects equal only if they are equal in value and scale (thus 2.0 is not equal to 2.00 when compared by this method)
+```
 
 
 
+#### BigDecimal原理
+
+>BigDecimal类似于科学计数法，其内部维护了一个无标度数值和一个标度。
+
+BigDecimal中标度使用Scale表示。
+
+当scale为0或整数时，表示该数小数点右边位数；当scale为负数时，即表示该数为无标度数值后加n个0。
+
+123.123 的无标度数为123123，标度为3。
+
+0.1 无标度数为1，标度为1。
+
+> 那么就可以表示二进制数不能表示的数
+
+
+
+> BigDecimal有如下几种构造方法，这些构造方法的Scale的表示是不同的。
+
+- int和long都是正整数，没有小数部分，他们的scale为0
+- double的scale由其具体表示值决定
+- string的scale由具体表示值决定
+
+```java
+BigDecimal(int)
+BigDecimal(double) 
+BigDecimal(long) 
+BigDecimal(String)
+```
+
+可以debug看一下如下代码：
+
+使用BigDecimal表示0.1d，并不精确，原因在浮点数的精度问题
+
+```java
+double d1 = 0.1d;
+final BigDecimal bigDecimal = new BigDecimal(d1);
+System.out.println(bigDecimal);
+```
+
+![image-20220906012031070](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209060123055.png)
+
+但是如果此浮点数是可准确表示的，那么Bigdecimal也没有问题。但是BigDecimal就是为了解决精度问题的，在不存在精度问题才可准确表示，意义何在？
+
+![image-20220906012306647](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209060123915.png)
+
+> 使用Bigdecimal(String)来创建Bigdecimal,可准确表示
+
+![image-20220906012608197](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209060126818.png)
+
+##### 小结
+
+> 创建Bigdecimal使用如下方式：
+
+valueof(val)会调用Double.toString(val)保证进度准确
+
+```java
+Bigdecimal(String str);
+Bigdecimal.valueof(double val);
+```
 
 
 
