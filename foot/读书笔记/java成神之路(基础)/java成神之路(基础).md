@@ -7901,9 +7901,180 @@ x -> 2 * x
 (String s) -> System.out.print(s)
 ```
 
+例子：
+
+```java
+interface Demo1 {
+    /**
+     * 没有参数，返回值为null
+     */
+    void method();
+}
+
+interface Demo2 {
+    /**
+     * 没有参数，返回值为String类型
+     */
+    String method();
+}
+
+interface Demo3 {
+
+    String method(int value);
+}
+
+interface Demo4 {
+
+    String method(int value1, int value2);
+}
+```
+
+```java
+Demo1 demo1 = () -> {
+};
+Demo2 demo2 = () -> {
+    return "123";
+};
+//只有一个参数，括号可以省略
+Demo3 demo3 = value -> {
+    return String.valueOf(value);
+};
+//有多个参数，括号不可以省略
+Demo4 demo4 = (value1, value2) -> {
+    return String.valueOf(value1 + value2);
+};
+```
 
 
 
+####  由繁至简
+
+> lambda表达式主要用于定义行内执行的方法类型接口。(lambda表达式用于实现，函数式接口、或接口中只有一个方法且实现逻辑较为简单)。
+>
+> lambda表达式免去了使用匿名内部类的方法实现，并且给予Java强大的函数式编程的能力。
+
+- ClassOuter，定义在同一个java文件中。 编译时会生成独立的class字节码文件
+- ClassInner，内部类，编译时会生成独立字节码信息，inner class，主类名称`$`内部类名称 如(`Parsing inner class .\TestLambda2$1.class`)
+- 静态内部类
+- 匿名内部类，没有名字，但是编译器会自动生成
+- lambda表达式，它不是匿名内部类的语法糖。借助LambdaMetafactory实现
+
+```java
+public class TestLambda2 {
+    /**
+     * 内部类
+     */
+    class ClassInner implements Demo {
+        @Override
+        public void method() {
+        }
+    }
+    /**
+     * 静态内部类
+     */
+    static class StaticClassInner implements Demo {
+        @Override
+        public void method() {
+        }
+    }
+    public static void main(String[] args) {
+        /**
+         * 匿名内部类
+         */
+        final Demo demo = new Demo() {
+            @Override
+            public void method() {
+            }
+        };
+
+        /**
+         * lambda表达式
+         */
+        Demo demo1 = () -> {
+        };
+    }
+}
+interface Demo {
+    /**
+     * 没有参数，返回值为null
+     */
+    void method();
+}
+
+/**
+ * 普通外部类
+ */
+class ClassOuter implements Demo {
+    @Override
+    public void method() {
+    }
+}
+```
+
+
+
+#### 变量作用域
+
+> `Variable used in lambda expression should be final or effectively final`。
+>
+> Lambda表达式中使用的变量，要么被final修饰，要么具有被final修饰的语义，也就是在lambda表达式中使用的变量都是不可变的。
+
+lambda中使用的变量特点和final一致：
+
+- 对于基本数据类型，只有值得概念，不可变
+- 引用类型，可使用内部修改方法来修改内部属性值，但不可修改引用
+
+![image-20220907103529023](java成神之路(基础).assets/image-20220907103529023.png)
+
+
+
+#### 方法声明
+
+> java中方法声明使用双冒号`::`。 可表示一个接口实现，作为方法的参数。
+
+- 使用双冒号声明方法，要求方法没有参数
+
+如：
+
+```java
+final Function<String, String> stringFunction = String::toString;
+final Function<String, Integer> stringFunction1 = String::length;
+```
+
+例子：
+
+```java
+//接口
+interface Lambda1<T> {
+    String method(T t);
+}
+class TestClass {
+    /**
+     * toString存在重载
+     * 使用方法声明的时候会寻找无参数的方法
+     */
+    public  String toStringX(int i){
+        return "i";
+    }
+    public String toStringX(){
+        return "i";
+    }
+    //有参数不可使用方法声明
+    public String method1(String str){
+        return "i";
+    }
+}
+```
+
+```java
+Lambda1<TestClass> lambda1a = (testClass) -> {
+    return testClass.method1("");
+};
+//toStringX存在重载，会自动选择无参数的方法
+Lambda1<TestClass> lambda1b = TestClass::toStringX;
+//有参数，不可方法声明
+// Lambda1<TestClass> lambda1c = TestClass::method1;
+```
 
 
 
