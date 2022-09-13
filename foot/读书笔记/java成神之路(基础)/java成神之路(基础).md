@@ -7901,9 +7901,180 @@ x -> 2 * x
 (String s) -> System.out.print(s)
 ```
 
+例子：
+
+```java
+interface Demo1 {
+    /**
+     * 没有参数，返回值为null
+     */
+    void method();
+}
+
+interface Demo2 {
+    /**
+     * 没有参数，返回值为String类型
+     */
+    String method();
+}
+
+interface Demo3 {
+
+    String method(int value);
+}
+
+interface Demo4 {
+
+    String method(int value1, int value2);
+}
+```
+
+```java
+Demo1 demo1 = () -> {
+};
+Demo2 demo2 = () -> {
+    return "123";
+};
+//只有一个参数，括号可以省略
+Demo3 demo3 = value -> {
+    return String.valueOf(value);
+};
+//有多个参数，括号不可以省略
+Demo4 demo4 = (value1, value2) -> {
+    return String.valueOf(value1 + value2);
+};
+```
 
 
 
+####  由繁至简
+
+> lambda表达式主要用于定义行内执行的方法类型接口。(lambda表达式用于实现，函数式接口、或接口中只有一个方法且实现逻辑较为简单)。
+>
+> lambda表达式免去了使用匿名内部类的方法实现，并且给予Java强大的函数式编程的能力。
+
+- ClassOuter，定义在同一个java文件中。 编译时会生成独立的class字节码文件
+- ClassInner，内部类，编译时会生成独立字节码信息，inner class，主类名称`$`内部类名称 如(`Parsing inner class .\TestLambda2$1.class`)
+- 静态内部类
+- 匿名内部类，没有名字，但是编译器会自动生成
+- lambda表达式，它不是匿名内部类的语法糖。借助LambdaMetafactory实现
+
+```java
+public class TestLambda2 {
+    /**
+     * 内部类
+     */
+    class ClassInner implements Demo {
+        @Override
+        public void method() {
+        }
+    }
+    /**
+     * 静态内部类
+     */
+    static class StaticClassInner implements Demo {
+        @Override
+        public void method() {
+        }
+    }
+    public static void main(String[] args) {
+        /**
+         * 匿名内部类
+         */
+        final Demo demo = new Demo() {
+            @Override
+            public void method() {
+            }
+        };
+
+        /**
+         * lambda表达式
+         */
+        Demo demo1 = () -> {
+        };
+    }
+}
+interface Demo {
+    /**
+     * 没有参数，返回值为null
+     */
+    void method();
+}
+
+/**
+ * 普通外部类
+ */
+class ClassOuter implements Demo {
+    @Override
+    public void method() {
+    }
+}
+```
+
+
+
+#### 变量作用域
+
+> `Variable used in lambda expression should be final or effectively final`。
+>
+> Lambda表达式中使用的变量，要么被final修饰，要么具有被final修饰的语义，也就是在lambda表达式中使用的变量都是不可变的。
+
+lambda中使用的变量特点和final一致：
+
+- 对于基本数据类型，只有值得概念，不可变
+- 引用类型，可使用内部修改方法来修改内部属性值，但不可修改引用
+
+![image-20220907103529023](java成神之路(基础).assets/image-20220907103529023.png)
+
+
+
+#### 方法声明
+
+> java中方法声明使用双冒号`::`。 可表示一个接口实现，作为方法的参数。
+
+- 使用双冒号声明方法，要求方法没有参数
+
+如：
+
+```java
+final Function<String, String> stringFunction = String::toString;
+final Function<String, Integer> stringFunction1 = String::length;
+```
+
+例子：
+
+```java
+//接口
+interface Lambda1<T> {
+    String method(T t);
+}
+class TestClass {
+    /**
+     * toString存在重载
+     * 使用方法声明的时候会寻找无参数的方法
+     */
+    public  String toStringX(int i){
+        return "i";
+    }
+    public String toStringX(){
+        return "i";
+    }
+    //有参数不可使用方法声明
+    public String method1(String str){
+        return "i";
+    }
+}
+```
+
+```java
+Lambda1<TestClass> lambda1a = (testClass) -> {
+    return testClass.method1("");
+};
+//toStringX存在重载，会自动选择无参数的方法
+Lambda1<TestClass> lambda1b = TestClass::toStringX;
+//有参数，不可方法声明
+// Lambda1<TestClass> lambda1c = TestClass::method1;
+```
 
 
 
@@ -8028,6 +8199,135 @@ valueof(val)会调用Double.toString(val)保证进度准确
 Bigdecimal(String str);
 Bigdecimal.valueof(double val);
 ```
+
+
+
+### 并发编程
+
+
+
+#### 并发&并行
+
+##### 并发
+
+> 单CPU环境下，多个作业感官上`同时运行`，实际上是切换运行，某一时刻，只能有一个作业在运行。
+
+​	无论是Windows、Linux还是Mac OS，都是多用户多任务分时操作系统。操作系统将CPU资源(时间)划分为多个CPU时间片，由操作系统分配这些时间片，当一个作业时间片消耗完或失去时间片，那么这个作业就会暂停，此刻操作系统重写分配时间片，获得CPU时间片的作业将继续运行，CPU切换时间片很快且基本上是轮询，所以说感官上是多个任务同时进行`。所以说单核CPU环境下，任务不可能同时进行。	
+
+​	上下文切换：CPU进行上下文切换时，会停止当前进程，当前线程状态会变为挂起、删除，并保存此进程的状态以便恢复。
+
+##### 并行
+
+> 并行才是真正意义上的同时进行。
+>
+> 并行只能出现在多核CPU环境下，多个进程可以同时运行，两个进程互不影响。
+
+##### 区别
+
+> 并发：单核CPU下，多个任务交替执行。
+>
+> 并行：多核CPU下，多个任务独立执行，互不影响。
+
+
+
+#### 进程&线程
+
+> 进程是CPU分配资源的最小单位，线程是执行的最小单位。
+>
+> 进程是线程的集合，一个进程可完整完成一件事情。
+
+打开一个浏览器就开启一个进程。打开一个记事本就开启一个进程。打开2个记事本，就开启两个进程。
+
+进程是线程的集合，记事本可以进行统计、打字等功能，每一个功能可能都是一个线程。
+
+
+
+##### 线程
+
+特点：
+
+- 共享进程资源
+
+  > 多个线程可共享同一个进程的内存空间
+
+- 可并发执行
+
+  > 单个进程下多线程可以并发执行，提升效率。
+  >
+  > 当然也会带来问题，由于多线程共享进程内存空间，存在线程安全问题，保证线程安全也是并发编程需要解决的事
+
+Java线程状态：
+
+线程存在状态，并且线程状态会切换
+
+- 初始化(INIT)
+
+  > 创建线程，还未执行。new出来，但没有start
+
+- 运行(RUNABLE)
+
+  - 就绪 (READY)  调用start方法，等待获取CPU时间片的过程
+  - 运行中 (RUNNING) 获取了CPU时间片，正在执行
+
+- 阻塞(BLOCKED)
+
+  > 线程阻塞，失去CPU时间片
+
+- 等待(WAITING)
+
+  > 处于此状态的线程，需要等待被其他线程唤醒
+
+- 超时等待(TIMED_WAITING)
+
+  > 超过等待延时时间可自己唤醒
+
+- 终止(TERMINATED)
+
+  > 线程执行完毕
+
+
+
+
+
+#### 线程优先级
+
+> Java虚拟机采用抢占式调度模型，也就是会给优先级更高的线程优先分配CPU。
+>
+> Java线程的调度是自动进行的，可为线程设置优先级，但Java虚拟机是抢占式调度，优先级高的线程不一定会抢占到CPU资源。
+
+Java语言一共设置了十个线程优先级别
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
