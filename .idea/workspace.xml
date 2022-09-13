@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0905">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)/java成神之路(基础).md" afterDir="false" />
-    </list>
+    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="0905" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -66,6 +63,7 @@
       <workItem from="1662390195820" duration="637000" />
       <workItem from="1662399803500" duration="19000" />
       <workItem from="1662478409533" duration="1711000" />
+      <workItem from="1662488501233" duration="25000" />
     </task>
     <task id="LOCAL-00001" summary="0802work">
       <created>1659435136175</created>
@@ -151,7 +149,14 @@
       <option name="project" value="LOCAL" />
       <updated>1662399811759</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="0905">
+      <created>1662488514712</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1662488514712</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
