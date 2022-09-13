@@ -8024,9 +8024,7 @@ lambda中使用的变量特点和final一致：
 - 对于基本数据类型，只有值得概念，不可变
 - 引用类型，可使用内部修改方法来修改内部属性值，但不可修改引用
 
-![image-20220907103529023](java成神之路(基础).assets/image-20220907103529023.png)
-
-
+![image-20220913225238338](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209132252815.png)
 
 #### 方法声明
 
@@ -8287,47 +8285,237 @@ Java线程状态：
 
 
 
-
-
 #### 线程优先级
 
 > Java虚拟机采用抢占式调度模型，也就是会给优先级更高的线程优先分配CPU。
 >
 > Java线程的调度是自动进行的，可为线程设置优先级，但Java虚拟机是抢占式调度，优先级高的线程不一定会抢占到CPU资源。
+>
+> 所创建的线程优先级默认为父线程优先级，可通过setPriority设置线程优先级，getPriority获得线程优先级
 
 Java语言一共设置了十个线程优先级别
 
+![image-20220913230104244](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209132301686.png)
+
+Thread的init方法：
+
+```java
+private void init(ThreadGroup g, Runnable target, String name,
+                  long stackSize, AccessControlContext acc,
+                  boolean inheritThreadLocals) {
+.....
+
+    Thread parent = currentThread();
+.....
+}
+```
+
+setPriority
+
+```java
+System.out.println(Thread.currentThread().getPriority());
+Thread.currentThread().setPriority(7);
+System.out.println(Thread.currentThread().getPriority());
+```
+
+![image-20220913230547558](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209132305126.png)
+
+#### 线程调度
+
+**给多个线程按照特定的机制分配CPU的使用权的过程就叫做线程调度。**
+
+操作系统给线程分配CPU时间片
+
+- 对于单CPU的计算机来说，一个时刻只可运行一个线程
+
+- 多线程并发，宏观上看多线程一起运行，实际上某一时刻只有一个线程处于运行中状态。而线程想要从就绪状态变为运行中状态，就必须获得CPU使用权。
+
+##### Linux线程调度
+
+在Linux中，线程是由进程来实现，线程就是轻量级进程（ lightweight process ），因此在Linux中，线程的调度是按照进程的调度方式来进行调度的，也就是说线程是调度单元。
+
+Linux这样实现的线程的好处的之一是：线程调度直接使用进程调度就可以了，没必要再搞一个进程内的线程调度器。在Linux中，调度器是基于线程的调度策略（scheduling policy）和静态调度优先级（static scheduling priority）来决定那个线程来运行。
+
+在Linux中，主要有三种调度策略。分别是：
+
+- SCHED_OTHER 分时调度策略，（默认的）
+- SCHED_FIFO 实时调度策略，先到先服务
+- SCHED_RR 实时调度策略，时间片轮转
+
+##### Windows线程调度
+
+Windows 采用基于优先级的、抢占调度算法来调度线程。
+
+用于处理调度的 Windows 内核部分称为调度程序，Windows 调度程序确保具有最高优先级的线程总是在运行的。由于调度程序选择运行的线程会一直运行，直到被更高优先级的线程所抢占，或终止，或时间片已到，或调用阻塞系统调用（如 I/O）。如果在低优先级线程运行时，更高优先级的实时线程变成就绪，那么低优先级线程就被抢占。这种抢占使得实时线程在需要使用 CPU 时优先得到使用。
+
+##### Java线程调度
+
+可以看到，不同的操作系统，有不同的线程调度策略。但是，作为一个Java开发人员来说，我们日常开发过程中一般很少关注操作系统层面的东西。
+
+主要是因为Java程序都是运行在Java虚拟机上面的，而虚拟机帮我们屏蔽了操作系统的差异，所以我们说Java是一个跨平台语言。
+
+**在操作系统中，一个Java程序其实就是一个进程。所以，我们说Java是单进程、多线程的！**
+
+前面关于线程的实现也介绍过，Thread类与大部分的Java API有显著的差别，它的所有关键方法都是声明为Native的，也就是说，他需要根据不同的操作系统有不同的实现。
+
+在Java的多线程程序中，为保证所有线程的执行能按照一定的规则执行，JVM实现了一个线程调度器，它定义了线程调度模型，对于CPU运算的分配都进行了规定，按照这些特定的机制为多个线程分配CPU的使用权。
+
+主要有两种调度模型：**协同式线程调度**和**抢占式调度模型**。
+
+###### 协同式线程调度
+
+协同式调度的多线程系统，线程的执行时间由线程本身来控制，线程把自己的工作执行完了之后，要主动通知系统切换到另外一个线程上。协同式多线程的最大好处是实现简单，而且由于线程要把自己的事情干完后才会进行线程切换，切换操作对线程自己是可知的，所以没有什么线程同步的问题。
+
+###### 抢占式调度模型
+
+抢占式调度的多线程系统，那么每个线程将由系统来分配执行时间，线程的切换不由线程本身来决定。在这种实现线程调度的方式下，线程的执行时间是系统可控的，也不会有一个线程导致整个进程阻塞的问题。
+
+系统会让可运行池中优先级高的线程占用CPU，如果可运行池中的线程优先级相同，那么就随机选择一个线程，使其占用CPU。处于运行状态的线程会一直运行，直至它不得不放弃CPU。
+
+**Java虚拟机采用抢占式调度模型。**
+
+虽然Java线程调度是系统自动完成的，但是我们还是可以“建议”系统给某些线程多分配一点执行时间，另外的一些线程则可以少分配一点——这项操作可以通过设置线程优先级来完成。Java语言一共设置了10个级别的线程优先级（Thread.MIN_PRIORITY至Thread.MAX_PRIORITY），在两个线程同时处于Ready状态时，优先级越高的线程越容易被系统选择执行。
+
+不过，线程优先级并不是太靠谱，原因是Java的线程是通过映射到系统的原生线程上来实现的，所以线程调度最终还是取决于操作系统，虽然现在很多操作系统都提供线程优先级的概念，但是并不见得能与Java线程的优先级一一对应。
 
 
 
+#### 多线程Debug
+
+> idea  多线程Debug
+
+如果不设置，被多个线程访问的代码，断点只会停留一次。
+
+右击断点设置为Thread即可
+
+![image-20220913234255079](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209132342275.png)
+
+可选择线程执行顺序，也可观测线程状态。ZOMBIE僵尸线程：资源已经释放但线程实例还在。
+
+![image-20220913234425219](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209132345728.png)
 
 
 
+#### 线程创建方式
 
 
 
+##### 继承Thread类重写start方法
+
+> 继承Thread重写run方法，直接new出来，调用start方法
+
+```java
+public class ExtendsThread extends Thread {
+    @Override
+    public void run() {
+        super.run();
+        System.out.println(Thread.currentThread());
+    }
+}
+```
 
 
 
+##### 实现runable接口
+
+> Runable可避免多继承问题，java不支持多继承，如果一个类已经有了父类，那么就不就可以使用继承Thread的方式来创建线程。
+>
+> 实现Runable接口重写run方法，作为构造参数给Thread，调用start方法即可
+
+```java
+class ImplementsRunnable  implements Runnable{
+    @Override
+    public void run() {
+        System.out.println(Thread.currentThread());
+    }
+}
+
+new Thread(new ImplementsRunnable()).start();
+```
+
+> 也可先使用FutureTask包装，指定默认返回值即可
+
+```java
+final ImplementsRunnable implementsRunnable = new ImplementsRunnable();
+final FutureTask<String> vFutureTask = new FutureTask<>(implementsRunnable,"");
+new Thread(vFutureTask).start();
+```
 
 
 
+##### 实现Callable接口
+
+> Callable接口可接收一个返回值，可指定泛型。
+>
+> 需要使用FutureTask包装再送给Thread作为构造参数
+
+```java
+class ImplementsCallable implements Callable<String> {
+    @Override
+    public String call() throws Exception {
+        return Thread.currentThread().getName();
+    }
+}
+```
+
+```java
+final FutureTask<String> futureTask = new FutureTask<>(new ImplementsCallable());
+new Thread(futureTask).start();
+System.out.println(futureTask.get());
+```
+
+> FutureTask位于concurrent包下。实现了Runbale接口，可对实现Runable和Calable接口的类进行包装，可获取线程执行结果，适合于异步获取结果的场景。
+>
+> 值得注意的是FutureTask的get方法是阻塞的，对于异步获取线程执行结果的操作可放于主线程后。
+
+如下：主线程的执行会在futureTask之后
+
+```java
+public static void main(String[] args) throws ExecutionException, InterruptedException {
+    final ImplementsRunnable implementsRunnable = new ImplementsRunnable();
+    final FutureTask<String> vFutureTask = new FutureTask<>(implementsRunnable,"xxx");
+    new Thread(vFutureTask).start();
+    //vFutureTask.get()是一个阻塞任务，可放置于最后，当主线程执行完后再来监控此返回结果
+    System.out.println(vFutureTask.get());
+    System.out.println("主线程。。。。。");
+}
+```
+
+改造如下：
+
+```java
+final ImplementsRunnable implementsRunnable = new ImplementsRunnable();
+final FutureTask<String> vFutureTask = new FutureTask<>(implementsRunnable,"xxx");
+new Thread(vFutureTask).start();
+
+System.out.println("主线程。。。。。"); 
+while (!vFutureTask.isDone())
+System.out.println(vFutureTask.get());
+```
 
 
 
+##### 通过线程池创建线程
 
+> 推荐使用线程池创建线程，线程属于资源，池化管理可重复使用节省资源。
 
+```java
+System.out.println(Thread.currentThread().getName());
+System.out.println("通过线程池创建线程");
+ExecutorService executorService = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,
+        new ArrayBlockingQueue<Runnable>(10), (r) -> {
+    //线程名前缀
+    String namePrefix = "线程：";
+    int no = 0;
+    Thread t = new Thread(null, r, namePrefix + no++, 0);
+    //设置为费守护线程
+    t.setDaemon(false);
+    //设置线程优先级为5
+    t.setPriority(Thread.NORM_PRIORITY);
+    return t;
+});
+executorService.execute(() -> System.out.println(Thread.currentThread().getName()));
+executorService.shutdown();
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+![image-20220914005031768](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209140050528.png)
