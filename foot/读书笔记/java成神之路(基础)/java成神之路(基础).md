@@ -7014,7 +7014,7 @@ System.out.println("America/New_York:===>>" + simpleDateFormat.format(Calendar.g
 >
 > JDK文档明确指出，SimpleDateFormat不应该在多线程环境下使用。
 
-![image-20220902170545946](java成神之路(基础).assets/image-20220902170545946.png)
+![image-20220902170545946](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209132248912.png)
 
 SimpleDateFormat非线程安全，必须为每一个线程创建独立的实例。如果必须同步使用一个日期格式，必须在外部加锁。
 
