@@ -3818,6 +3818,8 @@ final Stream<String> stream1 = Arrays.stream(new String[]{"1", "2", "3"});
 
 > 对`Stream`做处理，包括过滤、映射、排序等
 
+filter参数为Predicate，可使用多个Predicate配合and  or  组合成一个Predicate。
+
 | 操作(Stream opration) | 说明                         | 参数                                    |
 | --------------------- | ---------------------------- | --------------------------------------- |
 | filter                | 过滤                         | Predicate<? super T> predicate          |
@@ -3825,9 +3827,7 @@ final Stream<String> stream1 = Arrays.stream(new String[]{"1", "2", "3"});
 | limit、skip           | 限制                         | long maxSize                            |
 | sorted                | 自然排序或指定比较器         | Comparator<? super T> comparator        |
 | distinct              | 使用元素的equals去除重复元素 |                                         |
-|                       |                              |                                         |
-
-
+| flatMap               | 合并流                       | Function<? super T, ? extends R> mapper |
 
 ###### 最终操作
 
@@ -3838,6 +3838,8 @@ final Stream<String> stream1 = Arrays.stream(new String[]{"1", "2", "3"});
 | foreach | 遍历     | Consumer<? super T> action           |
 | count   | 计数     |                                      |
 | Collect | 转化集合 | Collector<? super T, A, R> collector |
+| Reduce  | 聚合操作 |                                      |
+|         |          |                                      |
 
 ##### Stream转化
 
@@ -3848,6 +3850,117 @@ final IntStream intStream = stream.mapToInt(StringBuffer::length);
 final DoubleStream doubleStream = stream.mapToDouble(StringBuffer::length);
 final LongStream longStream = stream.mapToLong(StringBuffer::length);
 ```
+
+
+
+##### 例子
+
+```java
+System.out.println("===============流  转集合===============");
+List<String> list = new ArrayList<>(Arrays.asList("1", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+List<String> collect1 = list.stream().collect(Collectors.toList());
+collect1.stream().forEach(System.out::print);
+System.out.println();
+
+System.out.println("===============遍历===============");
+list.stream().forEach(System.out::print);
+System.out.println();
+
+System.out.println("===============过滤===============");
+List<String> collect2 = list.stream().filter((ele) -> ele.equals("2")).collect(Collectors.toList());
+collect2.stream().forEach(System.out::print);
+System.out.println();
+
+System.out.println("===============映射===============");
+List<Integer> collect3 = list.stream().map(Integer::valueOf).collect(Collectors.toList());
+collect3.stream().forEach(System.out::print);
+System.out.println();
+
+System.out.println("===============求和 求平均值===============");
+int sum = list.stream().mapToInt(Integer::valueOf).sum();
+System.out.println(sum);
+
+System.out.println("===============去重===============");
+List<String> collect4 = list.stream().distinct().collect(Collectors.toList());
+collect4.stream().forEach(System.out::print);
+System.out.println();
+
+System.out.println("===============判断===============");
+final boolean b1 = list.stream().allMatch(ele -> "2".equals(ele));
+final boolean b2 = list.stream().anyMatch(ele -> "2".equals(ele));
+System.out.println(b1 + " " + b2);
+System.out.println();
+
+System.out.println("===============获取option===============");
+String s1 = list.stream().findAny().get();
+String s2 = list.stream().findFirst().get();
+System.out.println(s1 + " " + s2);
+System.out.println();
+
+final List<StringBuilder> sbs = Arrays.asList(new StringBuilder(), new StringBuilder());
+System.out.println("===============对每一个元素进行操作===============");
+List<StringBuilder> collect5 = sbs.stream().peek(ele -> ele.append("123")).collect(Collectors.toList());
+collect5.stream().forEach(System.out::print);
+System.out.println();
+
+System.out.println("==============合并多个流===============");
+final List<List<Integer>> lists = Arrays.asList(Arrays.asList(1, 2), Arrays.asList(1, 2));
+final List<Integer> collect = lists.stream().flatMap(Collection::stream).collect(Collectors.toList());
+collect.forEach(System.out::print);
+
+//对集合进行聚合求值，e1首次为集合第一个参数，之后为return结果，e2为 2、3.。。。。
+final Optional<Integer> reduce1 = list1.stream().reduce(Integer::sum);
+System.out.println(reduce1.get());
+
+//reduce的重载，返回结果为T，e1首个为100
+final Integer reduce2 = list1.stream().reduce(100, Integer::sum);
+System.out.println(reduce2);
+
+//非并行流，只有一个线程，第三个参数BinaryOperator，可以忽略
+final StringBuilder reduce3 = list1.stream().reduce(new StringBuilder(), StringBuilder::append, (t, u) -> {
+    int i = 0;
+    return t;
+});
+```
+
+
+
+##### 并行 & 非并行
+
+> 并行流会启动多个线程对集合进行操作，因为结果分散到各个线程中，最终对结果进行汇总。
+>
+> 非并行流，单线程。
+>
+> 一般来说非并行流够用
+
+现象：
+
+```java
+/**
+ * 三个参数
+ * Supplier 供应商，提供返回对象
+ * BiConsumer  消费者  操作返回对象和流中的元素
+ * BiConsumer  消费者  对并行流结果进行操作
+ */
+final HashMap<String, Integer> map2 = list1.parallelStream().collect(HashMap::new, (mapx, ele) -> {
+    mapx.put(ele.toString(), ele);
+}, (mapa, mapb) -> {
+});
+System.out.println("并行流，未addall" + map2);
+```
+
+解决：
+
+```java
+final HashMap<String, Integer> map3 = list1.parallelStream().collect(HashMap::new, (mapx, ele) -> {
+    mapx.put(ele.toString(), ele);
+}, (a1, a2) -> {
+    a1.putAll(a2);
+});
+System.out.println("并行流，addall" + map3);
+```
+
+![image-20220923135653257](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202209251249397.png)
 
 
 
@@ -8028,53 +8141,91 @@ lambda中使用的变量特点和final一致：
 
 #### 方法声明
 
-> java中方法声明使用双冒号`::`。 可表示一个接口实现，作为方法的参数。
+> java中方法声明使用双冒号`::`。
 
-- 使用双冒号声明方法，要求方法没有参数
+- 使用双冒号声明方法，要求方法不可对参数做修改，只是简单引用方法
 
 如：
 
 ```java
+//第一个String为调用toString方法对象，第二个为返回类型
 final Function<String, String> stringFunction = String::toString;
 final Function<String, Integer> stringFunction1 = String::length;
 ```
 
 例子：
 
-```java
-//接口
-interface Lambda1<T> {
-    String method(T t);
-}
-class TestClass {
-    /**
-     * toString存在重载
-     * 使用方法声明的时候会寻找无参数的方法
-     */
-    public  String toStringX(int i){
-        return "i";
-    }
-    public String toStringX(){
-        return "i";
-    }
-    //有参数不可使用方法声明
-    public String method1(String str){
-        return "i";
-    }
-}
-```
+> 问题：` void method2(String str1, String str2)`可以进行方法引用么？
 
 ```java
-Lambda1<TestClass> lambda1a = (testClass) -> {
-    return testClass.method1("");
+class Person {
+    public void method1() {
+        System.out.println();
+    }
+    public void method2(String str1) {
+        System.out.println("method2(String str1)");
+    }
+    public void method2(String str1, String str2) {
+        System.out.println("method2(String str1, String str2)");
+    }
+}
+//以下两组是等价的
+Consumer<Person> method1x = (person) -> {
 };
-//toStringX存在重载，会自动选择无参数的方法
-Lambda1<TestClass> lambda1b = TestClass::toStringX;
-//有参数，不可方法声明
-// Lambda1<TestClass> lambda1c = TestClass::method1;
+//简单方法引用，无参数
+final Consumer<Person> method1 = Person::method1;
+
+final BiConsumer<Person, String> method2x = (person, str) -> {
+    person.method2(str);
+};
+//一个参数方法，范型：第一个调用方，第二个方法参数
+final BiConsumer<Person, String> method2 = Person::method2;
+```
+
+> 自定义接口
+
+```java
+interface MyDemoI<T, K, V> {
+    void method(T t, K k, V v);
+}
+MyDemoI<Person,String,String> myDemoI = Person::method2;
 ```
 
 
+
+####  函数式接口
+
+> 只有一个未实现的抽象方法的接口叫做函数式接口。
+
+被@FunctionInterface修饰的接口，编译器要求该接口具有以下特点：
+
+- 是Interface而不是class或enum
+- 只有一个未实现抽象方法的接口
+- 可以有default或final方法（这不是抽象方法）
+
+编译器会自动识别满足函数式接口的接口，而不需要强制使用@FuncationInterface
+
+
+
+##### 内置四大函数式接口
+
+> java提供的四大内置函数式接口。
+
+- public interface Consumer<T>   void accept(T t);
+
+  > 消费接口，接收一个参数，无返回值。
+
+- public interface Supplier<T>   T get();
+
+  > 供给接口，无参数有返回值，生产一个
+
+- public interface Predicate<T> boolean test(T t);
+
+  > 判断接口，有参数，有返回值，对传入参数i进行断言
+
+- public interface Function<T, R>  R apply(T t);
+
+  > 函数式接口，有参，有返回值
 
 ### BigDecimal
 
