@@ -50,7 +50,7 @@
 inal String s = optional.get();
 ```
 
-- ifPresent
+- ifPres0ent
 
   > 如果存在则执行消费方法，如果不存在则不执行消费方法
 
