@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="merge">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foot/pdai/pdai/Pdai.md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/pdai/pdai/Pdai.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_9_23_9_52__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_9_25,_12_42_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_9_25__12_42__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/foot/pdai/spring/01.spring-base.md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/pdai/spring/01.spring-base.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
