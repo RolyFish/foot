@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="user" class="com.roily.pojo.User">
+        <property name="name" value="Spring"/>
+    </bean>
+
+    <bean id="user2" class="com.roily.pojo.User">
+        <constructor-arg index="0" value="springuser2"/>
+    </bean>
+    <bean id="user3" class="com.roily.pojo.User">
+        <constructor-arg name="name" value="springuser3"/>
+    </bean>
+    <bean id="user4" class="com.roily.pojo.User">
+        <constructor-arg  type="java.lang.String" value="springuser4"/>
+    </bean>
+    <bean id="user5" class="com.roily.pojo.User">
+        <constructor-arg  type="java.lang.String" value="springuser5"/>
+        <constructor-arg  type="java.lang.String" value="springuser5"/>
+    </bean>
+
+    <alias name="user" alias="abc"/>
+
+</beans>

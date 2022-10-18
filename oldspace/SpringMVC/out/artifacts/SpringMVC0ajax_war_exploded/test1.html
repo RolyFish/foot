@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+<p>
+    <input type="text" id="url"/>
+    <input type="button" id="submit" value="提交" onclick="sub()"/>
+
+</p>
+
+<iframe  id="ifram" style="width: 80%; height: 500px"></iframe>
+</body>
+</html>
+<script>
+    function sub() {
+        var url = window.document.getElementById("url").value;
+        window.document.getElementById("ifram").src = url;
+    }
+
+</script>

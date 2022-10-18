@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.camemax.com.camemax.dao.UsersDao">
+
+<!--    <resultMap id="getUsersInfo" type="MyBatisAliasUsers">-->
+<!--        <id property="userId" column="id" />-->
+<!--        <result property="userName" column="username" />-->
+<!--        <result property="userPassword" column="password" />-->
+<!--        <result property="userEmail" column="email" />-->
+<!--        <result property="userGender" column="gender" />-->
+<!--    </resultMap>-->
+    <select id="getUsersInfo" resultType="MyBatisAliasUsers" >
+        select * from school.users
+    </select>
+
+<!--    <resultMap id="getUsersInfoById" type="MyBatisAliasUsers">-->
+<!--        <id property="userId" column="id" />-->
+<!--        <result property="userName" column="username" />-->
+<!--        <result property="userPassword" column="password" />-->
+<!--        <result property="userEmail" column="email" />-->
+<!--        <result property="userGender" column="gender" />-->
+<!--    </resultMap>-->
+    <select id="getUserInfoById" resultType="MyBatisAliasUsers">
+        select * from school.users where id = #{id}
+    </select>
+
+<!--    <resultMap id="getUsersInfoByLimit" type="MyBatisAliasUsers">-->
+<!--        <id property="userId" column="id" />-->
+<!--        <result property="userName" column="username" />-->
+<!--        <result property="userPassword" column="password" />-->
+<!--        <result property="userEmail" column="email" />-->
+<!--        <result property="userGender" column="gender" />-->
+<!--    </resultMap>-->
+    <!-- 使用map传入limit所需要的起始位置以及返回值 -->
+    <select id="getUsersInfoByLimit" resultType="MyBatisAliasUsers" parameterType="map">
+        select * from school.users limit #{startIndex},#{returnSize}
+    </select>
+</mapper>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+
+    <!--  映入配偶之文件  -->
+    <properties resource="db.properties">
+        <!--  property 配置自定义属性  优先使用外部web配置文件  -->
+    </properties>
+
+    <settings>
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+
+    <typeAliases>
+        <package name="com.roily.pojo"/>
+        <!--        <typeAlias type="com.roily.pojo.Users" alias="user"/>-->
+    </typeAliases>
+<!--    <environments default="test1">-->
+<!--        <environment id="development">-->
+<!--            <transactionManager type="JDBC"/>-->
+<!--            <dataSource type="POOLED">-->
+<!--                <property name="driver" value="com.mysql.jdbc.Driver"/>-->
+<!--                <property name="url" value="jdbc:mysql://localhost:3306/mybatis?useUnicode=true&amp;charactEncoding=utf8&amp;useSSL=true"/>-->
+<!--                <property name="username" value="root"/>-->
+<!--                <property name="password" value="123"/>-->
+<!--            </dataSource>-->
+<!--        </environment>-->
+<!--        <environment id="test1">-->
+<!--            <transactionManager type="JDBC"/>-->
+<!--            <dataSource type="POOLED">-->
+<!--                <property name="driver" value="${driver}"/>-->
+<!--                <property name="url" value="${url}"/>-->
+<!--                <property name="username" value="${username}"/>-->
+<!--                <property name="password" value="${passwd}"/>-->
+<!--            </dataSource>-->
+<!--        </environment>-->
+<!--    </environments>-->
+<!--    <mappers>-->
+<!--        &lt;!&ndash;        <mapper resource="com/roily/dao/UserMapper.xml"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;        <mapper class="com.roily.dao.UserMapper"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;        <package name="com.roily.dao.UserMapper"/>&ndash;&gt;-->
+<!--        <mapper resource="com/roily/dao/UserMapper.xml"/>-->
+<!--    </mappers>-->
+</configuration>

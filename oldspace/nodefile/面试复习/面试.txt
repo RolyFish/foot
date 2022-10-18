@@ -1,0 +1,19 @@
+
+//Q1 - 下面四个判断的结果分别是什么？String的== 和 equals有什么区别
+       String a1 = "ABC";                           String a2 = "ABC";  
+       String b1 = new String("ABC");       String b2 = new String("ABC");
+       1.a1 == a2        2.a1.equals(a2)       3.b1 == b2       4.b1.equals(b2)
+//Q - String、StringBuffer、StringBuilder有什么区别？
+
+//Q - HashMap、ConcurrentHashMap有什么区别？
+//Q - Map如何遍历Key和Value？List去重、排序怎么实现？
+//Q - 如何实现多线程并保证线程安全？CompletableFuture怎么使用?
+//Q - Mybatis-Plus和Mybatis有什么区别？
+//Q - Mybatis的ResultType、ResultMap区别是什么，有几种占位符，有什么作用?
+//Q - 注解@RequestBody、@ResponseBody的区别是什么？
+//Q - 注解@RequestMapping、@PostMapping、@GetMapping、@DeleteMapping、@PutMapping 有什么区别
+//Q - 注解@Async是什么，怎么使用?
+//Q - Spring如何将数据库数据同步到Redis，如何更新redis缓存？
+//Q - Aop有几种通知类型，JointPoint怎么使用?
+//Q - OpenFeign的Fallback有什么作用？
+//Q - Spring的定时任务怎么实现，是否了解XXL-JOB? 

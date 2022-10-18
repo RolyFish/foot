@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.camemax.dao.BlogsMapper">
+
+    <!-- 开启二级缓存 -->
+    <cache
+        eviction="LRU"
+        flushInterval="30000"
+        size="512"
+        readOnly="true"/>
+
+    <select id="getBlogInfoByAuthor" resultType="blogs" parameterType="string" >
+        select * from test.blog
+        <where>
+            <if test="post_author != null">
+                author = #{post_author}
+            </if>
+        </where>
+    </select>
+</mapper>

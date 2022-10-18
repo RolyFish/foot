@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.camemax.dao.StudentsMapper">
+
+    <select resultMap="StudentsInfoMapBySelect" id="getStudentsInfo">
+        select * from school.students
+    </select>
+    <resultMap id="StudentsInfoMapBySelect" type="students">
+        <id property="sid" column="id"/>
+        <result property="sname" column="name"/>
+
+        <!-- 复杂类型： Teachers类
+            【association】: 对象
+                - 【property】: 设置获取到的结果集字段 => private Teachers teacher
+                - 【column】: 设置映射对应的数据库字段 => tid
+                - 【javaType】: 设置返回类型 => Teachers
+                - 【select】: 通过其他<select>标签中的值，指向其他select语句 => <select id="TeachersInfo">
+            【collection】: 集合
+        -->
+        <association property="teacher" column="tid" javaType="Teachers" select="TeachersInfo"/>
+    </resultMap>
+
+    <select id="TeachersInfo" resultType="teachers">
+        select * from school.teachers where tid = #{tid}
+    </select>
+<!--    <select id="getStudentsInfo" resultMap="getStudentsInfoByResult">-->
+<!--        select s.id studentId,-->
+<!--               s.name studentName,-->
+<!--               t.tname teacherName-->
+<!--        from students s,teachers t-->
+<!--        where s.tid = t.tid;-->
+<!--    </select>-->
+<!--    <resultMap id="getStudentsInfoByResult" type="students">-->
+<!--        <id property="sid" column="studentId"/>-->
+<!--        <result property="sname" column="studentName"/>-->
+<!--        <association property="teacher" javaType="Teachers">-->
+<!--            <result property="tname" column="teacherName"/>-->
+<!--        </association>-->
+<!--    </resultMap>-->
+
+</mapper>

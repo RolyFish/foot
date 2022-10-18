@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.camemax.com.camemax.dao.UsersDao">
+    <!-- select sql: 绑定getUsersInfo方法，返回所有用户信息 -->
+    <select id="getUsersInfo" resultType="users">
+        select * from school.users
+    </select>
+
+    <!-- update sql: 绑定updateUser方法，更新指定用户信息 -->
+    <update id="updateUseInfoById" parameterType="com.camemax.com.camemax.pojo.Users">
+        update school.users
+        set username = #{username},
+            password = #{password},
+            email = #{email},
+            gender = #{gender}
+        where id = #{id}
+    </update>
+
+    <!-- delete sql: 绑定deleteUserById方法，删除指定用户信息 -->
+    <delete id="deleteUserById" parameterType="int">
+        delete from school.users
+        where id = #{id}
+    </delete>
+
+    <!-- insert sql: 绑定insertManyUseMap,批量插入 -->
+    <insert id="insertManyUseList" >
+        insert into school.users values
+        /* foreach 标签：
+        -【item】属性： 表示集合中每一个元素进行迭代时的别名
+        - 【collection】属性： 参数类型是一个List的时候，collection属性值为list
+        - 【separator】属性： 表示在每次进行迭代之间以什么符号作为分隔符。
+        */
+        <foreach  item="user" collection="list" separator=",">
+            (#{user.id},#{user.username},#{user.password},#{user.email},#{user.gender})
+        </foreach>
+    </insert>
+
+</mapper>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- configuration标签 => 声明MyBatis核心配置 -->
+<configuration>
+    <!-- environments标签 => 设置MyBatis选用的环境信息 -->
+    <environments default="oracle">
+        <environment id="mysql">
+            <!-- transactionManager标签 => 事务管理 -->
+            <transactionManager type="JDBC"/>
+            <!-- dataSource标签 => 配置数据源属性 -->
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/school?useSSL=false&amp;useUnicode=true&amp;characterEncoding=utf8&amp;serverTimezone=CST"/>
+                <property name="username" value="root"/>
+                <property name="password" value="123"/>
+            </dataSource>
+        </environment>
+
+        <environment id="oracle">
+            <!-- transactionManager标签 => 事务管理 -->
+            <transactionManager type="JDBC"/>
+            <!-- dataSource标签 => 配置数据源属性 -->
+            <dataSource type="POOLED">
+                <property name="driver" value="${Oracle Driver}"/>
+                <property name="url" value="${Oracle Url"/>
+                <property name="username" value="${Oracle Username}"/>
+                <property name="password" value="${Oracle Password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <mappers>
+        <mapper resource="mappers/usersMapper.xml"/>
+    </mappers>
+</configuration>

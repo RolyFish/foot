@@ -1,0 +1,27 @@
+server:
+  port: 3003
+
+spring:
+  cloud:
+    config:
+      label: master
+      server:
+        git:
+          uri: https://gitee.com/fz972/springcoud-config.git
+          search-paths: springcoud-config
+#          username:
+#          password:
+  application:
+    name: springcoud-config
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka9001.com:9001/eureka/,http://eureka9002.com:9002/eureka/,http://eureka9003.com:9003/eureka/
+  instance:
+    instance-id: springcoud-config
+    prefer-ip-address: true
+
+info:
+  app.name: springcloudconfig
+  company.name: ccahouse

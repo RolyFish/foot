@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    config:
+      label: master
+      profile: test
+      discovery:
+        enabled: true #是从配置中心读取文件
+        service-id: springcoud-config #配置中心的servieId，服务名称，通过服务名称去 Eureka注册中心找服务
+      name: config-client-eureka #git仓库文件名 默认application
+  #      uri: http://localhost:3001
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka9001.com:9001/eureka/,http://eureka9002.com:9002/eureka/,http://eureka9003.com:9003/eureka/
+    register-with-eureka: false
+  instance:
+    instance-id: springcoud-config
+    prefer-ip-address: true

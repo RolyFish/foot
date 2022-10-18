@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.camemax.dao.TeachersMapper">
+
+<!-- 按结果嵌套查询 ： 关联查询 -->
+<!--    <select id="getTeacherByIdHasStudents" resultMap="teacherGetStudentsByResult">-->
+<!--        select s.id studentId,s.name studentName,s.tid,t.tname teacherName,t.tid-->
+<!--        from students s,teachers t-->
+<!--        where s.tid = t.tid-->
+<!--          and t.tid = #{tid}-->
+<!--    </select>-->
+<!--    <resultMap id="teacherGetStudentsByResult" type="teachers">-->
+<!--        <id property="tid" column="tid"/>-->
+<!--        <result property="tname" column="teacherName"/>-->
+<!--        <collection property="teacherHasStudents" ofType="students">-->
+<!--            <id property="sid" column="studentId"/>-->
+<!--            <result property="sname" column="studentName"/>-->
+<!--            <result property="tid" column="tid" />-->
+<!--        </collection>-->
+<!--    </resultMap>-->
+
+<!--  按查询嵌套查询 ： 子查询  -->
+    <select id="getTeacherByIdHasStudents" resultMap="teacherGetStudentsBySelect">
+        select * from school.teachers where tid = #{tid}
+    </select>
+    <resultMap id="teacherGetStudentsBySelect" type="teachers">
+        <id property="tid" column="tid"/>
+        <collection property="teacherHasStudents" javaType="ArrayList" ofType="students" select="getStudentsByTeacherId" column="tid"/>
+    </resultMap>
+
+    <select id="getStudentsByTeacherId" resultType="students" resultMap="studentsMap">
+        select * from school.students where tid = #{tid}
+    </select>
+    <resultMap id="studentsMap" type="students">
+        <id property="sid" column="id"/>
+        <result property="sname" column="name"/>
+        <result property="tid" column="tid"/>
+    </resultMap>
+</mapper>

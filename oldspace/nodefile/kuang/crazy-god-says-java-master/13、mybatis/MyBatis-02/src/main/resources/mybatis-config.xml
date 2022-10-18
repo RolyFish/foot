@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- configuration标签 => 声明MyBatis核心配置 -->
+<configuration>
+    <!-- properties标签 => 读取外部properties文件 -->
+    <properties resource="dataSource.properties">
+        <property name="insideUsername" value="root"/>
+        <property name="insidePassword" value="123"/>
+    </properties>
+
+    <!-- typeAliases标签 => 设置别名，减少全限定名的冗余 -->
+    <typeAliases>
+        <typeAlias type="com.camemax.com.camemax.pojo.Users" alias="users"/>
+        <package name="com.camemax.pojo"/>
+    </typeAliases>
+    <!-- environments标签 => 设置MyBatis选用的环境信息 -->
+    <environments default="mysql">
+        <environment id="mysql">
+            <!-- transactionManager标签 => 事务管理 -->
+            <transactionManager type="JDBC"/>
+            <!-- dataSource标签 => 配置数据源属性 -->
+            <dataSource type="POOLED">
+                <property name="driver" value="${propertiesDriver}"/>
+                <property name="url" value="${propertiesUrl}"/>
+                <property name="username" value="${insideUsername}"/>
+                <property name="password" value="${insidePassword}"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <mappers>
+<!--        <mapper resource="mappers/usersMapper.xml"/>-->
+<!--        org.apache.ibatis.binding.BindingException: Invalid bound statement (not found): com.camemax.dao.UsersDao.getUsersInfo -->
+<!--        <mapper class="com.camemax.dao.UsersDao"/>-->
+<!--        <mapper url="classes/mappers/usersMapper.xml"/>-->
+        <package name="com.camemax.dao"/>
+    </mappers>
+</configuration>

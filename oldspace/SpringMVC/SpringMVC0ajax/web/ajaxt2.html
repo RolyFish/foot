@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="${pageContext.request.contextPath}/static/js/jquery-3.6.0.js"></script>
+    <script>
+        function jz() {
+            $.post("${p}")
+        }
+
+    </script>
+</head>
+<body>
+<input type="button" id="btn" value="加载数据" onclick="jz()"/>
+<table>
+    <tr>
+        <td>姓名</td>
+        <td>年龄</td>
+        <td>密码</td>
+    </tr>
+    <tbody>
+
+
+    </tbody>
+</table>
+</body>
+</html>

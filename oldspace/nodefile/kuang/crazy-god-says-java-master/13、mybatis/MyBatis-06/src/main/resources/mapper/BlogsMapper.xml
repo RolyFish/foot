@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.camemax.dao.BlogsMapper">
+
+    <insert id="addBlog" parameterType="blogs">
+        insert into test.blog values(
+            #{id},
+            #{title},
+            #{author},
+            #{createTime},
+            #{views}
+        )
+    </insert>
+
+    <sql id="if-title-author">
+        <if test="title != null">
+            and title = #{title}
+        </if>
+        <if test="author != null">
+            and author = #{author}
+        </if>
+    </sql>
+    <select id="getBlogs" resultType="blogs">
+        select * from test.blog where 1 = 1
+        <include refid="if-title-author"/>
+    </select>
+    
+    <select id="queryBlogsByChoose" resultType="blogs" parameterType="map">
+        select * from test.blog
+        <!-- <choose>标签： 选择性返回
+                <when>标签： 当其内部条件成立时返回
+                <otherwise>标签： 当所有条件都不满足时执行-->
+        <choose>
+            <when test=" title != null ">
+                <where>
+                   title = #{title}
+                </where>
+            </when>
+            <when test=" author != null">
+                <where>
+                    and author = #{author}
+                </where>
+            </when>
+            <otherwise>
+                <where>
+                    and views = 9999
+                </where>
+            </otherwise>
+        </choose>
+    </select>
+
+    <update id="updateBlogInfoBySet" parameterType="blogs">
+        update test.blog
+        <set>
+            <if test="title != null"> title = #{title},</if>
+            <if test="author != null" > author = #{author},</if>
+            <if test="create_time != null"> create_time = #{createTime},</if>
+            <if test="views != null"> views = #{views}</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="queryBlogsByTrim" parameterType="map" resultType="blogs">
+        select * from test.blog
+        <trim prefix="WHERE" prefixOverrides="AND |OR ">
+            <if test="titleMap != null">
+                and title = #{titleMap}
+            </if>
+
+            <if test="authorMap != null">
+                or author = #{authorMap}
+            </if>
+        </trim>
+    </select>
+
+    <update id="updateBlogInfoByTrim" parameterType="map">
+        update test.blog
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="authorMap != null">
+                author = #{authorMap},
+            </if>
+            <if test="titleMap != null">
+                title = #{titleMap},
+            </if>
+        </trim>
+        where id = #{idMap}
+    </update>
+</mapper>

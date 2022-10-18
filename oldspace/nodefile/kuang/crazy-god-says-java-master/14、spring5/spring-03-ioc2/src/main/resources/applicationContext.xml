@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+<!--import:团队合作开发使用-->
+
+<!--    张三-->
+    <import resource="beans.xml"/>
+<!--    李四-->
+    <import resource="beans2.xml"/>
+<!--    王五-->
+    <import resource="beans3.xml"/>
+
+</beans>
