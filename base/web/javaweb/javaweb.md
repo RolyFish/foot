@@ -454,24 +454,33 @@ resp.setCharacterEncoding("utf-8");
 >
 > 每一次请求都会有一个全新的request
 
-通过`req.getParamer()`获取请求参数
+- 通过`req.getParamer()`获取请求参数
+- attribute
 
-通过
+> 请求转发可以传递req对象
 
 ```java
-final Object name1 = req.getAttribute("name");
-req.setAttribute("name", "name");
+req.setAttribute("name","姓名");
+req.getRequestDispatcher("/demo").forward(req,resp);
+
+req.getAttribute("name");
 ```
 
-获取属性和设置属性，可用于请求转发，延长Request生命周期
+- zhongta
+
+> ServletContext对象代表整个web容器，所有servlet共享一个ServletContext，他的生命周期与web程序一致
+
+获取方式
+
+```java
+final ServletContext servletContext = getServletContext();
+```
 
 
 
 ##### Respones
 
-
-
-
+> response 为响应对象。可向网页输出文本、超文本。
 
 
 
