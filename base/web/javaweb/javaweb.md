@@ -454,6 +454,8 @@ resp.setCharacterEncoding("utf-8");
 >
 > 每一次请求都会有一个全新的request
 
+###### 基础
+
 - 通过`req.getParamer()`获取请求参数
 - attribute
 
@@ -466,9 +468,9 @@ req.getRequestDispatcher("/demo").forward(req,resp);
 req.getAttribute("name");
 ```
 
-- zhongta
+- ServletContext
 
-> ServletContext对象代表整个web容器，所有servlet共享一个ServletContext，他的生命周期与web程序一致
+> ServletContext对象代表整个web容器，所有servlet共享一个ServletContext，他与web容器共生死。
 
 获取方式
 
@@ -478,13 +480,135 @@ final ServletContext servletContext = getServletContext();
 
 
 
+###### 请求转发
+
+> 将请求委托给另一个servlet(接口)处理，委托处理的接口只能是内部接口。
+>
+> 可延长request生命周期
+
+使用：
+
+主要测请求转发request域中参数的传递：
+
+```java
+public class Servlet01 extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doPost(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        System.out.println("====1====getParameter===========");
+
+        final Enumeration parameterNames = req.getParameterNames();
+        while (parameterNames.hasMoreElements()) {
+            System.out.println(req.getParameter((String) parameterNames.nextElement()));
+        }
+        System.out.println("====1====getParameter===========");
+
+        System.out.println("====1====getAttribute===========");
+        final Enumeration attributeNames = req.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            System.out.println(req.getAttribute((String) attributeNames.nextElement()));
+        }
+        System.out.println("====1====getAttribute===========");
+        req.setAttribute("add", "add");
+        req.getRequestDispatcher("/servlet2").forward(req, resp);
+    }
+}
+
+public class Servlet02 extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doPost(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        System.out.println("====2===getParameter===========");
+
+        final Enumeration parameterNames = req.getParameterNames();
+        while (parameterNames.hasMoreElements()) {
+            System.out.println(req.getParameter((String) parameterNames.nextElement()));
+        }
+        System.out.println("====2====getParameter===========");
+
+        System.out.println("====2====getAttribute===========");
+        final Enumeration attributeNames = req.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            System.out.println(req.getAttribute((String) attributeNames.nextElement()));
+        }
+        System.out.println("====2====getAttribute===========");
+    }
+}
+```
+
+配置web.xml
+
+```xml
+<servlet>
+    <servlet-name>servlet1</servlet-name>
+    <servlet-class>com.roily.servlet.dispatcher.Servlet01</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>servlet1</servlet-name>
+    <url-pattern>/servlet1</url-pattern>
+</servlet-mapping>
+<servlet>
+    <servlet-name>servlet2</servlet-name>
+    <servlet-class>com.roily.servlet.dispatcher.Servlet02</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>servlet2</servlet-name>
+    <url-pattern>/servlet2</url-pattern>
+</servlet-mapping>
+```
+
+测试
+
+请求url：`http://localhost:8080/demo3/servlet1?value=1&name=2`
+
+![image-20221024112611452](javaweb.assets/image-20221024112611452.png)
+
 ##### Respones
 
 > response 为响应对象。可向网页输出文本、超文本。
 
+###### print  & write
 
+> resp有两种方式输出文件到网页上，分别是write  和  print。
 
+- 两者都是字符串，则无区别
+- 若输出的是整数，则write会通过ascll码转译，print不做转译
 
+```java
+public class ResponseWriterDemo1 extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doPost(req, resp);
+    }
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        final PrintWriter writer = resp.getWriter();
+        writer.write("resp Writer");
+        writer.write(97);
+        writer.println();
+        writer.println("resp Print");
+        writer.println(97);
+        writer.flush();
+        writer.close();
+    }
+}
+```
+
+![image-20221024150103957](javaweb.assets/image-20221024150103957.png)
 
 
 
