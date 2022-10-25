@@ -2133,7 +2133,9 @@ public void test() {
 
 > 作为局部变量
 
-不管是引用类型还是基本数据类型，都不可以使用等号赋值。但是如果引用数据类型存在修改方法的时候是可以修改对象的引用的。
+不管是引用类型还是基本数据类型，初始化后，都不可以使用等号重新赋值。
+
+但是引用类型存在修改api，则可以调用修改方法来修改引用所指对象。
 
 ```java
 @Test
@@ -2144,8 +2146,6 @@ public void test01() {
     System.out.println(sb.toString());
 }
 ```
-
-
 
 > 作为成员变量
 
@@ -2180,6 +2180,8 @@ class MemberField {
 ###### 静态方法
 
 > 和静态变量一样，静态方法也属于类，以`类名 。方法名`调用，在此期间不必创建类的实例，因此会方便许多。
+
+> 静态方法属于类，和类共生死，在类初始化时候，静态方法就已经有了，也就是说静态方法必须有实现
 
 > 比如说集合工具类返回空集合Collections.emptyList();
 
@@ -2221,7 +2223,7 @@ public class AboutStatic {
 
 <img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252302.png" alt="image-20220802164043054" style="zoom:67%;" />
 
-###### 静态类
+###### 静态内部类
 
 > 静态内部类定义于普通类内部，可以和普通类一样使用。
 >
@@ -2252,6 +2254,13 @@ class TestClass {
     public static void main(String[] args) {
         AboutStaticClass.StaticClass staticClass = new AboutStaticClass.StaticClass();
         System.out.println(AboutStaticClass.StaticClass.b);
+
+        //报错 非静态内部类的创建依赖于外部类实例
+        // final AboutStaticClass.InnerClass innerClass = new AboutStaticClass.InnerClass();
+
+        //ok
+        final AboutStaticClass aboutStatic = new AboutStaticClass();
+        final AboutStaticClass.InnerClass innerClass = aboutStatic.new InnerClass();
     }
 }
 @FunctionalInterface
@@ -2259,6 +2268,99 @@ interface IInterface{
     void method();
 }
 ```
+
+非静态内部类和静态内部类的区别：
+
+非静态内部类依赖于外部实例，静态内部类则不需要。
+
+
+
+###### 静态导包
+
+> 通过静态导包，在引用静态变量和方法的时候可不再指明ClassName，可大大降低代码可读性。
+
+使用如下格式
+
+```java
+import static com.roily.booknode.javatogod._01faceobj.javakeywords.aboutstatic.StaticClass1.method;
+```
+
+例子：
+
+```java
+public class StaticClass1 {
+    static String str = "static str";
+    static void method(){
+    }
+}
+//正常情况
+public class Test1 {
+    //引用静态变量，方法
+    void method2(){
+        final String staticStr = StaticClass1.str;
+        StaticClass1.method();
+    }
+}
+//静态导包
+import static com.roily.booknode.javatogod._01faceobj.javakeywords.aboutstatic.StaticClass1.method;
+import static com.roily.booknode.javatogod._01faceobj.javakeywords.aboutstatic.StaticClass1.str;
+public class Test2 {
+    //引用静态变量，方法
+    void method2(){
+        final String str2 = str;
+        method();
+    }
+}
+```
+
+
+
+###### 初始化顺序
+
+> (静态/非静态)成员变量和(静态/非静态)代码块的初始化顺序取决于代码顺序。
+
+例子：
+
+```java
+public class Parent {
+    static {
+        System.out.println("Parent 静态代码块");
+    }
+    {
+        System.out.println("Parent 普通代码块");
+    }
+    public Parent() {
+        System.out.println("Parent 构造方法");
+    }
+}
+public class Son extends Parent{
+    static {
+        System.out.println("Son 静态代码块");
+    }
+    {
+        System.out.println("Son 普通代码块");
+    }
+    public Son() {
+        System.out.println("Son 构造方法");
+    }
+    public static void main(String[] args) {
+        final Son son = new Son();
+    }
+}
+```
+
+![image-20221025173049847](java成神之路(基础).assets/image-20221025173049847.png)
+
+##### super
+
+> 通过super关键字可访问父类成员。
+>
+> super关键字不可出现在静态环境中（静态方法）
+
+- 访问父类构造函数：super()访问父类构造函数，从而委托父类完成一些初始化操作。
+- 访问父类成员：包括属性和方法 
+
+
 
 ##### const
 
@@ -2706,6 +2808,153 @@ public void testy() {
 
 
 
+#### 常用类
+
+
+
+##### Object
+
+> 看一下Object类
+
+![image-20221025101057243](java成神之路(基础).assets/image-20221025101057243.png)
+
+
+
+###### equals
+
+> 等价关系
+
+**特点：**
+
+- 自反性     x.equals(x) = true
+- 对称性
+- 传递性
+- 一致性   多次调用equals()方法，条件不变，结果不变
+- 与null比较都为false
+
+**equals和==**
+
+- equals()是等价，`==`是完全相等。
+- equals()是java方法，只能对象之间进行比较。 `==`随意比较
+- equals()返回true，`==`不一定返回true
+
+**实现equals()**
+
+equals()是object中的public方法，任何类继承自object拥有此方法，Object中的equals方法是通过`==`实现的。
+
+我们如何实现？ 
+
+- 首先通过 ==`判断是否指向同一个引用，是则返回true
+- 判断类型是否相等，否则返回false
+- 向下强转
+- 再进行主要逻辑判断
+
+参考String的equals()方法的实现：
+
+```java
+public boolean equals(Object anObject) {
+    if (this == anObject) {
+        return true;
+    }
+    if (anObject instanceof String) {
+        String anotherString = (String)anObject;
+        int n = value.length;
+        if (n == anotherString.value.length) {
+            char v1[] = value;
+            char v2[] = anotherString.value;
+            int i = 0;
+            while (n-- != 0) {
+                if (v1[i] != v2[i])
+                    return false;
+                i++;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+```
+
+
+
+###### hashCode
+
+> hashcode，哈希值也叫散列值，通过散列值可快速寻址，hashCode可进行对象之间对比。相较于equals效率更高。多用于去重情况下的频繁比较，比如HashSet中判断元素是否重复。
+
+两个对象的hashcode和equals有以下特点
+
+- equals()方法返回true，两个对象的hashCode一定相等
+- hashCode相等，两个对象的equals()方法不一定返沪true
+
+
+
+如何实现hashCode()：
+
+同一个对象的哈希值一定相等，即不可使用随机数生成算法代表哈希值。哈希值一定根据对象特点，均匀散列。
+
+参考String的hashCode实现
+
+```java
+public int hashCode() {
+    int h = hash;
+    if (h == 0 && value.length > 0) {
+        char val[] = value;
+        for (int i = 0; i < value.length; i++) {
+            h = 31 * h + val[i];
+        }
+        hash = h;
+    }
+    return h;
+}
+```
+
+相当于一个数列的和
+
+s[0]*31^(n-1) + s[1]*31^(n-2) + ... + s[n-1]
+
+理解的话，看成一个31进制的数，每一特点位均匀散列在31进制的数的每一位上，为何选31？因为这是个奇素数。
+
+
+
+###### toString
+
+> 默认返回  XXXX@123abc，后面是16进制的散列值表示。
+>
+> 需定制显示得重写toString
+
+###### clone
+
+> object的clone()方法是protected的，也就是必须重写clone()方法，其他类才可以直接调用。
+>
+> 重写clone()方法，必须标注cloneable接口。
+
+clone()方法的替代方案：
+
+拷贝构造函数
+
+```java
+public class CloneExample {
+    private StringBuilder sb;
+    private String str;
+    public CloneExample(StringBuilder sb, String str) {
+        this.sb = sb;
+        this.str = str;
+    }
+    public CloneExample(CloneExample clone) {
+        this.str = clone.str;
+        this.sb = new StringBuilder(clone.sb.toString());
+    }
+    public static void main(String[] args) {
+        final CloneExample cloneExample1 = new CloneExample(new StringBuilder(), "");
+        final CloneExample cloneExample2 = new CloneExample(cloneExample1);
+    }
+}
+```
+
+
+
+
+
 ### 异常处理
 
 > `ThrowAble`类下有两个重要的子类：`Error`和`Exception`,并且这两个子类下面也存在着大量的子类。
@@ -2716,7 +2965,7 @@ public void testy() {
 
 #### 异常类型
 
- 主要分两大类：
+ `Exception`主要分两大类：
 
 - 受检异常(checked   exception)
 - 非受检异常(unchecked   exception)
@@ -5598,9 +5847,13 @@ public static void main(String[] args) {
 
 ### 范型
 
-> Java范型时JDK5引入的特性，允许在定义类、接口和方法的时候可以使用类型参数。声明的类型参数会在使用的时候替换为具体的类型。
+> Java范型时JDK5引入的特性，允许在定义类、接口和方法的时候可以使用类型参数。Java范型是==伪范型==，即Java在语法上支持范型，但会在编译阶段会进行==类型擦除==，将范型替换为原始类型。在真正使用的时候会进行强制转化得到真正需要的类型。
 >
-> 范型是java提供的语法糖，我们所定义的范型在编译期间都会被类型擦除，使用泛型可提高代码的复用性。Java的集合框架都使用了范型，我们平常所定义的List<String>、List<Iteger>这两个集合类型是相同的，在编译的时候会进行类型擦除，擦除后的类型变为原始类型List。
+> java范型是java提供的语法糖，我们所定义的范型在编译期间都会进行类型擦除，使用泛型可提高代码的复用性。Java的集合框架都使用了范型，我们平常所定义的List<String>、List<Iteger>这两个集合类型是相同的，在编译的时候会进行类型擦除，擦除后的类型变为原始类型List。
+
+#### 为范型
+
+- 
 
 #### 类型擦除(type erasue)
 
