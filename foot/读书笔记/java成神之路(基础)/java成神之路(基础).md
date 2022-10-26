@@ -5851,9 +5851,187 @@ public static void main(String[] args) {
 >
 > java范型是java提供的语法糖，我们所定义的范型在编译期间都会进行类型擦除，使用泛型可提高代码的复用性。Java的集合框架都使用了范型，我们平常所定义的List<String>、List<Iteger>这两个集合类型是相同的，在编译的时候会进行类型擦除，擦除后的类型变为原始类型List。
 
-#### 为范型
 
-- 
+
+#### 范型优点
+
+- 代码复用
+
+  >  范型类和范型方法，共用一份字节码文件
+
+- 类型安全
+
+  > 即使用时可指定范型，编译器会进行类型检查和帮助强制类型转化
+
+
+
+两个例子说明：
+
+此处使用范型方法对比普通方法，范型共享字节码，可实现代码复用
+
+```java
+public class FanxClass {
+    private static void add(int a, int b) {
+        System.out.println("int  a + b : " + (a + b));
+    }
+    private static void add(double a, double b) {
+        System.out.println("double  a + b : " + (a + b));
+    }
+    private static void add(float a, float b) {
+        System.out.println("float  a + b : " + (a + b));
+    }
+
+    //声明范型方法
+    private static <T extends Number> void addF(T a, T b){
+        System.out.println(a.getClass()+ " a + b : " + (a.doubleValue() + b.doubleValue()));
+    }
+
+    public static void main(String[] args) {
+        addF(1,2);
+        addF(1.0,2.0);
+        addF(1.0f,2.0f);
+    }
+}
+```
+
+类型安全：
+
+编译器提高编译前检查
+
+反编译查看可知 1、List不支持基本数据类型，会对基本数据类型进行自动装箱   2、编译器 类型擦除、强制转化  
+
+```java
+public class NeedNotCast {
+    public static void main(String[] args) {
+        
+        //不指定范型，也就是Object，容易CastException
+        final List objList = new ArrayList();
+        objList.add(1);
+        objList.add("1");
+        objList.add(null);
+
+        //new 关键字后面的<>里面不用声明类型，java会进行类型推断
+        final List<Integer> integers = new ArrayList<>();
+        // integers.add("1");//报错
+        integers.add(1);//报错
+        //不用强制转化
+        final Integer integer = integers.get(0);
+    }
+}
+```
+
+```java
+public static void main(String args[])
+{
+    List objList = new ArrayList();
+    objList.add(Integer.valueOf(1));
+    objList.add("1");
+    objList.add(null);
+    List integers = new ArrayList();
+    integers.add(Integer.valueOf(1));
+    Integer integer = (Integer)integers.get(0);
+}
+```
+
+
+
+#### 范型基本使用
+
+> 范型三种使用方式，范型类、范型接口、范型方法
+
+##### 范型类
+
+> 注意这里的method1和method2不可称作为范型方法，这两个方法中的范型依赖于具体实例。
+
+```java
+@Data
+@AllArgsConstructor
+public class FanXClass<T> {
+    T t;
+    void method1(T t) {
+        System.out.println("T  t :" + t.getClass() + "和  FanXClass<T> 类型一致");
+    }
+    T method2(T t) {
+        return t;
+    }
+    public static void main(String[] args) {
+
+        final FanXClass<String> stringFanXClass = new FanXClass<>("FanXClass");
+        final String t = stringFanXClass.t;
+        stringFanXClass.method1("");
+
+        final FanXClass<Integer> intFanXClass = new FanXClass<>(1);
+        final Integer t2 = intFanXClass.t;
+        intFanXClass.method1(t2);
+    }
+}
+```
+
+##### 范型接口
+
+```java
+public interface FanXInterface<T> {
+    T method(T t);
+}
+class FanXInterfaceImpl<T> implements FanXInterface<T>{
+    @Override
+    public T method(T t) {
+        return t;
+    }
+    public static void main(String[] args) {
+        final FanXInterface<String> fanXInterface = new FanXInterfaceImpl<>();
+        fanXInterface.method("str");
+    }
+}
+```
+
+
+
+##### 范型方法
+
+> 范型方法指的是在调用方法时指定具体类型。
+>
+> 范型方法的好处：例如上面范型类的method1和method2，其类型在实例new出来就已经确定了，如果想要另一种类型则需要重新new。而范型方法则不需要。
+
+```java
+public class FanXMethod<T> {
+    /**
+     * 范型方法声明
+     */
+    private <T> void method1(T t) {
+        System.out.println(t.getClass());
+    }
+    /**
+     * @param t
+     * @param <T> 声明此方法为一个范型方法
+     * @return 返回类型为范型
+     */
+    private static <T> T method2(T t) {
+        System.out.println(t.getClass());
+        return t;
+    }
+   
+    public static void main(String[] args) {
+        //范型方法使用，范型方法和所在范型类范型无关
+        final FanXMethod<Integer> integerFanXMethod = new FanXMethod<>();
+        integerFanXMethod.method1("123");
+       
+        FanXMethod.method2("method2");
+    }
+}
+```
+
+
+
+#### 伪范型
+
+
+
+
+
+
+
+
 
 #### 类型擦除(type erasue)
 
@@ -6005,15 +6183,16 @@ public void method1(List<Integer> list){
 - K     key   (键值)
 - V     value   （value值）
 - N   number    数值类型
-- ？   未知java类型（无限制通配符类型）
 
-> 对于普通泛型符号(除？以外)，必须预先声明类型才可以使用，也就是在我们使用的时候必须确定类型，否则编译报错。
+> 对于普通泛型符号(除？以外)，必须预先声明才可以使用
 
 <img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208281522005.png" alt="image-20220828152230268" style="zoom:50%;" />
 
-> 而对于?通配符来说无需事先声明，表示任意类型。正是因为无需声明类型，那么对于编译器来说它不知道如何对类型进行强转，就造成了此方式的泛型无法添加元素，且获取得到的元素也只能是Object类型。
+？   未知java类型（无限制通配符类型）
+
+> 如下List<?> list 表示此方法可以接受任意类型的集合对象。
 >
-> 如下List<?> list 表示此方法可以接受任意类型的集合对象
+> 由于无从获知list内元素具体类型，因此get出来的元素都是Object的，且不可添加元素
 
 ```java
 class  TestClass2 {
@@ -6031,49 +6210,137 @@ class  TestClass2 {
 }
 ```
 
+
+
 ##### 限定通配符
 
-> 对于非限定通配符来说，也有不好的地方，它不限制类型，那么在方法逻辑中想使用指定类型的方法时需要强制转化，如此可能出现`ClassCastException`异常。
+
+
+###### 例子
+
+> 对于非限定通配符来说，它不限制类型，编译前也可以通过类型检查，业务过程手动强制转化可能出现`ClassCastException`异常。
+>
+> 先看一个例子：
 
 ```java
-class TestClassC<T> {
-    T t;
-    public void test(T t1,T t2){
-        final Comparable t1c = (Comparable) t1;
-        System.out.println(t1c.compareTo(t2));
+class TestExtendsA<T> {
+    /**
+     * 此方法目的是接受两个参数进行比较
+     */
+    void funA(T t1, T t2) {
+        //强转
+        Comparable c1 = (Comparable) t1;
+        Comparable c2 = (Comparable) t2;
+        System.out.println(c1.compareTo(c2));
+    }
+    public static void main(String[] args) {
+        final TestExtendsA<Fruit> fruitTestExtendsA = new TestExtendsA<>();
+        //classCastException
+        fruitTestExtendsA.funA(new Fruit(), new Fruit());
+    }
+}
+```
+
+主要看list3  和  listB3的对比
+
+list3指定范型方法类型为Comparable，而传入的是String通过不了类型检查。
+
+lstB3指定范型为Comparable及其派生类，传入的String符合要求
+
+```java
+class TestAB {
+
+    static void funA(List<Comparable> list) {
+        final Comparable comparable = list.get(0);
+    }
+
+    static void funB(List<? extends Comparable> list) {
+        final Comparable comparable = list.get(0);
+    }
+
+    public static void main(String[] args) {
+        //没有问题
+        final ArrayList list1 = new ArrayList<>(Arrays.asList("1", "2", "3"));
+        funA(list1);
+
+        //ClassCastException
+        final ArrayList list2 = new ArrayList<>(Collections.singletonList(new StringBuilder()));
+        funA(list2);
+
+        //通过不了类型检查
+        final ArrayList<String> list3 = new ArrayList<>(Arrays.asList("1", "2", "3"));
+        funA(list3);
+
+        //没有问题
+        final ArrayList listB1 = new ArrayList<>(Arrays.asList("1", "2", "3"));
+        funB(listB1);
+
+        //ClassCastException
+        final ArrayList listB2 = new ArrayList<>(Collections.singletonList(new StringBuilder()));
+        funB(listB2);
+
+        // 可以
+        final ArrayList<String> listB3 = new ArrayList<>(Arrays.asList("1", "2", "3"));
+        funB(listB3);
     }
 }
 ```
 
 
 
-> 如上我们可以限定test的参数类型为Comparable的实现类。所以java为我们引入了限定通配符
+###### 上界
 
-限定通配符对类型进行限制，java中有两种限定通配符：
 
-- 表示上界，<? extends T>
 
-  > 泛型类型必须为T或T的派生类（可以是接口、也可以是子类）这里没有用任何意义上的继承关系。
-  >
-  > <? extends T>表示可接收任意T即T的派生类类型。
-  >
-  > 用于取值。
+> 表示上界，<? extends T>,可接收的泛型类型必须为T或T的派生类（可以是接口、也可以是子类）这里没有用任何意义上的继承关系
+
+> <? extends T>表示可接收任意T即T的派生类类型。
+
+> 用于取值。不可放值。
+
+> <? extends T>编译时类型擦除到上边界，即用T代替范型，这时需要一次向上转型，运行时将其当作T来处理。
 
 ![image-20220828164524819](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208281645961.png)
 
-- 表示下界,<？  super T>,   即类型必须为T或T的父类型
+> 为何作为上界不可存值
 
-  > 泛型类型必须为T或T的父类。
-  >
-  > <? super T>表示可接收任意T即T的父类类型。
-  >
-  > 用于存值。
+List<String>只能添加String类型，而编译期间类型会被擦除，当作Comparable来处理，那么添加的类型就不确定了。
 
-![image-20220828165307611](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208281653029.png)
 
-> 指定类型就不行了，因为String不是Fruit的父类类型
 
-![image-20220828165336604](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208281653641.png)
+
+
+###### 下界
+
+> 表示下界,<？  super T>,   即可接受的类型必须为T或T的父类型
+>
+> 泛型类型必须为T或T的父类。
+>
+> <? super T>表示可接收任意T即T的父类类型。
+>
+> 用于存值。
+>
+> <? super T>编译时类型擦除到最左边界，最右边界是Object，即用Object代替范型，运行时将其当作Object来处理。
+
+```java
+class TestSG{
+
+    static void superGet(List<? super String> list){
+        list.add("z");
+        //get得到的时String及String的父类，不能确定具体类型，没有意义
+        final Object s = list.get(0);
+    }
+
+    public static void main(String[] args) {
+        final List<Integer> integers = new ArrayList<>(Arrays.asList(1,2,3));
+        final List<Comparable> comparableList = new ArrayList<>(Arrays.asList(1,2,3));
+        // 报错
+        // superGet(integers);
+        superGet(comparableList);
+        comparableList.forEach(System.out::print);
+    }
+}
+```
 
 > 关于存取值问题
 
@@ -6086,6 +6353,83 @@ class TestClassC<T> {
 > 如果对于泛型有限制，则使用限定通配符 extents支持取，super支持存。
 >
 > ？对于取是不友好的，因为？表示任意java类型，那么取出来的一定是Object，而Object没有意义，强转存在ClassCastExpression异常风险。
+
+###### 多限制
+
+> 使用  `&` 表示多限制
+
+```java
+static <T extends Comparable<? super T> & CharSequence> void method(T t) {
+    System.out.println(t);
+}
+
+public static void main(String[] args) {
+    method("123");
+}
+```
+
+
+
+##### 范型数组
+
+> 如何定义范型数组？
+
+方式一：
+
+```java
+//ok
+final Demo[] demos1 = new Demo[10];
+//ok
+final Demo<?>[] demos2 = new Demo<?>[10];
+
+//错误 Generic array creation
+// final Demo<?>[] demos3 = new Demo<String>[10];
+
+//可以  需要强转
+final Demo<String>[] demos4 = (Demo<String>[]) new Demo<?>[10];
+
+
+@Data
+class Demo<T> {
+    T t;
+}
+```
+
+方式二：
+
+```java
+static <T> T[] createFunc(T... t) {
+    return t;
+}
+
+static <T> void printFunc(T[] tArr) {
+
+    for (int i = 0; i < tArr.length; i++) {
+        System.out.print(tArr[i]);
+    }
+    System.out.println("    "+tArr.getClass());
+}
+
+public static void main(String[] args) {
+    printFunc(createFunc(1, 2, 3, 4, 5, 6));
+
+    printFunc(createFunc("a", "b", "c", "d", "e", "f"));
+}
+```
+
+![image-20221026154852124](java成神之路(基础).assets/image-20221026154852124.png)
+
+> 使用。
+
+```java
+(String[]) Array.newInstance(String.class, 10);
+
+static <T> T[] createArray(Class<T> type, int size) {
+    return (T[]) Array.newInstance(type, 10);
+}
+```
+
+
 
 ### 设计模式
 
