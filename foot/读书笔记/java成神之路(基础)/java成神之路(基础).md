@@ -6023,13 +6023,264 @@ public class FanXMethod<T> {
 
 
 
-#### 伪范型
+#### 伪范型  &  类型擦除
+
+> 理解java中范型的伪范型和类型擦除机制。
+
+##### 伪范型
+
+> 范型是jdk1.5的时候才引入的，为了兼容采用伪范型。
+>
+> 伪范型的意思就是，使用上(编码中)支持范型，底层通过类型擦除其实不支持范型。
+>
+> 范型是语法糖，方便编码，通过  编译前类型检查  +  编译期间类型推断和类型擦除实现。
+
+##### 类型擦除
+
+> 类型擦除是Java伪范型的具体实现。
+>
+> 类型擦除指的是在编译期间将所有范型替换为(具体类型)原始类型。
+
+###### 类型擦除原则
+
+- 擦除范型，即去掉`<>`及其包裹内容
+- 类型推断，即根据范型上下界推断并且将所有的类型参数替换为原生态类型。
+  - 如果是无限定通配符，类型参数替换为Object类型
+  - 如果是限定通配符，替换为最左边界类型即父类 型。 例如：`<？ extends Comparable>`替换为Comparable，`<?  super String> `替换为Object。
+- 类型强转，为保证类型安全，在必要时添加强制类型转化
+- 保证范型多态，为保证范型多态，会自动生成桥接方法
+
+例子：
+
+> 非限定通配符
+
+```java
+@Data
+public class Demo01<T> {
+    T t;
+    public void method() {
+        /**
+         * 这里我们声明范型参数为String
+         * 由于这是非限定通配符，在编译器期间会进行类型擦除，范型类型替换为Object
+         */
+        final Demo01<String> stringDemo01 = new Demo01<>();
+        /**
+         * 由于类型擦除，这里的getT返回类型为Object
+         * 这里我们使用String接收，所以必须进行类型强转
+         */
+        final String t = stringDemo01.getT();
+        //setT参数为Object，允许向上转型，可接收String类型
+        stringDemo01.setT("str");
+    }
+
+}
+```
+
+反编译查看，jad  [-s]  输出文件类型java  xxxx.class
+
+```java
+public class Demo01 {
+    Object t;
+    public Demo01() {
+    }
+    public Object getT() {
+        return t;
+    }
+    public void setT(Object t) {
+        this.t = t;
+    }
+    public void method() {
+        Demo01 stringDemo01 = new Demo01();
+        String t = (String) stringDemo01.getT();
+        stringDemo01.setT("str");
+    }
+}
+```
+
+> 限定通配符
+
+1
+
+```java
+@Data
+public class Demo02<T extends Comparable> {
+    T t;
+    public void method() {
+        /**
+         * 这里我们声明范型参数为String
+         * 由于这是限定通配符，在编译器期间会进行类型擦除，范型类型替换为范型左边界Comparable
+         */
+        final Demo02<String> stringDemo01 = new Demo02();
+        /**
+         * 由于类型擦除，这里的getT返回类型为Comparable
+         * 这里我们使用String接收，所以必须进行类型强转
+         */
+        final String t = stringDemo01.getT();
+        //setT参数为Comparable，允许向上转型，可接收String类型
+        stringDemo01.setT("str");
+    }
+}
+```
+
+反编译查看
+
+```java
+public class Demo02 {
+    public Demo02() {
+    }
+    Comparable t;
+    public Comparable getT() {
+        return t;
+    }
+    public void setT(Comparable t) {
+        this.t = t;
+    }
+    public void method() {
+        Demo02 stringDemo01 = new Demo02();
+        String t = (String) stringDemo01.getT();
+        stringDemo01.setT("str");
+    }
+}
+```
+
+2
+
+```java
+public static void method1(List<? super String> list ) {
+    /**
+     * 可以取，取到的是Object，想要用得自己强转，没意义
+     */
+    final Object o = list.get(0);
+    String s = (String)o;
+
+    /**
+     * 可以  add
+     */
+    list.add("");
+
+}
+
+public static  void method(List<? extends Comparable> list ) {
+    final Comparable comparable = list.get(0);
+    /**
+     * 不让add，怕add过后，这个list取值的时候会出选 ClassCastException
+     * 
+     * 由于类型擦除，这里可以add所有Comparable得派生类型，比如Integer
+     */
+    // list.add("");
+}
+```
+
+反编译
+
+```java
+public class Demo03{
+    public static void method1(List list){
+        Object o = list.get(0);
+        String s = (String)o;
+        list.add("");
+    }
+    public static void method(List list){
+        Comparable comparable = (Comparable)list.get(0);
+    }
+}
+```
 
 
 
+###### 类型擦除具体操作
+
+> 无限定类型参数，类型擦除，替换为Object.
+
+如下例子包含 范型类、范型接口、范型方法
+
+![image-20221027151744399](java成神之路(基础).assets/image-20221027151744399.png)
+
+> 限定参数类型，先擦除，再替换成左边界。
+
+也是一样。
+
+```java
+public static <T extends Number> void valueT(T t) {
+    T tTemp = t;
+}
+//替换为
+public static void valueT(Number t) {
+    Number tTemp = t;
+}
+```
 
 
 
+###### 如何证明类型擦除
+
+> 范型只是为了方便编码，在编译期范型参数就都会被擦除，如何证明这个现象呢？
+
+- 反编译
+
+> 真正会加载进jvm得是.class字节码文件，可以利用反编译工具查看其编译后的代码逻辑。
+
+- class对象
+
+> class的范型采用的是CodeSharing方式，共享字节码。
+
+```java
+/**
+ * 共享字节码
+ */
+final ArrayList<String> strings = new ArrayList<>();
+final ArrayList<Integer> integers = new ArrayList<>();
+System.out.println(strings.getClass() == integers.getClass());//true
+```
+
+- 利用反射
+
+> 反射是java提供的强大功能，可以利用反射窥探class字节码文件信息
+
+```java
+/**
+ * 声明此方法只接受，Comparable的派生类型。他会在编译前进行类型检查，运行期间范型被擦除
+ */
+static <T extends Comparable> T method(T t) {
+    return t;
+}
+public static void main(String[] args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    final Demo05 d5 = new Demo05();
+    final Method method = Demo05.class.getDeclaredMethod("method",Comparable.class);
+    //ok
+    System.out.println(method.invoke(d5,"abc"));
+    //IllegalArgumentException
+    System.out.println(method.invoke(d5,new StringBuilder()));
+}
+```
+
+```java
+//限制只能添加String类型
+final ArrayList<String> list = new ArrayList<>();
+//ok
+list.add("abc");
+//编译通过不了
+// list.add(new Object());
+
+//这样就可以通过
+final Method add = list.getClass().getMethod("add", Object.class);
+add.invoke(list, 123);
+
+//但是，取值的时候就苦逼了.ClassCastException
+final String s = list.get(1);
+```
+
+
+
+###### 原始类型 &  范型变量类型
+
+> 原始类型指的是编译期间经过类型擦除，保留在字节码中的真正类型。
+>
+> 范型变量类型指的是，范型可接受的类型。
+
+- 在指定范型的情况下
+
+指定了范型，那么
 
 
 
