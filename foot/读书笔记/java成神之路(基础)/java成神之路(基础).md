@@ -6276,11 +6276,300 @@ final String s = list.get(1);
 
 > 原始类型指的是编译期间经过类型擦除，保留在字节码中的真正类型。
 >
-> 范型变量类型指的是，范型可接受的类型。
+> 范型变量类型指的是可接受的类型，如下
 
-- 在指定范型的情况下
+- 如果不指定类型
 
-指定了范型，那么
+> 如果我们不指定范型类型，那么编辑器会根据参数类型进行类型推断，范型类型为几个参数的最小级父类
+
+```java
+public class Demo06 {
+    /**
+     * 这个范型方法，是非限定范型，编译期间类型擦除，替换为Object
+     *
+     * 原始类型为Object
+     */
+    static <T> T method(T t1, T t2){
+        return t2;
+    }
+    static <T> List<T> method(List<T> t1, List<T> t2){
+        return t2;
+    }
+
+    public static void main(String[] args) {
+
+        /**
+         * 这里两个参数类型都会自动装箱为Integer.valueOf()
+         * 返回结果是Object强转为Integer，所以范型类型为Integer
+         */
+        final Integer v1 = Demo06.method(1, 1);
+        /**
+         * 这里参数一为Integer 参数二为Double
+         * 返回结果为Object需要强转为两个参数的共同最小级父类，所以范型类型为Number
+         */
+        final Number v2 = Demo06.method(1, 1.0);
+        /**
+         * 以下同理
+         */
+        final Serializable str = Demo06.method(1, "str");
+        final Object method = Demo06.method(1, new Demo06());
+        
+        final List<? extends Serializable> method1 = Demo06.method(Collections.singletonList(1), Collections.singletonList(""));
+    }
+
+}
+```
+
+
+
+- 如果指定类型
+
+> 如果指定了参数类型，那么就只能放指定的类型以及其子类型
+
+```java
+final Integer v3 = Demo06.<Integer>method(1, 1);
+// 报错
+// final Integer v4 = Demo06.<Integer>method(1, 1.1);
+final List<? extends Serializable> method2 = Demo06.<Integer>method(Collections.singletonList(1), Collections.singletonList(1));
+```
+
+
+
+###### 编译前类型检查
+
+> 范型的编译前检查如何理解？
+>
+> 假设我们指定范型类型为String，添加Integer就会报错。编译期间范型擦除不是会将类型擦除到Object么？为何不可添加？
+>
+> 所以说类型检查是发生在编译期前的，类型检查保证了只能使用指定范型类型
+
+- 范型的类型检查发生在编译前
+
+  ![image-20221028143737579](java成神之路(基础).assets/image-20221028143737579.png)
+
+- 范型类型检查针对引用，不针对具体实例
+
+  ```java
+  public void test2() {
+  
+      /**
+       *  ok  有警告
+       */
+      final List list1 = new ArrayList<String>();
+      list1.add(1);
+      list1.add("str");
+  
+      /**
+       *  ok  有警告，和上面等价
+       */
+      final List list2 = new ArrayList();
+      list2.add(1);
+      list2.add("str");
+  
+      /**
+       * 此刻 new ArrayList<String>();  《》中String是置灰的
+       */
+      final List<String> list3 = new ArrayList<String>();
+      list3.add("str");
+      // list3.add(1);//报错
+  
+  }
+  ```
+
+- 范型类型不考虑继承关系
+
+  ![image-20221028150041874](java成神之路(基础).assets/image-20221028150041874.png)
+
+
+
+###### 范型多态 & 桥接方法
+
+> 多态可发生在继承关系中，也可发生在实现关系中。根据不同实例类型，表现不同得行为。 范型也满足多态，关键就在于桥接方法。
+
+先看两个例子：分别代表继承和实现
+
+原：
+
+```java
+class Parent<T> {
+    void method(T t) {
+
+    }
+}
+class Son extends Parent<Date> {
+    @Override
+    void method(Date date) {
+        super.method(date);
+    }
+}
+```
+
+反编译：使用javap   或  jad
+
+```java
+class Parent {
+    Parent() {
+    }
+    void method(Object obj) {
+    }
+}
+class Son extends Parent {
+    Son() {
+    }
+    void method(Date date) {
+        super.method(date);
+    }
+    volatile void method(Object obj) {
+        method((Date) obj);
+    }
+}
+```
+
+原：
+
+```java
+interface IPerson<T> {
+    void method(T t);
+}
+class CPerson implements IPerson<String> {
+    @Override
+    public void method(String s) {
+    }
+}
+```
+
+反编译：
+
+```java
+interface IPerson{
+    public abstract void method(Object obj);
+}
+class CPerson implements IPerson {
+    CPerson() {
+    }
+    public void method(String s1) {
+    }
+    public volatile void method(Object obj) {
+        method((String) obj);
+    }
+}
+```
+
+> 子类重写服了和实现父类都有@Override标识，表示重写，且是合法的，可通过编译。
+>
+> 如果但从java源代码来看，这必然会造成多态的冲突。原因在于：父类范型擦除到Object，子类限定了父类范型为Date，父类和子类方法参数类型不一样，也就是未构成重写而是构成重载。
+>
+> 回头再看反编译后的代码，发现子类（实现类）都有一个被Volatile修饰的方法，此方法和父类(接口)构成重写关系，也就是当子类的实例指向范型父类的引用，方法调用时调用的其实是桥接方法，通过桥接方法来调用具体实现方法。
+
+```java
+//ok
+final Parent<Date> son1 = new Son();
+son1.method(new Date());
+
+//桥接方法进行类型强转，ClassCastException
+final Parent son2 = new Son();
+son2.method(" ");
+
+// 编译报错
+// final Parent<String> son3 = new Son();
+```
+
+
+
+###### 泛型类型不可为基本类型
+
+> 类型擦除后必为引用类型，基本类型和引用类型不可互相引用。
+
+
+
+###### 范型类型不可实例化
+
+> 范型类型不可实例化，根本原因是由于类型擦除。
+>
+> 如果是非限定类型，类型擦除后是Object，new Object() 没有意义
+>
+> 如果是限定类型，类型擦除到左边界，左边界是什么呢？接口还是具体类呢？
+>
+> 所以范型不可实例化
+
+必须实例化范型，可利用反射实现
+
+```java
+static <T> T newInstance(Class<T> tClass) throws InstantiationException, IllegalAccessException {
+    return tClass.newInstance();
+}
+```
+
+
+
+##### 泛型类中的静态成员
+
+> 泛型类中的范型静态成员不可使用范型类所声明的范型参数。
+>
+> 因为范型类中的范型参数是在范型类实例化的时候指定的，而范型静态成员不属于实例，也就无法确定其类型，所以不支持范型静态成员。
+
+例：
+
+![image-20221028171605590](java成神之路(基础).assets/image-20221028171605590.png)
+
+
+
+不使用范型类所声明的范型是可以的，如下定义的静态范型方法：
+
+> 静态方法声明的范型和类声明的范型不是同一个范型。
+>
+> 此范型静态方法，在调用时会指定范型参数类型
+
+```java
+public class Demo10<T> {
+    static <T> T method(T t){
+        return t;
+    }
+}
+```
+
+
+
+###### 定义范型异常
+
+> 可以定义范型异常么？
+>
+> 两个角度讨论： 异常捕获规则  和  异常中的范型使用
+
+**异常捕获规则：**
+
+> 一个try代码块可进行多次catch捕获异常，捕获异常由具体到模糊，即优先捕获子类，且不可多次捕获相同异常。
+
+如下一组例子
+
+![image-20221028172553582](java成神之路(基础).assets/image-20221028172553582.png)
+
+**不可声明范型异常：**
+
+> 范型类不可继承Throwable，范型被擦除，会导致多次catch同一个异常
+
+![image-20221028175957575](java成神之路(基础).assets/image-20221028175957575.png)
+
+
+
+
+
+**catch中不可使用类型变量**
+
+![image-20221028182405736](java成神之路(基础).assets/image-20221028182405736.png)
+
+
+
+**如下使用是正确的**
+
+```java
+public static <T extends Throwable> void method4(Class<T> e) throws Throwable {
+    try {
+    } catch (IndexOutOfBoundsException t) {
+        throw e.newInstance().initCause(t);
+    }
+}
+```
 
 
 
@@ -6624,6 +6913,8 @@ public static void main(String[] args) {
 ##### 范型数组
 
 > 如何定义范型数组？
+>
+> java不支持定义具体类型的范型数组
 
 方式一：
 
@@ -6670,7 +6961,7 @@ public static void main(String[] args) {
 
 ![image-20221026154852124](java成神之路(基础).assets/image-20221026154852124.png)
 
-> 使用。
+合理使用：
 
 ```java
 (String[]) Array.newInstance(String.class, 10);
@@ -6679,6 +6970,16 @@ static <T> T[] createArray(Class<T> type, int size) {
     return (T[]) Array.newInstance(type, 10);
 }
 ```
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7186,7 +7487,16 @@ public class ClassCustomizeSerializable implements Serializable {
 
 ### 注解
 
-> Java 注解（Annotation）又称 Java 标注，是 JDK5.0 引入的一种注释机制。
+#### 注解基础
+
+> Java 注解（Annotation）又称 Java 标注，是 JDK5.0 引入的一种注释机制。可以对代码进行说明，可对包、类、接口、方法、字段、方法参、局部变量进行注释说明。
+
+作用
+
+- 生成文档
+- 编译检查，可对代码在编译期间进行检查，比如非空检查
+- 编译期动态处理，编译期间通过类加载器动态生成代码
+- 运行时动态处理，运行期间通过反射对代码进行动态处理
 
 从以下几点了解：
 
@@ -7228,9 +7538,14 @@ public interface MyDefinitionAnnotation extends Annotation{
 元注解有四个：
 
 - @Target
+
 - @Retention
+
 - @Documented
+
 - @Inherited
+
+  
 
 ##### @Documented&@Inherited 
 
