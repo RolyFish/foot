@@ -7552,7 +7552,7 @@ public class ClassCustomizeSerializable implements Serializable {
 >
 > Java1.8引入一个`@FunctionalInterface`
 
-###### Deprecated
+###### @Deprecated
 
 > 作用于构造器、属性、局部变量、放啊、包、形参、类、接口上
 >
@@ -7574,7 +7574,7 @@ public @interface Deprecated {
 
 > 作用于类、接口、属性、方法、形参、构造器、局部变量。
 >
-> value参数必填
+> value属性必填
 >
 > @SuppressWarnings("all")，抑制警告，`all`代表抑制所有警告，包括未检测警告、过时警告等。
 
@@ -7650,25 +7650,59 @@ public @interface Override {
 >
 > `@Doucumented`用于标注注解是否生成JavaDoc文档
 >
-> java1.8引入一个`@Repeatable`，标注于注解上声明此注解可重复标注
+> java1.8引入`@Repeatable`，标注于注解上声明此注解可重复标注
+>
+> java1.8引入`@Native`，标注于注解上声明此注解可重复标注
 
 ###### @Documented
 
+> 作用于注解上,运行期间保存。
+>
+> 被此注解注释的注解，可保留在JavaDoc文档中
 
-
-
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Documented {
+}
+```
 
 ###### @Inherited 
 
+> 被次注解注释的注解具有继承性。子类自动拥有父类注解
 
+```java
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@interface InheritedTestI {
+    String value();
+}
 
+@InheritedTestI(value = "父类注解")
+class Parent {
+}
 
+class Son extends Parent {
+    public static void main(String[] args) {
+        final Annotation[] declaredAnnotations = Son.class.getAnnotations();
+        for (Annotation declaredAnnotation : declaredAnnotations) {
+            if (declaredAnnotation instanceof InheritedTestI) {
+                System.out.println(((InheritedTestI) declaredAnnotation).value());
+            }
+        }
+    }
+}
+```
+
+![image-20221031234134691](java成神之路(基础).assets/image-20221031234134691.png)
 
 ###### @Target
 
 > @Target注解只可用于注解类型上、可保留进javadoc、保留策略为RUNTIME。
 >
-> 此注解有一个属性，为数组表示被@Target修饰的注解可用于什么地方，如果不使用@Targer注释则表示该注解可用于任何地方。
+> 此注解有一个属性，为数组表示被@Target修饰的注解可用于什么地方，如果不使用@Target注释则表示该注解可用于任何地方。
 
 ```java
 @Documented
@@ -7737,37 +7771,98 @@ public enum RetentionPolicy {
 
 > 注释于注解上，表示该注解可重复声明多次。
 
+Java8之前注解不可重复声明
+
 ![image-20220830204849836](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312252848.png)
 
-使用:
+那么如何达到注解重复声明的效果呢？可像如下操作
 
 ```java
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public   @interface Persons {
-   Person[] value();
-}
-```
-
-```java
-@Repeatable(Persons.class)
-public  @interface Person{
+**
+ * java8之前想达到重复注解的效果，如下操作
+ *
+ * @author rolyfish
+ */
+@interface Role {
     String role() default "";
 }
+/**
+ * @author rolyfish
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@interface Roles {
+    Role[] roles();
+}
+@Roles(roles = {@Role(role = "男的"), @Role(role = "学Java的")})
+class Test1 {
+    public static void main(String[] args) {
+        final Annotation[] declaredAnnotations = Test1.class.getDeclaredAnnotations();
+        for (Annotation declaredAnnotation : declaredAnnotations) {
+            if (declaredAnnotation instanceof Roles){
+                Roles roles = (Roles) declaredAnnotation;
+                for (Role role : roles.roles()) {
+                    System.out.println(role.role());
+                }
+            }
+        }
+    }
+}
 ```
 
+![image-20221031213908016](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202210312140986.png)
+
+@Repeatable使用:
+
 ```java
-@Person(role = "男的")
-@Person(role = "打工族")
-public class MeClass {
+/**
+ * jad8提供的Repeatable注解可实现重复
+ *
+ * @author rolyfish
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Repeatable(RolesX.class)
+@interface RoleX {
+    String role();
+}
+
+/**
+ * @author rolyfish
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@interface RolesX {
+    RoleX[] value();
+}
+
+@RoleX(role = "男的")
+@RoleX(role = "学java的")
+class Test2 {
+    public static void main(String[] args) {
+        final Annotation[] declaredAnnotations = Test2.class.getDeclaredAnnotations();
+        for (Annotation declaredAnnotation : declaredAnnotations) {
+            if (declaredAnnotation instanceof RolesX) {
+                RolesX rolesX = (RolesX) declaredAnnotation;
+                for (RoleX roleX : rolesX.value()) {
+                    System.out.println(roleX.role());
+                }
+            }
+        }
+    }
 }
 ```
 
 
 
+###### @Native
+
+> @Native修饰成员变量，表示这个变量可以被本地方法所引用，常常被代码生成工具使用。
 
 
-#### 注解语法
+
+##### 自定义注解
+
+###### 注解语法
 
 > 注解的定义很简单，使用`@interface`声明，表示一个注解。
 
@@ -7790,25 +7885,169 @@ public interface MyDefinitionAnnotation extends Annotation{
 }
 ```
 
+###### 例子
+
+> 我们使用一个例子，来自定义注解，并获取注解内容，将上诉知识点用一遍。
+
+- 定义注解
+
+  > 包括重复注解和、运行可见、运行期间不可见
+
+```java
+@Repeatable(value = Jobs.class)
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.TYPE})
+public @interface Job {
+    String job();
+}
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.TYPE})
+public @interface Jobs {
+    Job[] value();
+}
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})//可标注在 类 接口 、方法、属性上
+@Retention(RetentionPolicy.RUNTIME)//在运行期间可见
+public @interface Log {
+    //日志
+    String log();
+    //描述
+    String desc();
+    //编号
+    int num();
+}
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.SOURCE)
+public @interface Desc {
+    String desc();
+}
+```
+
+- 测试类
+
+```java
+@Job(job = "学生")
+@Job(job = "服务员")
+public class TestClass {
+    @Job(job = "学生")
+    @Job(job = "服务员")
+    public String[] jobs;
+
+    @Log(log = "setter", desc = "set方法", num = 1)
+    @Desc(desc = "set方法")
+    public void setValue(String[] jobs) {
+        this.jobs = jobs;
+    }
+
+    public static void main(String[] args) throws NoSuchFieldException, NoSuchMethodException {
+        classC();
+        fieldD();
+        methodD();
+    }
+    public static void classC() throws NoSuchFieldException {
+        final Annotation[] annotations = TestClass.class.getAnnotations();
+        for (Annotation annotation : annotations) {
+            if (annotation instanceof Jobs) {
+                Jobs jobsT = (Jobs) annotation;
+                final Job[] value = jobsT.value();
+                for (Job job : value) {
+                    System.out.println(job.job());
+                }
+            }
+        }
+        //返回所有注解  如果是重复注解则返回注解容器
+        final Annotation[] annotations1 = TestClass.class.getAnnotations();
+        //返回所有注解  如果是重复注解则返回注解容器，忽略父类注解
+        final Annotation[] declaredAnnotations1 = TestClass.class.getDeclaredAnnotations();
+
+        //返回指定类型注解，如果是重复注解则返回注解容器。 Job.class返回空
+        final Jobs annotation = TestClass.class.getAnnotation(Jobs.class);
+        //返回指定类型注解，如果是重复注解则返回注解容器 忽略父类注解。Job.class返回空
+        final Jobs declaredAnnotation = TestClass.class.getDeclaredAnnotation(Jobs.class);
+
+        //返回指定类型注解，可返回重复注解
+        final Annotation[] annotationsByType = TestClass.class.getAnnotationsByType(Job.class);
+        //返回指定类型注解，可返回重复注解，忽略父类注解
+        final Annotation[] declaredAnnotationsByType = TestClass.class.getDeclaredAnnotationsByType(Job.class);
+
+    }
+
+    public static void fieldD() throws NoSuchFieldException {
+        final AnnotatedElement jobs = TestClass.class.getField("jobs");
+        final Annotation[] annotations = jobs.getAnnotations();
+        for (Annotation annotation : annotations) {
+            if (annotation instanceof Jobs) {
+                Jobs jobsT = (Jobs) annotation;
+                final Job[] value = jobsT.value();
+                for (Job job : value) {
+                    System.out.println(job.job());
+                }
+            }
+        }
+        //返回所有注解  如果是重复注解则返回注解容器
+        final Annotation[] annotations1 = jobs.getAnnotations();
+        //返回所有注解  如果是重复注解则返回注解容器，忽略父类注解
+        final Annotation[] declaredAnnotations1 = jobs.getDeclaredAnnotations();
+
+        //返回指定类型注解，如果是重复注解则返回注解容器。 Job.class返回空
+        final Jobs annotation = jobs.getAnnotation(Jobs.class);
+        //返回指定类型注解，如果是重复注解则返回注解容器 忽略父类注解。Job.class返回空
+        final Jobs declaredAnnotation = jobs.getDeclaredAnnotation(Jobs.class);
+
+        //返回指定类型注解，可返回重复注解
+        final Annotation[] annotationsByType = jobs.getAnnotationsByType(Job.class);
+        //返回指定类型注解，可返回重复注解，忽略父类注解
+        final Annotation[] declaredAnnotationsByType = jobs.getDeclaredAnnotationsByType(Job.class);
+    }
+    public static void methodD() throws NoSuchFieldException, NoSuchMethodException {
+        final Method setValue = TestClass.class.getDeclaredMethod("setValue", String[].class);
+
+        final Annotation[] annotations = setValue.getAnnotations();
+        for (Annotation annotation : annotations) {
+            if (annotation instanceof Log) {
+                Log log = (Log) annotation;
+                System.out.println("log:" + log.log() + "  desc:" + log.desc() + "  num:" + log.num());
+            }
+            //运行期间不可见
+            if (annotation instanceof Desc) {
+                Desc desc = (Desc) annotation;
+                System.out.println("  desc:" + desc.desc());
+            }
+        }
+    }
+}
+```
 
 
-#### 元注解
 
-> 元注解起到对其他注解进行说明的作用，可以定义其他注解
+#### 注解 + 反射
 
-元注解有四个：
+> 当一个注解被标注为运行时可见，则可以通过反射来获取注解内容。
+>
+> 可以使用`java.lang.reflect`包下的AnnotatedElement提供的接口来访问竹节内容。AnnotatedElement接口是所有程序元素(Class、Method、Constructor)的父接口，所以当我们获取到AnnotatedElement对象就可以访问Annotation信息。
 
-- @Target
+```java
+//判断是否包含某个注解。
+default boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+    return getAnnotation(annotationClass) != null;
+}
+//返回指定类型的注解，存在返回，不存在则返回null。如果是重复注解，则返回注解容器
+ <T extends Annotation> T getAnnotation(Class<T> annotationClass);
+//返回所有注解，若没有注解则返回长度为0的数组。如果是重复注解，则返回注解容器
+Annotation[] getAnnotations();
+//返回指定类型的所有注解，与getAnnotations区别，此接口可返回重复注解，getAnnotations会返回注解容器
+<T extends Annotation> T[] getAnnotationsByType(Class<T> annotationClass);
+//返回指定类型的注解，此接口会忽略父类可继承注解,getDeclaredAnnotation会返回注解容器
+<T extends Annotation> T getDeclaredAnnotation(Class<T> annotationClass);
+//返回指定类型注解，会忽略父类注解
+<T extends Annotation> T[] getDeclaredAnnotationsByType(Class<T> annotationClass);
+//返回所有注解，忽略父类注解
+Annotation[] getDeclaredAnnotations();
+```
 
-- @Retention
+总结
 
-- @Documented
-
-- @Inherited
-
-  
-
-
+- Declared  返回直接存在于程序元素上的注解，会忽略父注解
+- `getAnnotations getAnnotation & getAnnotationsByType` 如果是重复注解前者返回注解容器，后者返回所有重复注解。
 
 #### 注解的继承
 

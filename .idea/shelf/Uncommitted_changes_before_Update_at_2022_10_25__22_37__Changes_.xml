@@ -1,0 +1,14 @@
+<changelist name="Uncommitted_changes_before_Update_at_2022_10_25,_22_37_[Changes]" date="1666708635137" recycled="true" deleted="true">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_10_25,_22_37_[Changes]/shelved.patch" />
+  <option name="DESCRIPTION" value="Uncommitted changes before Update at 2022/10/25, 22:37 [Changes]" />
+  <binary>
+    <option name="BEFORE_PATH" value="oldspace/SpringMVC/SpringMVC03/target/classes/com/roily/controller/HelloController3.class" />
+    <option name="AFTER_PATH" value="oldspace/SpringMVC/SpringMVC03/target/classes/com/roily/controller/HelloController3.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_10_25,_22_37_[Changes]/HelloController3.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="oldspace/SpringMVC/out/artifacts/SpringMVC03_war_exploded/WEB-INF/classes/com/roily/controller/HelloController3.class" />
+    <option name="AFTER_PATH" value="oldspace/SpringMVC/out/artifacts/SpringMVC03_war_exploded/WEB-INF/classes/com/roily/controller/HelloController3.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_10_25,_22_37_[Changes]/HelloController31.class" />
+  </binary>
+</changelist>
