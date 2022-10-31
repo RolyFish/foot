@@ -7487,9 +7487,13 @@ public class ClassCustomizeSerializable implements Serializable {
 
 ### 注解
 
-#### 注解基础
+#### 注解基础 
 
 > Java 注解（Annotation）又称 Java 标注，是 JDK5.0 引入的一种注释机制。可以对代码进行说明，可对包、类、接口、方法、字段、方法参、局部变量进行注释说明。
+
+> Java1.8内部定义了一套注解，共有11个，5 个在 java.lang 中，剩下 6 个在 java.lang.annotation 中，
+>
+>  java.lang.annotation 下除了@Native不是元注解，其余注解都是可修饰注解的注解，称为元注解
 
 作用
 
@@ -7498,13 +7502,270 @@ public class ClassCustomizeSerializable implements Serializable {
 - 编译期动态处理，编译期间通过类加载器动态生成代码
 - 运行时动态处理，运行期间通过反射对代码进行动态处理
 
-从以下几点了解：
 
-- 注解语法
+
+#### 注解分类
+
 - 元注解
-- java内置注解
-- 注解的继承性
-- 简单使用
+
+  > 用于标注注解的注解。`@Retention、@Target、@Inherited、@Documented`。
+  >
+  > `@Retention`用于标注注解被保留的阶段
+  >
+  > `@target`用于标注注解使用范围
+  >
+  > `@Inherited`用于标注注解具有继承性
+  >
+  > `@Doucumented`用于标注注解是否生成JavaDoc文档
+  >
+  > 
+  >
+  > java1.8引入一个`@Repeatable`，标注于注解上声明此注解可重复标注
+
+  
+
+- Java自带标准注解
+
+  > Java自带的注解`@Override、@Deprecated、@Suppressings`。
+  >
+  > `@Override`用于标注于重写某个方法
+  >
+  > `@Deprecated`用于标注某个方法已过时，不建议使用
+  >
+  > `@Suppressings`镇压警告
+  >
+  > java1.7引入`@SafeVarargs`,作用于参数是可变的构造函数或方法上，且作用于方法上的时候此方法必须被final或static修饰
+  >
+  > java1.8引入`@FunctionalInterface`作用于接口上，表明这是一个函数式接口
+  >
+  > 
+
+- 自定义注解
+
+  > 按需自定义注解
+
+##### Java内置注解
+
+> Java1.5引入三个内置注解`@Override、@Deprecated、@Suppressings`。
+>
+> Java1.7引入一个`@SafeVarargs`
+>
+> Java1.8引入一个`@FunctionalInterface`
+
+###### Deprecated
+
+> 作用于构造器、属性、局部变量、放啊、包、形参、类、接口上
+>
+> 编译时会发出 xxx已过时警告。
+>
+> 使用过时的类、方法、属性等，会有一个横线标识、不影响使用。
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value={CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, PACKAGE, PARAMETER, TYPE})
+public @interface Deprecated {
+}
+```
+
+
+
+###### @SuppressWarnings
+
+> 作用于类、接口、属性、方法、形参、构造器、局部变量。
+>
+> value参数必填
+>
+> @SuppressWarnings("all")，抑制警告，`all`代表抑制所有警告，包括未检测警告、过时警告等。
+
+```java
+@Target({TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE})
+@Retention(RetentionPolicy.SOURCE)
+public @interface SuppressWarnings {   
+    String[] value();
+}
+```
+
+
+
+| 参数                      | 作用                           | 描述 |
+| ------------------------- | ------------------------------ | ---- |
+| all                       | 抑制所有警告                   |      |
+| boxing                    | 抑制装箱拆箱时的警告           |      |
+| cast                      | 抑制类型映射警告               |      |
+| depann                    | 抑制启用注释警告               |      |
+| deprecation               | 抑制过期方法警告               |      |
+| fallthrough               | switch缺失breaks警告           |      |
+| finally                   | 抑制finally模块没有返回的警告  |      |
+| hiding                    |                                |      |
+| incomplete-switch         |                                |      |
+| nls                       |                                |      |
+| null                      | 忽略null                       |      |
+| rawtype                   | 使用Generics没有指定相应类型   |      |
+| restriction               |                                |      |
+| serial                    | 忽略实现序列话接口，没有序列号 |      |
+| static-access             | 不正确的静态访问方式           |      |
+| synthetic-access          |                                |      |
+| unchecked                 | 未进行类型检查                 |      |
+| unquualified-field-access | 没有权限访问域                 |      |
+| unused                    | 未使用                         |      |
+|                           |                                |      |
+
+
+
+###### @Override
+
+> 注解于方法上，表示重写方法。
+>
+> SOURCE：保存于源文件，用于编译前检查，被编译器忽略
+
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.SOURCE)
+public @interface Override {
+}
+```
+
+
+
+###### @SafeVarargs
+
+> 注释于构造方法或方法上，忽略任何使用参数为泛型变量的方法或构造函数调用产生的警告
+
+###### @FunctionalInterface
+
+> 注释于接口上，表示为一个函数式接口。
+
+
+
+##### 元注解
+
+> 用于标注注解的注解。`@Retention、@Target、@Inherited、@Documented`。
+
+> `@Retention`用于标注注解被保留的阶段
+>
+> `@target`用于标注注解使用范围
+>
+> `@Inherited`用于标注注解具有继承性
+>
+> `@Doucumented`用于标注注解是否生成JavaDoc文档
+>
+> java1.8引入一个`@Repeatable`，标注于注解上声明此注解可重复标注
+
+###### @Documented
+
+
+
+
+
+###### @Inherited 
+
+
+
+
+
+###### @Target
+
+> @Target注解只可用于注解类型上、可保留进javadoc、保留策略为RUNTIME。
+>
+> 此注解有一个属性，为数组表示被@Target修饰的注解可用于什么地方，如果不使用@Targer注释则表示该注解可用于任何地方。
+
+```java
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Target {
+    ElementType[] value();
+}
+```
+
+> ElementType枚举值说明：
+
+常用的：TYPE、FIELD、METHOD
+
+```java
+public enum ElementType {
+    /** Class, interface (including annotation type), or enum declaration */
+    //标注此注解可用于 类、接口、注解、以及枚举上（注解就是接口、枚举就是类）
+    TYPE,
+    /** Field declaration (includes enum constants) */
+    //标注此注解可用于字段属性上,（成员变量）
+    FIELD,
+    /** Method declaration */
+    //标注此注解可用于方法上(成员方法)
+    METHOD,
+    /** Formal parameter declaration */
+    //标注此注解可用于方法参数上，比如@Valid @RequestBody  (形式参数)
+    PARAMETER,
+    /** Constructor declaration */
+    //标注此注解可用于构造方法上
+    CONSTRUCTOR,
+    /** Local variable declaration */
+     //标注此注解可用于本地变量   （局部变量）
+    LOCAL_VARIABLE,
+    /** Annotation type declaration */
+     //标注此注解可用于注解上，元注解都有此属性 
+    ANNOTATION_TYPE,
+    /** Package declaration */
+    //可用于package-info.java中
+    PACKAGE,
+    // 类型参数 迎合范型
+    TYPE_PARAMETER,
+    //使用类型的任何地方  迎合范型
+    TYPE_USE
+}
+```
+
+###### @Retention
+
+> 保留策略，注解只是保留在源文件中、还是编译保存在class文件中、还是可加载进虚拟机中（可以通过反射访问）
+>
+> 有一个RetentionPolicy value属性，RetentionPolicy 是一个枚举类型。
+
+```java
+public enum RetentionPolicy {
+    //表示只保留在javaDoc中，会被编译器忽略，不会在class中保存，不可加载进虚拟机
+    SOURCE,
+    //在class中保存，不可加载进虚拟机
+    CLASS,
+    //在class中保存，可加载进虚拟机，可通过反射在运行期间获取注解状态
+    RUNTIME
+}
+```
+
+###### @Repeatable
+
+> 注释于注解上，表示该注解可重复声明多次。
+
+![image-20220830204849836](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312252848.png)
+
+使用:
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public   @interface Persons {
+   Person[] value();
+}
+```
+
+```java
+@Repeatable(Persons.class)
+public  @interface Person{
+    String role() default "";
+}
+```
+
+```java
+@Person(role = "男的")
+@Person(role = "打工族")
+public class MeClass {
+}
+```
+
+
+
+
 
 #### 注解语法
 
@@ -7546,170 +7807,6 @@ public interface MyDefinitionAnnotation extends Annotation{
 - @Inherited
 
   
-
-##### @Documented&@Inherited 
-
-> 这两个注解分别表示，是否在JavaDoc中保存注解和是否允许子类继承父类注解。
->
-> 这两个注解没有内部属性，都被
->
-> ```java
-> @Retention(RetentionPolicy.RUNTIME)
-> @Target(ElementType.ANNOTATION_TYPE)
-> ```
->
-> 注释，保留策略为Runtime，即会被VM加载进内存，可反射获取、类型属性为`ElementType.ANNOTATION_TYPE`即只可定义在注解上。
-
-##### @Target
-
-> @Target注解只可用于注解类型上、可保留进javadoc、保留策略为RUNTIME。
->
-> 此注解有一个属性，为数组表示被@Target修饰的注解可用于什么地方，如果不使用@Targer注释则表示该注解可用于任何地方。
-
-```java
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
-public @interface Target {
-    ElementType[] value();
-}
-```
-
-> ElementType枚举值说明：
-
-常用的：TYPE、FIELD、METHOD
-
-```java
-public enum ElementType {
-    /** Class, interface (including annotation type), or enum declaration */
-    //标注此注解可用于 类、接口、注解、以及枚举上（注解就是接口、枚举就是类）
-    TYPE,
-    /** Field declaration (includes enum constants) */
-    //标注此注解可用于字段属性上
-    FIELD,
-    /** Method declaration */
-    //标注此注解可用于方法上
-    METHOD,
-    /** Formal parameter declaration */
-    //标注此注解可用于方法参数上，比如@Valid @RequestBody
-    PARAMETER,
-    /** Constructor declaration */
-    //标注此注解可用于构造方法上
-    CONSTRUCTOR,
-    /** Local variable declaration */
-     //标注此注解可用于本地变量
-    LOCAL_VARIABLE,
-    /** Annotation type declaration */
-     //标注此注解可用于注解上，元注解都有此属性
-    ANNOTATION_TYPE,
-    /** Package declaration */
-    //可用于package-info.java中
-    PACKAGE,
-    /**
-     * Type parameter declaration
-     *
-     * @since 1.8
-     */
-    TYPE_PARAMETER,
-    /**
-     * Use of a type
-     *
-     * @since 1.8
-     */
-    TYPE_USE
-}
-```
-
-##### @Retention
-
-> 保留策略，注解只是保留在代码中、还是编译进class文件中、还是在运行期间保留在虚拟机中（可以通过反射访问）
->
-> 有一个RetentionPolicy value属性，RetentionPolicy 是一个枚举类型。
-
-```java
-public enum RetentionPolicy {
-    //表示只保留在javaDoc中，会被编译器忽略，被编译器忽略自然也不会加载进虚拟机
-    SOURCE,
-    //表示会被编译器编译生成class文件，但不会由VM在运行时保留
-    CLASS,
-    //会编译、也会由VM在运行时保留，注解为此保留策略可通过反射获取注解信息
-    RUNTIME
-}
-```
-
-
-
-####  java内置注解
-
-> Java内部定义了一套注解，共有10个，6 个在 java.lang 中，剩下 4 个在 java.lang.annotation 中，
->
-> 除了三面提供的四个元注解(四个元注解都在 java.lang.annotation中)，还有6个在`java.lang`包下。
-
-##### Deprecated
-
-> 注释于构造器、属性、本地变量、方法、包、接口、方法上，表示过时的意思。
->
-> 使用过时的类、方法、属性等，会有一个横线标识、不影响使用。
-
-```java
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(value={CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, PACKAGE, PARAMETER, TYPE})
-public @interface Deprecated {
-}
-```
-
-
-
-##### @SuppressWarnings
-
-> @SuppressWarnings("all")，抑制警告，`all`代表抑制所有警告，包括未检测警告、过时警告等。
-
-
-
-#####  @Override
-
-> 注解于方法上，表示重写方法。
-
-##### @SafeVarargs
-
-> 注释于构造方法或方法上，忽略任何使用参数为泛型变量的方法或构造函数调用产生的警告
-
-
-
-##### @FunctionalInterface
-
-> 注释于接口上，表示为一个函数式接口。
-
-##### @Repeatable
-
-> 注释于注解上，表示该注解可重复声明多次。
-
-![image-20220830204849836](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312252848.png)
-
-使用:
-
-```java
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public   @interface Persons {
-   Person[] value();
-}
-```
-
-```java
-@Repeatable(Persons.class)
-public  @interface Person{
-    String role() default "";
-}
-```
-
-```java
-@Person(role = "男的")
-@Person(role = "打工族")
-public class MeClass {
-}
-```
 
 
 
