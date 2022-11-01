@@ -7656,7 +7656,7 @@ public @interface Override {
 
 ###### @Documented
 
-> 作用于注解上,运行期间保存。
+> 作用于注解上
 >
 > 被此注解注释的注解，可保留在JavaDoc文档中
 
@@ -7667,6 +7667,34 @@ public @interface Override {
 public @interface Documented {
 }
 ```
+
+例子：
+
+```java
+@Target({ElementType.TYPE, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface DocumentedTest {
+
+     String name() default "fieldName";
+     String setFuncName() default "setField";
+     String getFuncName() default "getField";
+     boolean defaultDBValue() default false;
+}
+@DocumentedTest
+public class DocumentedTestC {
+    @DocumentedTest
+    public String value;
+}
+```
+
+![image-20221101102014154](java成神之路(基础).assets/image-20221101102014154.png)
+
+查看javadoc文件
+
+![image-20221101102134327](java成神之路(基础).assets/image-20221101102134327.png)
+
+
 
 ###### @Inherited 
 
@@ -7743,9 +7771,9 @@ public enum ElementType {
     /** Package declaration */
     //可用于package-info.java中
     PACKAGE,
-    // 类型参数 迎合范型
+    // 类型参数 
     TYPE_PARAMETER,
-    //使用类型的任何地方  迎合范型
+    //使用类型的任何地方  
     TYPE_USE
 }
 ```
@@ -8049,38 +8077,136 @@ Annotation[] getDeclaredAnnotations();
 - Declared  返回直接存在于程序元素上的注解，会忽略父注解
 - `getAnnotations getAnnotation & getAnnotationsByType` 如果是重复注解前者返回注解容器，后者返回所有重复注解。
 
-#### 注解的继承
 
-> 注解的继承是指什么意思？
 
-首先看一个例子：
+#### 注解深入
 
-结论表明如果一个注解被@Inherited 注释的话，那么子类可以继承得到父类的注解
+##### java8 新增
+
+
+
+###### 重复注解
+
+> 如上`@Repeatable`
+
+###### 类型注解
+
+> java8`@Target`的`ElementType`新增枚举`TYPE_PARAMETER`, `TYPE_USE`。这两个注解就是类型注解
+
+- `TYPE_PARAMETER`用于类型参数
+- `TYPE_USE`用于任何类型，包含`TYPE_PARAMETER`
 
 ```java
-@Target(value = ElementType.TYPE)
-@Retention(value = RetentionPolicy.RUNTIME)
-@Inherited // 声明注解具有继承性
-@interface AnnotationInherited {
-    String value() default "";
+public class Test01 {
+    void method1(@TargetType01 String str) {
+        @TargetType01 String str2 = "";
+
+        java.util. @TargetType01 Scanner console = new java.util.@TargetType01 Scanner(System.in);
+        
+        final String s = new @TargetType01 String("");
+    }
+    <@TargetType02 T> void method2(T t) {
+
+    }
+    <@TargetType02 T extends Comparable> void method3(T c) {
+
+    }
+    <@TargetType01 T> void method4(T t) {
+
+    }
+    <@TargetType01 T extends Comparable> void method5(T c) {
+
+    }
 }
 ```
 
+
+
+##### 注解可继承么
+
+> 注解不支持基础，不能使用`extends`关键字来实现注解继承。
+>
+> 注解也是java提供的一颗语法糖，编译期间注解会变为接口，并且此接口继承自`java.lang.annotation  Annotation`接口。即便接口可以实现多继承，但定义注解时仍无法实现继承。
+>
+> `@Inherited`：注解没有继承性，但是父类拥有被`@Inherited`注释的注解，子类可以继承它。
+
+
+
+##### 注解实现原理
+
+- 注解是一个继承自`java.lang.annotation.Annotation`的接口，其内部属性为抽象方法
+
 ```java
-@AnnotationInherited
-public class SuperClass {
+//定义注解，并使用jad反编译查看
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface MyAnnotation {
+    String value();
 }
-public class SonClass extends SuperClass{
+//
+public interface MyAnnotation extends Annotation {
+    public abstract String value();
 }
 ```
 
+- 我们可通过AnnotatedElement提供的接口获取`Annotation`实例
+
+那么这些Annotation实例是如何实例化的？
+
+通过如下代码Debug查看：
+
 ```java
-public static void main(String[] args) {
-    System.out.println(Arrays.asList(SonClass.class.getAnnotations()));
+@MyAnnotation(value = "value")
+public class Test1 {
+    public static void main(String[] args) {
+        final MyAnnotation declaredAnnotation = Test1.class.getDeclaredAnnotation(MyAnnotation.class);
+        final String value = declaredAnnotation.value();
+        System.out.println(value);
+    }
 }
 ```
 
-![image-20220831224956656](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208312250324.png)
+![image-20221101112155977](java成神之路(基础).assets/image-20221101112155977.png)
+
+既然使用JDK动态代理，且InvocationHandler也有了，那么如何创建代理实例的？
+
+创建代理实例的方式一定是这样的`Proxy.Proxy.newProxyInstance(classLoader, interfaces, invocationHandler)`，那么封装在哪呢？
+
+在`sun.reflect.annotation.AnnotationParser`下的public static Annotation annotationForMap()中
+
+```java
+public static Annotation annotationForMap(final Class<? extends Annotation> var0, final Map<String, Object> var1) {
+    return (Annotation)AccessController.doPrivileged(new PrivilegedAction<Annotation>() {
+        public Annotation run() {
+            return (Annotation)Proxy.newProxyInstance(var0.getClassLoader(), new Class[]{var0}, new AnnotationInvocationHandler(var0, var1));
+        }
+    });
+}
+```
+
+下图就是一步步调用，最终解析注解返回注解代理实例的调用信息：
+
+![image-20221101123523124](java成神之路(基础).assets/image-20221101123523124.png)
+
+总结：
+
+- 编译期间注解信息保存入Class文件，包括注解Class信息、接口方法引用
+- 类加载期间注解的信息会加载进Class常量池中
+- 类初始化阶段会将注解的属性值(也就是接口方法的返回值)初始化
+- 获取AnnotatedElement(程序元素，Class、Method、Consttructor等)，通过反射获取注解实例
+  - 这一步涉及注解代理实例的生成，通过JDK动态代理。
+  - 涉及的类有 ①AnnotationInvocationHandler ②AnnotationParser  ③Proxy 
+  - 注意AnnotationInvocationHandler 的构造函数有一个Map属性，此Map属性存放的就是注解的属性信息
+  - AnnotationParser负责解析注解信息，并将Class常量池中的属性值取出，交给AnnotationInvocationHandler 
+  - Proxy任务就是生成代理实例
+
+
+
+#### 注解使用场景
+
+
+
+
 
 
 
