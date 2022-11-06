@@ -3174,8 +3174,6 @@ public static void main(String[] args) {
 
 ###### 异常捕获
 
-
-
 异常捕获方式：
 
 - try  catch
@@ -3239,7 +3237,7 @@ public class MyException  extends RuntimeException{
 }
 ```
 
-#### 异常链
+##### 异常链
 
 > 是指java在运行期捕获了一个异常，处理的时候，抛出了一个新的异常，所抛出的新的异常包含前一个异常的信息，如此形成一个异常链。
 
@@ -3270,7 +3268,7 @@ public void test1() {
 
 ![image-20220808111646319](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250767.png)
 
-#### try-with-resources
+##### try-with-resources
 
 > java对于资源的操作，比如说io流、数据库连接，这些资源在非常昂贵，必须在使用结束后显示的关闭资源。
 >
@@ -3298,6 +3296,8 @@ public void test2() {
 ```
 
 > java7 开始提供了一个跟好的处理资源的方式：try-with-resources 语句。这是一个类似于语法糖的语法，方便程序员编码，但是经过编译器编译后，都会转化成jvm认识的。
+>
+> 可以使用try  with  resource特性的资源需要实现Closeable接口
 
 将资源定义在try括号内，便无需我们手动去关闭资源了：
 
@@ -3321,26 +3321,71 @@ public void test4() {
 
 ![image-20220808114543526](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250315.png)
 
-#### try  catch finally执行顺序
+##### try  catch finally执行顺序
 
-> 
+- 当未捕获到异常：执行try代码块，跳过catch代码块，执行fianlly代码块及其之后代码。
 
-##### try  & finally
+- 当try捕获到异常，catch未作处理：执行try代码块，在出现异常处跳出try代码块，记录方法异常退出点，执行finally代码块,回到方法退出点(如果finally代码块中有方法退出点，则不会回去)，finally代码块后的代码不再执行。
 
-- ffinally代码块一定会执行么？
-- return的结果是否被finally影响？
-- return和finally代码执行顺序，孰先孰后？
+  - 如下例子debug查看sb的值为`<init>、<tryprev>、<finally>`，但会抛出异常
 
-###### finally代码块不一定执行
+    ```java
+    static StringBuilder m1() {
+        final StringBuilder sb = new StringBuilder("<init>、");
+        try {
+            sb.append("<tryprev>、");
+            int i = 1 / 0;
+            sb.append("<trylast>、");
+            return sb.append("<tryreturn>、");
+        } finally {
+            sb.append("<finally>");
+        }
+      	//通过不了编译，因为要么return 要么异常向上抛出
+      	//sb.append("<last>");
+    }
+    ```
 
-> finally代码块不一定会执行
+  - 此刻若在finally代码块中进行return，则不会抛出异常，但这么写是建议的且编译器会有警告。结果：`<init>、<tryprev>、<finally><tryreturn>、`
 
-- 当我们的代码在进入try代码块之前就已经return了，那么整个方法就结束了，finally代码块就不会执行
-- 当虚拟机强制停止的时候  exit(0),finally代码块就不会执行
+    ```java
+    static StringBuilder m1() {
+        //...
+        try {
+            //...
+        } finally {
+            sb.append("<finally>");
+            return sb.append("<tryreturn>、");
+        }
+    		//...
+    }
+    ```
 
-例：
+  - 此刻若在finally代码块中抛出异常，则`java.lang.RuntimeException: finally exception`会覆盖`java.lang.ArithmeticException: / by zero`异常
 
-以下两种方式finally代码块都不会执行
+    ```java
+    static StringBuilder m3() {
+        //...
+        try {
+            //...
+        } finally {
+            sb.append("<finally>");
+            throw new RuntimeException("finally exception");
+        }
+      //...
+    }
+    ```
+
+- 当try捕获到异常，catch进行处理：执行try代码块，在出现异常处跳出try代码块，执行catch代码块记录方法异常退出点(throw哪个异常)，执行finally代码块,回到方法退出点(如果finally代码块中有方法退出点，则不会回去)，finally代码块后的代码不再执行。不出现异常跳过catch代码块，执行finally代码块，回到方法退出点(如果finally代码块中有方法退出点，则不会回去)，继续执行finally后的代码。
+
+
+
+###### finally代码不一定执行
+
+> finally代码块中的代码只有在程序进入try代码块后才一定会执行，如果程序在进入try代码块之前就已经结束了，那么finally代码块则不会执行。
+>
+> 比如return，或退出虚拟机(exit(0))
+
+例如：
 
 ```java
 public StringBuilder method1(Boolean flag) {
@@ -3350,9 +3395,8 @@ public StringBuilder method1(Boolean flag) {
         return sb;
     }
     try {
-
+				System.out.println("进入try代码块\n");
     } catch (Exception e) {
-        System.out.println("进入try代码块\n");
     } finally {
         System.out.println("finally代码块执行\n");
     }
@@ -3364,15 +3408,13 @@ public StringBuilder method2(Boolean flag) {
         System.exit(0);
     }
     try {
-
+       System.out.println("进入try代码块\n");
     } catch (Exception e) {
-        System.out.println("进入try代码块\n");
     } finally {
         System.out.println("finally代码块执行\n");
     }
     return sb;
 }
-
 @Test
 public void test1() {
     method1(true);
@@ -3380,86 +3422,163 @@ public void test1() {
 }
 ```
 
-###### finally对return结果的影响
 
-> finally代码可能会对return的结果产生影响。
->
-> 对于基本数据类型和一些不可变的引用类型return的结果不受finally的影响
->
-> 对于可变的提供修改方法的引用类型，return的结果会受到finally的影响
 
-- 对于基本数据类型  和  一些不可变的比如说String
+###### return的结果是否被finally影响？
 
-finally代码块执行但是不影响return的结果
+> 当环境正常，方法的退出方式要么return要么抛出异常，且会记住退出方法的点(return记住的点：基本数据类型就是值，引用类型就是引用地址)，finally代码块执行完会回到这个方法退出点。
+
+- finally代码块中不执行return
+  - 如果是基本数据类型，不受影响
+  - 如果是引用数据类型，finally代码块中对其进行修改，会有影响
+- finally代码块中执行return，则忽略try或catch中的return
+
+
+
+#### 异常小结
+
+- try、catch、finally都不可单独使用。只能是 try-catch、try-finally、try-catch-finally。
+- throws关键字告知调用可能需要处理异常
+- throw关键字抛出异常，交由调用者处理
+- catch捕获异常，不可重复捕获，捕获由详细到宽泛(即先捕获子类，再捕获父类)。使用异常链的方式捕获异常，方便溯源。
+- finally代码块一定会执行，一般只用于资源的关闭
+- 异常不知道如何处理，向上抛出
+
+##### 常用异常
+
+- RuntimeException
+  - java.lang.ArrayIndexOutOfBoundsException。数组下标越界异常(索引为负数或超过数组容量)
+  - java.lang.ArithmeticException。算数条件异常，比如除0异常。
+  - java.lang.NullPointerException。空指针异常。
+  - java.lang.ClassNotFoundException。找不到类异常，通过反射到Classpath路径下找class时，没找到，抛出异常
+  - java.lang.NegativeArraySizeException。数组长度为负异常
+  - java.lang.SecurityException。安全性异常
+  - java.lang.IllegalArgumentException。非法参数异常
+  - Java.util.ConcurrentModificationException。不允许并行修改异常
+- IOException
+  - java.io.FileNotFoundException  未找到文件异常
+- 其他
+  - java.lang.ClassCastException  类型转换异常
+  - java.sql.SQLException。 sql异常
+  - java.lng.NoSuchFieldException、NoSuchMethodException。未找到字段、方法异常
+  - java.lang.StringIndexOutOfBoundsException。字符串数组下标越界异常
+  - java.lang.IllegalAccessException。不允许访问异常。通过Class.newInstance()接口创建抽象类实例。
+  - java.lang.InstantiationException。实例化异常。比如通过Class.newInstance()接口创建实例，但对应类没有无惨构造器
+
+##### 实践
+
+> 一个项目拥有一套好的异常接口是非常好的
+
+- 针对不正常情况
+
+  > 异常不可用于正常的流程控制，只可用于不正常的情况。
+  >
+  > 比如NPE(空指针异常)、(IndexOutOfBoundException)数组下标越界异常可通过代码解决，不可用于异常捕获。
+
+​		创建、捕获、抛出异常性能消耗较大。JVM不会对异常进行指令优化
+
+- 关闭资源操作
+
+  > 在finally代码块中或使用try  with  resource机制关闭资源，不可在try代码块最后关闭资源。
+
+- 尽量使用标准异常
+
+  > 尽量重用Java已定义的标准异常。
+
+- 常说明
+
+  > 抛出的异常需要进行文字说明，通过Javadoc @throws声明 便于调用方进行处理，同时异常也易于排查。
+
+- 不捕获Throwable
+
+  > Throwable是Error和Exception的父类，而Error程序员捕获得到也无用，应该由Jvm抛出错误。而且Throwable捕获的异常不够具体，处理起来很模糊。
+
+- 不忽略异常
+
+  > 对于可能出现异常的代码一定要进行异常处理
+
+- 异常链
+
+  > 当捕获一个异常，我们往往会转化为系统定义的统一异常，此处需要将所捕获异常信息，包装到自定义异常内，以便后续排查。
+
+- 异常不可用于流程控制
+
+- 不要在finally中return
+
+  > finally中进行return会抛弃方法原有方法退出点。
+
+
+
+#### 深入了解异常
+
+> 从底层角度深入了解异常。
+
+
+
+##### Jvm处理异常机制
+
+> 以一个例子引入Exception Table  异常表。
 
 ```java
-public int method3() {
-    int i = 0;
+public void m1() {
     try {
-        return i;
-    } finally {
-        System.out.println("finally代码块执行");
-        i += 1;
+        int i = 1/0;
+    } catch (IndexOutOfBoundsException e) {
+        throw e;
+    } catch (RuntimeException e) {
+        throw e;
     }
-}
-public String method4() {
-    String str = "123";
-    try {
-        return str;
-    } finally {
-        System.out.println("finally代码块执行");
-        str += "abc";
-    }
-}
-@Test
-public void test2() {
-    int i = method3();
-    System.out.println("method3返回结果：" + i);
-
-    String str = method4();
-    System.out.println("method4返回结果：" + str);
 }
 ```
 
-![image-20220808130934740](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253522.png)
+> 使用javap 命令查看其字节码表现形式
+>
+> 主要看Exception table:
+>
+> 这就是异常表，包含了所有catch的异常类型
+>
+> - from  可能出现异常的起始点
+> - to  可能发生异常的结束点
+> - target  发生异常后处理者的位置
+> - type  异常类型
 
-- 对于可修改的引用类型(比如说StringBuilder)
-
-finally代码会执行且影响了返回的结果
-
-```java
-public StringBuilder method5() {
-    StringBuilder sb = new StringBuilder("");
-    try {
-        return sb.append("123");
-    } finally {
-        System.out.println("finally代码块执行");
-        sb.append("abc");
-    }
-}
-
-@Test
-public void test3() {
-    StringBuilder sb = method5();
-    System.out.println("method5返回结果：" + sb.toString());
-}
+```bash
+public void m1();
+    descriptor: ()V
+    flags: ACC_PUBLIC
+    Code:
+      stack=2, locals=2, args_size=1
+         0: iconst_1
+         1: iconst_0
+         2: idiv
+         3: istore_1
+         4: goto          13
+         7: astore_1
+         8: aload_1
+         9: athrow
+        10: astore_1
+        11: aload_1
+        12: athrow
+        13: return
+      Exception table:
+         from    to  target type
+             0     4     7   Class java/lang/IndexOutOfBoundsException
+             0     4    10   Class java/lang/RuntimeException
 ```
 
-![image-20220808131219548](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253387.png)
-
-> 所以说我们可以得出一个结论：
-
-return会记住需要返回结果的字面量信息，对于基本数据类型来说就是值，对于引用类型来说就是引用地址的值。对于基本数据类型和不可变引用类型需要通过`=`等号赋值，那就直接修改了引用，而return所记住的引用指向的对象并没有被修改。那么对于可变引用类型来说，return所记住的引用指向的对象可以在finally中被修改。
-
-###### return和finally代码执行顺序
-
-> 其实在上一个例子中已经有结果了，我们可以发现返回的sb为 123abc。
+> 异常表如何工作？
 >
-> 所以说可以得出的结论是：
+> 首先Jvm内存规定，每个线程都有自己独立的方法调用栈，称之为本地方法栈，这个内存空间是线程私有的，栈中保存着一个个栈帧(一个方法就是一个栈帧)，当调用一个方法时就有一个栈帧入栈，当一个方法退出时，就弹栈。
 >
-> return  的代码执行在finally代码块之前
->
-> finally代码执行在return代码之后，在整个方法完全return之前
+> 每个栈帧中都记录着异常表，当当前方法发生异常后，就会去查询此方法对应的异常表，如果存在则进行异常处理，如果不存在则向上抛出(当前方法退出，弹栈处理)交给调用者(来到栈顶)进行处理，如果一直向上抛出，直至所有栈帧弹出，则抛给当前线程进行处理，当前线程停止运行，如果当前线程是最后一个非守护线程，则JVM停止运行。
+
+
+
+##### finally原理
+
+> finally里的代码一定会执行，那么我们从字节码的角度去看一下其原理。                                                                                                                                            
+
+==**//todo**==
 
 
 
@@ -5570,17 +5689,24 @@ OutputStreamWriter，是Writer的子类属于字符流，可以将输出的字�
 
 ### 反射
 
-> 反射式java为程序员提供的强大机制，赋予程序可以在运行期间，知道任意类的所有属性和方法，调用或修改任意对象的属性和方法的能力。
+
+
+#### 基础
+
+
+
+> 反射允许程序在运行时发现和使用类信息，类信息也就是字节码文件,其中的各个成分会被封装成一个Class对象，反射可以获取这些Class对象，并通过反射提供的接口访问属性和方法(这些属性和方法也是一个个对象)。
+
+例如：
+
+一个类有成员属性、成员方法、构造方法等。通过反射可获取Class对象，可以获取Method对象，可以获取Constructor对象
+
+##### Class类
+
+> Class类位于java.lang下。当一个类或接口被装载进jvm就会生成一个与之唯一对应的Class实例，通过这个Class实例我们就知道此类的所有信息。
 >
-> Java反射就是在运行状态中，对于任意一个类，都能够知道这个类的所有属性和方法；对于任意一个对象，都能够调用它的任意方法和属性；并且能改变它的属性。而这也是Java被视为动态语言的一个关键性质。
 
-#### Class类
-
-> Class类用于封装加载到jvm中的类(包括接口和类)。当一个类被装载进jvm就会生成一个与之唯一对应的Class对象，通过这个Class对象我们就知道此类的所有信息。
->
-> 在程序运行时，jvm会检查所需加载的类对应的Class对象是否已经加载，如果没有加载，jvm会根据类名查找对应的Class文件，并将其加载入jvm，jvm会保证每个class类只会生成唯一对应的class对象。
-
-获取Class对象的方式：
+获取Class实例的方式：
 
 - 对象.getClass()方法
 - 类名.class
@@ -5609,145 +5735,226 @@ public void test() {
 
 ![image-20220825100540111](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252320148.png)
 
+结论：
+
+- (字节码文件)class类对应的Class实例在内存中只存在一份，多次获取得到的是同一个Class实例
+- Class类(java.lang.Class)只有一个私有构造器，因此Class实例都是由JVM创建和加载
+- Class实例可在运行期间提供一个对象的类信息。这是反射机制的前提条件
+
+##### 类加载
+
+> 类加载是指加载阶段到初始化阶段的整个过程。
+>
+> 类加载需要做：
+>
+> - 通过一个类的全限定名称获取此类的二进制流
+> - 将此二进制流转化为方法区的与字节码文件对应的数据结构
+> - 在堆内存生成唯一的Class对象（此Class对象是访问该类的入口）
 
 
-#### 反射能干什么
+
+#### 反射的使用
+
+> Class类和java.lang.reflect.*包下的类一起对反射提供支持。
+
+##### 获取Class实例
+
+> 在Jvm加载类时，会在堆内存创建唯一Class实例，也是访问对应类信息的入口，那么如何获取它呢？
+
+- 类名.class
+- 实例对象.getClass()
+- Class.forName(类全限定名)
+
+
+
+##### Class类常用方法
+
+- 获取类名信息
+
+  ```java
+  //获取简答类型  (String)
+  public String getSimpleName()
+  //获取类的全限定名
+  public String getName()
+  //获取类易于理解的全限定名
+  public String getCanonicalName() 
+  ```
+
+  > 作为普通类、内部类和数组之间的区别
+  >
+  > 需要注意的是想要使用Class.foname加载类，需使用getName()的方式获取类全限定名
+
+  ```java
+  @Test
+  public void test() {
+      //普通类
+      System.out.println(Class1.class.getSimpleName());
+      System.out.println(Class1.class.getName());
+      System.out.println(Class1.class.getCanonicalName());
+      //内部类
+      System.out.println(Class1.Class2.class.getSimpleName());
+      System.out.println(Class1.Class2.class.getName());
+      System.out.println(Class1.Class2.class.getCanonicalName());
+      //数组
+      final Object o = Array.newInstance(String.class, 1);
+      System.out.println(o.getClass().getSimpleName());
+      System.out.println(o.getClass().getName());
+      System.out.println(o.getClass().getCanonicalName());
+  }
+  class Class1{
+      class Class2{
+      }
+  }
+  ```
+
+  ![image-20221104120147195](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202211041203607.png)
+
+- 获取Class实例
+
+  ```java
+  //通过类的全限定名获取Class实例对象
+  public static Class<?> forName(String className);
+  //参数说明：类全限定名、是否触发初始化、指定的类加载器
+  public static Class<?> forName(String name, boolean initialize,
+                                     ClassLoader loader)
+  ```
+
+- 创建实例对象
+
+  > 想要如此方式创建实例则必须存在public的无参构造器
+
+  ```java
+  public T newInstance()
+  ```
+
+- 判断是否是此类的实例
+
+  > Isinstanceof 关键字的平替
+
+  ```java
+  public native boolean isInstance(Object obj);
+  ```
+
+- 获取构造器
+
+  ```java
+  //获取符合参数列表的public构造器
+  public Constructor<T> getConstructor(Class<?>... parameterTypes)
+  //获取所有类型的构造器
+  public Constructor<?>[] getConstructors()
+  //获取符合参数列表的所有构造器
+  public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes)
+  //获取所有构造器  
+  public Constructor<?>[] getDeclaredConstructors() 
+  ```
+
+- 获取属性
+
+  > 需要注意
+  >
+  > - getField 获取当前类及其父类的所有public属性
+  > - getDeclaredField获取当前类所有属性(包括私有属性和默认属性)，不包括父类属性
+
+  ```java
+  public Field getField(String name)
+  public Field getDeclaredField(String name)
+  public Field[] getDeclaredFields()
+  public Field[] getFields()
+  ```
+
+  ```java
+  public class ClassFieldsParent {
+      public String publicStrP;
+      private String privateStrP;
+      protected String protectedStrP;
+  }
+  public class ClassFieldsSon extends ClassFieldsParent {
+      public String publicStrS;
+      private String privateStrS;
+      protected String protectedStrS;
+      @Test
+      public void test() {
+          System.out.println("========getFields=======");
+          final Field[] fields = ClassFieldsSon.class.getFields();
+          for (Field field : fields) {
+              System.out.println(field.getName());
+          }
+          System.out.println("========getDeclaredFields=======");
+          final Field[] declaredFields = ClassFieldsSon.class.getDeclaredFields();
+          for (Field field : declaredFields) {
+              System.out.println(field.getName());
+          }
+      }
+  }
+  ```
+
+- 获取方法
+
+  > 和上面的属性一样的特点
+
+  ```java
+  public Method[] getMethods()
+  public Method[] getDeclaredMethods() 
+  public Method getMethod(String name, Class<?>... parameterTypes)
+  public Method getDeclaredMethod(String name, Class<?>... parameterTypes)
+  ```
+
+反射能干什么
 
 - 使用反射创建实例对象
 - 使用反射获取一个实例对象，所属类的所有信息(类信息[父类、接口、注解]、属性、方法[包括私有方法、构造方法])
 
 
 
-##### 使用反射创建实例
+##### Constructor类
+
+> 通过Class实例获取Constructor实例。
+
+使用反射创建实例
 
 > 除了new关键字可创建实例对象，反射机制也可创建实例。
 >
 > 主要有两种方式：
 >
-> ①class.newInstance()
+> ①class.newInstance()   必须存在public的无参构造函数
 >
-> ②获取构造方法，执行构造方法
+> ②获取构造方法，执行构造方法， 可设置访问权限和参数列表
 
-###### isInstance
+- getConstractor
 
-isInstance()方法是instanceOf 关键字的平替，如果返回true则可正常转化类型
+  > 获取任意Class对象的非私有构造器，调用newInstance方法并指定构造参数。
+  >
+  > 获取不到私有构造器，如果尝试调用private私有构造器，会报出`java.lang.NoSuchMethodException`异常
 
-```java
-/**
- * Class 类Api isInstance
- * isInstance方法，是instanceOf的平替
- */
-@Test
-public void testIsInstance() {
-    System.out.println("如果Object参数为该类实例，返回true" + ClassPerson.class.isInstance(new ClassPerson()));
-    System.out.println("如果Object参数为该类或其任意子类的实例，返回true" + ClassPerson.class.isInstance(new ClassSon()));
-    System.out.println("如果Object参数为该接口实现类，返回true" + InterfaceTest.class.isInstance(new InterfaceTestImpl()));
-    //如果是数组类型，可强制转化不报CastException异常
-    final Object[] objects = new Object[1024];
-    System.out.println(objects.getClass().isInstance(new Integer[11]));
-}
-```
+- getDeclaredConstructor
 
-###### newInstance
+  > 获取任意类的构造器，如果是private的需要设置为可访问的，否则会爆出IllegalAccessException异常
 
-newInstance()方法创建实例：
+Constructor常用方法：
 
-```java
-public class ClassPerson {
-    public ClassPerson() {
-         System.out.println("公开构造器");
-    }
-}
-public class ClassPersonPrivate {
-    private ClassPersonPrivate() {
-        System.out.println("私有构造器");
-    }
-}
-```
+- 获取构造器所属Class实例
 
-> 如果此类的构造器是public的，则可使用class.newInstance()方法创建实例，且会触发类的初始化。
->
->  如果此类的构造器是private的，则不可使用class.newInstance()方法创建实例，会报java.lang.IllegalAccessException异常。
+  ```java
+  public Class<T> getDeclaringClass()
+  ```
 
-```java
-/**
- * 如果此类的构造器是public的，则可使用class.newInstance()方法创建实例
- * 切会触发类的初始化
- */
-@Test
-public void testNewInstance1() throws InstantiationException, IllegalAccessException {
-    final ClassPerson classPerson = ClassPerson.class.newInstance();
-    System.out.println(classPerson);
-}
-/**
- * 如果此类的构造器是private的，则不可使用class.newInstance()方法创建实例
- * 会报java.lang.IllegalAccessException异常
- */
-@Test
-public void testNewInstance2() throws InstantiationException, IllegalAccessException {
-    final ClassPersonPrivate classPersonPrivate = ClassPersonPrivate.class.newInstance();
-    System.out.println(classPersonPrivate);
-}
-```
+- 返回参数列表  Type数组
 
+  ```java
+  public Type[] getGenericParameterTypes()
+  ```
 
+- 返回参数列表 Class数组
 
-###### getConstractor
+  ```java
+  public Class<?>[] getParameterTypes()
+  ```
 
-> 获取任意Class对象的非私有构造器，可以指定构造参数
+- 创建实例对象
 
-```java
-/**
- * Class的getConstructor方法可以获取，任意类的非私有构造器
- * 可以指构造参数
- */
-@Test
-public void testGetConstructor() throws Exception {
-    final Class<ClassPerson> classPersonClass = ClassPerson.class;
-    //无参构造
-    final Constructor<ClassPerson> constructorWithOutParams = classPersonClass.getConstructor(null);
-    final ClassPerson classPerson1 = constructorWithOutParams.newInstance(null);
-    System.out.println(classPerson1);
-    //有参构造
-    final Constructor<ClassPerson> constructorWithParams = classPersonClass.getConstructor(String.class);
-    final ClassPerson classPerson2 = constructorWithParams.newInstance("小可爱");
-    System.out.println(classPerson2);
-}
-```
-
-![image-20220825110704311](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252320961.png)
-
-> 当然对于private私有构造器，不可以获取。
->
-> 会报出`java.lang.NoSuchMethodException`异常
-
-```java
-@Test
-public void testGetConstructor2() throws Exception {
-    final Constructor<ClassPersonPrivate> constructor = ClassPersonPrivate.class.getConstructor(null);
-    constructor.newInstance(null);
-}
-```
-
-###### getDeclaredConstructor
-
-> 获取任意类的构造器，如果是private的需要设置为可访问的
-
-```java
-/**
- * Class的getDeclaredConstructor方法可以获取，任意类的构造器
- * 可以指构造参数,如果是私有需要设置可访问,否则会爆出IllegalAccessException异常
- */
-@Test
-public void testGetDeclaredConstructor1() throws Exception {
-    final Constructor<ClassPerson> declaredConstructor1 = ClassPerson.class.getDeclaredConstructor(null);
-    declaredConstructor1.newInstance(null);
-    final Constructor<ClassPersonPrivate> declaredConstructor2 = ClassPersonPrivate.class.getDeclaredConstructor(null);
-    //设置可访问
-    declaredConstructor2.setAccessible(true);
-    declaredConstructor2.newInstance(null);
-}
-```
+  ```java
+  public T newInstance(Object ... initargs)
+  ```
 
 
 
@@ -5757,99 +5964,91 @@ public void testGetDeclaredConstructor1() throws Exception {
 
 ###### 属性
 
-> 获取属性Field
-
-```java
-//修改name属性为pubilc
-public String name;
-```
-
-> 使用`getField()`方法只能获取`public`属性。
+> 使用`getField()`方法获取当前类及其父类的public属性
 >
-> 使用`getDeclaredField()`获取所有属性，设置`setAccessible(true)`可对非pulic属性进行访问
+> 使用`getDeclaredField()`获取当前类的所有属性，设置`setAccessible(true)`可对非pulic属性进行访问。
 
-```java
-@Test
-public void testField1() throws Exception {
-    //getField获取public 属性
-    final Field name = ClassPerson.class.getField("name");
-    System.out.println("field name :  => " + name.getName());
-    System.out.println("field type :  => " + name.getType());
-}
-@Test
-public void testField2() throws Exception {
-    final Field[] fields =  ClassPerson.class.getDeclaredFields();
-    Arrays.asList(fields).forEach(field -> field.setAccessible(true));
-    for (Field field : fields) {
-        System.out.println("field name :  => " + field.getName());
-        System.out.println("field type :  => " + field.getType());
-    }
-}
-```
+- 设置指定实例的属性值
 
-> 可通过反射动态修改对象属性
+  ```java
+  public void set(Object obj, Object value)
+  //基本数据类型api
+  public void setBoolean(Object obj, boolean z)
+  。。。char、byte、short、int、long、float、double
+  ```
 
-```java
-@Test
-public void testField3() throws Exception {
-    final ClassPerson classPerson = new ClassPerson();
-    System.out.println("ClassPerson =>" + classPerson);
-    //得到所有
-    final Field[] fields = classPerson.getClass().getDeclaredFields();
-    Arrays.asList(fields).forEach(field -> {
-        field.setAccessible(true);
-        Object obj;
-        switch (field.getName()) {
-            case "name":
-                obj = "name";
-                break;
-            case "age":
-                obj = 20;
-                break;
-            case "num":
-                obj = 10;
-                break;
-            case "values":
-                obj = new String[]{"values"};
-                break;
-            default:
-                obj = null;   break;
-        }
-        try {
-            field.set(classPerson,obj);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-    });
-    System.out.println(classPerson);
-}
-```
+- 返回指定对象上此 Field 表示的字段的值
 
-![image-20220825184025386](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252320662.png)
+  ```java
+  public Object get(Object obj)
+  //基本数据类
+  public boolean getBoolean(Object obj)
+  。。。char、byte、short、int、long、float、double
+  ```
+
+- 返回一个 Class 对象，它标识了此Field 对象所表示字段的声明类型
+
+  ```java
+  public Class<?> getType()
+  ```
+
+- 返回一个 Type对象，它标识了此Field 对象所表示字段的声明类型
+
+  ```java
+  public Type getGenericType()
+  ```
+
+- 如果此字段表示枚举类型的元素则返回 true,否则返回 false
+
+  ```java
+  public boolean isEnumConstant()
+  ```
+
+-  返回表示类或接口的 Class 对象，表示声明此属性的类或接口的Class对象
+
+  ```java
+  public Class<?> getDeclaringClass()
+  ```
+
+- 设置可访问
+
+  ```java
+  public void setAccessible(boolean flag)
+  ```
 
 ###### 方法
 
-> 通过反射调用方法
+> 和field一样。
+>
+> 使用`getMethod()`方法获取当前类及其父类的public方法
+>
+> 使用`getDeclaredMethod()`获取当前类的所有方法，设置`setAccessible(true)`可对非pulic方法进行访问。
 
-```java
-@Test
-public void testMethod1() throws Exception {
-    final ClassPerson classPerson = new ClassPerson();
-    System.out.println("ClassPerson =>" + classPerson);
-    //获取public方法
-    final Method methodWithoutParam = classPerson.getClass().getMethod("publicMethod");
-    System.out.println("方法名:=>" + methodWithoutParam.getName());
-    methodWithoutParam.invoke(classPerson);
-    //获取public方法
-    final Method methodWithParam = classPerson.getClass().getMethod("publicWithParamMethod", String.class, int.class);
-    System.out.println("方法名:=>" + methodWithParam.getName());
-    methodWithParam.invoke(classPerson, "str", 100);
-}
-```
+- 调用指定方法
 
-![image-20220825185606816](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208252320034.png)
+  ```java
+  public Object invoke(Object obj, Object... args)
+  ```
 
+- 返回Class对象，表示此方法的返回类型
 
+  ```java
+  public Class<?> getReturnType()
+  ```
+
+- 返回一个 Class 数组，按声明顺序，表示此方法的参数类型
+
+  ```java
+  public Class<?>[] getParameterTypes()
+  ```
+
+- 设置可访问
+
+  ```java
+  public void setAccessible(boolean flag)
+  ```
+
+###### 
 
 ##### 使用反射获取其他信息
 
