@@ -489,3 +489,302 @@ static <T> void m(T t, List<T> list) {
 
 永久代内存申请固定，小了会内存泄露，打了浪费内存资源。调整为元空间因为可以动态调整和GC的机制，便可不必担心永久代的问题
 
+
+
+### Java基础
+
+#### SPI机制
+
+> Service Provider interface，是JDK内置的一种服务提供发现机制，可以为某个接口寻找服务实现，将装配的控制权移程序之外达到解耦的目的。
+
+SPI机制流程：
+
+![image-20221107124902140](Pdai.assets/image-20221107124902140.png)
+
+当服务提供方提供了一种接口的实现，需要在classpath下的 `META-INF/services`下新建以接口全限定名称命名的文件，里面填写接口实现的全限定名称。当服务调用者需要调用此服务的时候，就搜索对应jar包的spi配置文件，读取解析配置文件，通过反射创建实例并存放入一个map结构体，key为实现类全限定名称，value为实现类实例对象。
+
+JDK查找服务的实现工具是`java.util.ServiceLoader`
+
+
+
+##### jdk  Spi应用
+
+> 比如`java.sql.Driver`接口，这是JDK官方提供的标准数据库驱动接口，各大厂商(mysql、oracle)去实现这个接口。
+
+引入两个驱动;
+
+```xml
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.28</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.oracle.database.jdbc/ojdbc8 -->
+<dependency>
+    <groupId>com.oracle.database.jdbc</groupId>
+    <artifactId>ojdbc8</artifactId>
+    <version>21.7.0.0</version>
+</dependency>
+```
+
+测试
+
+```java
+public static void test6() throws SQLException {
+    final ServiceLoader<Driver> load = ServiceLoader.load(Driver.class);
+    final Iterator<Driver> iterator = load.iterator();
+    while (iterator.hasNext()) {
+        final Driver next = iterator.next();
+        String url = "jdbc:mysql://localhost:3306/xtest?useUnicode=true&charactEncoding=utf8&useSSL=true&serverTimezone=GMT%2B8";
+        String user = "root";
+        String pass = "123456";
+        final Properties properties = new Properties();
+        properties.put("user", user);
+        properties.put("password", pass);
+        if (next instanceof com.mysql.cj.jdbc.Driver) {
+            final Connection connect = next.connect(url, properties);
+            final PreparedStatement prst = connect.prepareStatement("select * from user limit ?");
+            prst.setInt(1, 10);
+            final ResultSet resultSet = prst.executeQuery();
+            while (resultSet.next()) {
+                System.out.println(resultSet.getObject(2));
+            }
+            resultSet.close();
+            prst.close();
+            connect.close();
+        }
+    }
+}
+```
+
+
+
+##### 例子
+
+> 使用Spi机制写一个例子：
+>
+> idea + maven 即可
+
+- 标准接口
+  - 首先创建一个普通maven模块，这里面放标准接口，给调用方调用给服务方实现。
+
+    ![image-20221107152321940](Pdai.assets/image-20221107152321940.png)
+
+  - 写一个标准接口
+
+    ```java
+    public interface IDriver {
+    
+        void getConn();
+    
+        void service();
+    }
+    ```
+
+  - 使用maven插件安装到本地
+
+    ![image-20221107152405865](Pdai.assets/image-20221107152405865.png)
+
+  - 查看安装
+
+    ![image-20221107152503937](Pdai.assets/image-20221107152503937.png)
+
+- 接口实现方
+
+  - 引入标准接口模块
+
+    ```xml
+    <dependencies>
+        <dependency>
+            <groupId>com.roily.spi</groupId>
+            <artifactId>spi</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+    ```
+
+  - 实现标准接口
+
+    ```java
+    public class MysqlDriver implements IDriver {
+        @Override
+        public void getConn() {
+            System.out.println("mysql getConn");
+        }
+        @Override
+        public void service() {
+            System.out.println("mysql service");
+    
+        }
+    }
+    ```
+
+  - 添加spi配置文件
+
+    > 路径：classpath下的META-INF\services   即resoureces下的 META-INF\services 
+    >
+    > 文件名称  标准接口的全限定名称，内容实现类的全限定名称
+
+    ```properties
+    com.roily.spi.impl.MysqlDriver
+    ```
+
+  - 重复如上步骤，再添加一个
+
+  - instaiil安装到本地
+
+    ![image-20221107154021375](Pdai.assets/image-20221107154021375.png)
+
+- 接口调用方
+
+  - 创建模块
+
+  - 引入依赖
+
+    ```xml
+    <dependencies>
+        <dependency>
+            <groupId>com.roily.spi</groupId>
+            <artifactId>spi</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.roily.spi</groupId>
+            <artifactId>spiimpl</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.roily.spi</groupId>
+            <artifactId>spiimpl2</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+    ```
+
+  - 测试
+
+    ```java
+    public static void main(String[] args) throws ClassNotFoundException {
+        final ServiceLoader<IDriver> load = ServiceLoader.load(IDriver.class);
+        final Iterator<IDriver> iterator = load.iterator();
+        while (iterator.hasNext()) {
+            final IDriver next = iterator.next();
+            System.out.println("==========" + next.getClass() + "===========");
+            next.getConn();
+            next.service();
+        }
+    }
+    ```
+
+    ![image-20221107160752181](Pdai.assets/image-20221107160752181.png)
+
+
+
+
+
+#### SpringBoot中的SPI
+
+> SpringBoot的自动装配过程中，由SpringFactoriesLoader去加载META-INF/spring.factories文件，。他会寻找ClassPath下的每个META-INF/spring.factories配置文件，并解析为Properties对象，将信息放入一个`Map<String,List<>>`结构里面
+
+```java
+protected List<String> getAutoConfigurations() {
+   if (this.autoConfigurations == null) {
+      this.autoConfigurations = SpringFactoriesLoader.loadFactoryNames(EnableAutoConfiguration.class,
+            this.beanClassLoader);
+   }
+   return this.autoConfigurations;
+}
+
+public static List<String> loadFactoryNames(Class<?> factoryType, @Nullable ClassLoader classLoader) {
+    ClassLoader classLoaderToUse = classLoader;
+    if (classLoaderToUse == null) {
+        classLoaderToUse = SpringFactoriesLoader.class.getClassLoader();
+    }
+    String factoryTypeName = factoryType.getName();
+    return loadSpringFactories(classLoaderToUse).getOrDefault(factoryTypeName, Collections.emptyList());
+}
+private static Map<String, List<String>> loadSpringFactories(ClassLoader classLoader) {
+    Map<String, List<String>> result = cache.get(classLoader);
+    if (result != null) {
+        return result;
+    }
+
+    result = new HashMap<>();
+    try {
+        //获取类路径下所有spring.factories文件
+        Enumeration<URL> urls = classLoader.getResources(FACTORIES_RESOURCE_LOCATION);
+        while (urls.hasMoreElements()) {
+            URL url = urls.nextElement();
+            UrlResource resource = new UrlResource(url);
+            //解析为Properties
+            Properties properties = PropertiesLoaderUtils.loadProperties(resource);
+            for (Map.Entry<?, ?> entry : properties.entrySet()) {
+                //接口名称
+                String factoryTypeName = ((String) entry.getKey()).trim();
+                //实现类集合。以逗号分割
+                String[] factoryImplementationNames =
+                    StringUtils.commaDelimitedListToStringArray((String) entry.getValue());
+                for (String factoryImplementationName : factoryImplementationNames) {
+                    result.computeIfAbsent(factoryTypeName, key -> new ArrayList<>())
+                        .add(factoryImplementationName.trim());
+                }
+            }
+        }
+
+        // Replace all lists with unmodifiable lists containing unique elements
+        result.replaceAll((factoryType, implementations) -> implementations.stream().distinct()
+                          .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList)));
+        cache.put(classLoader, result);
+    }
+    catch (IOException ex) {
+        throw new IllegalArgumentException("Unable to load factories from location [" +
+                                           FACTORIES_RESOURCE_LOCATION + "]", ex);
+    }
+    return result;
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
