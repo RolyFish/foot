@@ -450,165 +450,198 @@ resp.setCharacterEncoding("utf-8");
 
 ##### Request
 
-> request生命周期，一次请求。
->
-> 每一次请求都会有一个全新的request
+> Request请求对象，封装了信息，包括参数、属性以及一些附加信息。
 
-###### 基础
-
-- 通过`req.getParamer()`获取请求参数
-- attribute
-
-> 请求转发可以传递req对象
+###### 获取请求参数
 
 ```java
-req.setAttribute("name","姓名");
-req.getRequestDispatcher("/demo").forward(req,resp);
+/**
+ * req 获取请求参数
+ * - 获取所有请求参数
+ * - 根据请求参数key获取value，存在同名返回第一个
+ * - 根据请求参数key获取所有请求参数的value  这是一个集合，请求参数的key允许重复
+ * - 将请求参数作为map，value为一个集合对象
+ * @param req
+ */
+private void reqParam(HttpServletRequest req) {
+    System.out.println("====getParameterNames()====");
+    final Enumeration parameterNames = req.getParameterNames();
+    while (parameterNames.hasMoreElements()) {
+        final String paramKey = (String) parameterNames.nextElement();
+        final String paramValue = req.getParameter(paramKey);
+        System.out.println("Key:" + paramKey + "," + "Value:" + paramValue);
+    }
+    System.out.println("====getParameterValues()====");
 
-req.getAttribute("name");
+    //可以存在同名的key，通过此方法可以获取所有此key的value
+    final String[] values = req.getParameterValues("value");
+    final StringBuilder sb = new StringBuilder("key:value:");
+    for (String value : values) {
+        sb.append(value + ",");
+    }
+    System.out.println(sb.toString());
+
+    System.out.println("====getParameterMap()====");
+    final Map<String, Object> parameterMap = req.getParameterMap();
+    parameterMap.entrySet().forEach(entity -> {
+        final Object value = entity.getValue();
+        if (String[].class.isInstance(value)) {
+            String[] strings = (String[]) value;
+            final StringBuilder sb2 = new StringBuilder("key:" + entity.getKey() + ":");
+            for (String string : strings) {
+                sb2.append(string + ",");
+            }
+            System.out.println(sb2.toString());
+        }
+    });
+}
 ```
 
-- ServletContext
+![image-20221110155303479](javaweb.assets/image-20221110155303479.png)
 
-> ServletContext对象代表整个web容器，所有servlet共享一个ServletContext，他与web容器共生死。
 
-获取方式
+
+###### 获取设置属性
+
+> req是一个容器可以放置属性，
 
 ```java
-final ServletContext servletContext = getServletContext();
+private void reqAttribute(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    //手动设置attribute，请求转发传递request，因为req生命周期只在一个请求期间
+    req.setAttribute("key1", "value1");
+    req.setAttribute("key1", "value1X");
+    req.setAttribute("key2", "value2");
+    req.setAttribute("key3", "value3");
+    req.getRequestDispatcher("/reqAcceptReqParamAndAttributeForWard").forward(req, resp);
+}
+```
+
+```java
+/**
+ * req是一个容器，可以往里面放置属性
+ *
+ * @param req
+ */
+private void reqAttribute(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        final Enumeration attributeNames = req.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            final String attributeName = (String) attributeNames.nextElement();
+            final Object attribute = req.getAttribute(attributeName);
+            if (String.class.isInstance(attribute))
+                System.out.println("attributeName:" + attributeName + ", attributeValue:" + attribute);
+            else
+                System.out.println("attributeName:" + attributeName + ", attributeValue:" + attribute.toString());
+
+        }
+        req.removeAttribute("value1");
+    }
+```
+
+![image-20221110161516092](javaweb.assets/image-20221110161516092.png)
+
+
+
+###### 附加信息
+
+>req封装请求信息，不止于请求参数和属性，还包括协议、端口、编码等。
+
+```java
+private void otherValue(HttpServletRequest req, HttpServletResponse resp) {
+
+    System.out.println("编码方式：" + req.getCharacterEncoding());
+    System.out.println("请求内容类型：" + req.getContentType());
+    System.out.println("本机ip地址：" + req.getLocalAddr());
+    System.out.println("本机name：" + req.getLocalName());
+    System.out.println("本机端口：" + req.getLocalPort());
+    System.out.println("远程ip地址：" + req.getRemoteAddr());
+    System.out.println("远程name：" + req.getRemoteUser());
+    System.out.println("远程端口：" + req.getRemotePort());
+
+    System.out.println("请求参数（跟在？后的字符串）：" + req.getQueryString());
+    //指定路径用于请求转发
+    final RequestDispatcher requestDispatcher = req.getRequestDispatcher("");
+    //获取所有的Cookies，cookies存在于客户端（也就是浏览器）
+    final Cookie[] cookies = req.getCookies();
+    //获取session，session存在于服务端，所有客户端共享
+    final HttpSession session = req.getSession();
+
+}
 ```
 
 
 
 ###### 请求转发
 
-> 将请求委托给另一个servlet(接口)处理，委托处理的接口只能是内部接口。
->
-> 可延长request生命周期
-
-使用：
-
-主要测请求转发request域中参数的传递：
-
-```java
-public class Servlet01 extends HttpServlet {
-
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        this.doPost(req, resp);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
-        System.out.println("====1====getParameter===========");
-
-        final Enumeration parameterNames = req.getParameterNames();
-        while (parameterNames.hasMoreElements()) {
-            System.out.println(req.getParameter((String) parameterNames.nextElement()));
-        }
-        System.out.println("====1====getParameter===========");
-
-        System.out.println("====1====getAttribute===========");
-        final Enumeration attributeNames = req.getAttributeNames();
-        while (attributeNames.hasMoreElements()) {
-            System.out.println(req.getAttribute((String) attributeNames.nextElement()));
-        }
-        System.out.println("====1====getAttribute===========");
-        req.setAttribute("add", "add");
-        req.getRequestDispatcher("/servlet2").forward(req, resp);
-    }
-}
-
-public class Servlet02 extends HttpServlet {
-
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        this.doPost(req, resp);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
-        System.out.println("====2===getParameter===========");
-
-        final Enumeration parameterNames = req.getParameterNames();
-        while (parameterNames.hasMoreElements()) {
-            System.out.println(req.getParameter((String) parameterNames.nextElement()));
-        }
-        System.out.println("====2====getParameter===========");
-
-        System.out.println("====2====getAttribute===========");
-        final Enumeration attributeNames = req.getAttributeNames();
-        while (attributeNames.hasMoreElements()) {
-            System.out.println(req.getAttribute((String) attributeNames.nextElement()));
-        }
-        System.out.println("====2====getAttribute===========");
-    }
-}
-```
-
-配置web.xml
-
-```xml
-<servlet>
-    <servlet-name>servlet1</servlet-name>
-    <servlet-class>com.roily.servlet.dispatcher.Servlet01</servlet-class>
-</servlet>
-
-<servlet-mapping>
-    <servlet-name>servlet1</servlet-name>
-    <url-pattern>/servlet1</url-pattern>
-</servlet-mapping>
-<servlet>
-    <servlet-name>servlet2</servlet-name>
-    <servlet-class>com.roily.servlet.dispatcher.Servlet02</servlet-class>
-</servlet>
-
-<servlet-mapping>
-    <servlet-name>servlet2</servlet-name>
-    <url-pattern>/servlet2</url-pattern>
-</servlet-mapping>
-```
-
-测试
-
-请求url：`http://localhost:8080/demo3/servlet1?value=1&name=2`
-
-![image-20221024112611452](javaweb.assets/image-20221024112611452.png)
+> req的生命周期在一次请求后就g了，而请求转发可以延长req的生命周期。
 
 ##### Respones
 
-> response 为响应对象。可向网页输出文本、超文本。
+> 响应对象，可以获取输出流，往页面输出数据。
 
-###### print  & write
-
-> resp有两种方式输出文件到网页上，分别是write  和  print。
-
-- 两者都是字符串，则无区别
-- 若输出的是整数，则write会通过ascll码转译，print不做转译
+###### 输出数据到网页
 
 ```java
-public class ResponseWriterDemo1 extends HttpServlet {
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        this.doPost(req, resp);
-    }
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        final PrintWriter writer = resp.getWriter();
-        writer.write("resp Writer");
-        writer.write(97);
-        writer.println();
-        writer.println("resp Print");
-        writer.println(97);
-        writer.flush();
-        writer.close();
-    }
-}
+final PrintWriter writer = resp.getWriter();
+writer.write("resp Writer");
+writer.write(97);
+writer.println();
+writer.println("resp Print");
+writer.println(97);
+writer.flush();
+writer.close();
 ```
 
-![image-20221024150103957](javaweb.assets/image-20221024150103957.png)
+![image-20221110183623624](javaweb.assets/image-20221110183623624.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
