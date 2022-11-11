@@ -563,8 +563,7 @@ private void otherValue(HttpServletRequest req, HttpServletResponse resp) {
     //获取所有的Cookies，cookies存在于客户端（也就是浏览器）
     final Cookie[] cookies = req.getCookies();
     //获取session，session存在于服务端，所有客户端共享
-    final HttpSession session = req.getSession();
-
+    final HttpSession session = req.getSession(true);
 }
 ```
 
@@ -572,7 +571,81 @@ private void otherValue(HttpServletRequest req, HttpServletResponse resp) {
 
 ###### 请求转发
 
-> req的生命周期在一次请求后就g了，而请求转发可以延长req的生命周期。
+> req的生命周期在一次请求后就g了，而请求转发可以延长req的生命周期。请求转发可以访问到网站内部资源（WEb-INF下的资源）。
+
+```java
+@Override
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    this.doPost(req, resp);
+}
+
+@Override
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    final String flag = req.getParameter("flag");
+    System.out.println(flag);
+    if ("1".equals(flag)) {
+        dispatcherServlet(req, resp);
+    } else {
+        dispatcherStatic(req, resp);
+    }
+}
+
+/**
+ * 请求转发到静态页面
+ *
+ * @param req
+ * @param resp
+ */
+private void dispatcherStatic(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+    req.getRequestDispatcher("/WEB-INF/jsp/reqDispatcher.jsp").forward(req, resp);
+}
+
+/**
+ * 请求转发到Servlet
+ *
+ * @param req
+ * @param resp
+ */
+private void dispatcherServlet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+    req.getRequestDispatcher("/reqDispatcherServlet").forward(req, resp);
+
+}
+```
+
+```xml
+<servlet>
+    <servlet-name>reqDispatcher</servlet-name>
+    <servlet-class>com.roily.servlet.request.ReqDispatcher</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>reqDispatcher</servlet-name>
+    <url-pattern>/reqDispatcher</url-pattern>
+</servlet-mapping>
+
+<servlet>
+    <servlet-name>reqDispatcherServlet</servlet-name>
+    <servlet-class>com.roily.servlet.request.ReqDispatcherServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>reqDispatcherServlet</servlet-name>
+    <url-pattern>/reqDispatcherServlet</url-pattern>
+</servlet-mapping>
+```
+
+```java
+@Override
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+    try (final PrintWriter writer = resp.getWriter()) {
+        writer.write("ReqDispatcher Servlet");
+        writer.flush();
+    }
+}
+```
+
+
 
 ##### Respones
 
@@ -580,36 +653,154 @@ private void otherValue(HttpServletRequest req, HttpServletResponse resp) {
 
 ###### 输出数据到网页
 
+> 可通过字符流PrintWriter或字节流ServletOutputStream输出内容到网页。
+>
+> 这两个方式不可同时使用
+
 ```java
-final PrintWriter writer = resp.getWriter();
-writer.write("resp Writer");
-writer.write(97);
-writer.println();
-writer.println("resp Print");
-writer.println(97);
-writer.flush();
-writer.close();
+try (final PrintWriter writer = resp.getWriter();) {
+    writer.write("resp Writer");
+    writer.write(97);
+    writer.println();
+    writer.println("resp Print");
+    writer.println(97);
+    writer.flush();
+}
 ```
 
-![image-20221110183623624](javaweb.assets/image-20221110183623624.png)
+```java
+req.setCharacterEncoding("utf-8");
+resp.setContentType("text/html;charset=utf-8");
+resp.setCharacterEncoding("utf-8");
+try (final ServletOutputStream outputStream = resp.getOutputStream();) {
+    String str = "起飞!!!起飞!!!起飞!!!起飞!!!起飞!!!";
+    final byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+    outputStream.write(bytes);
+    outputStream.flush();
+}
+```
+
+输出中文存在乱码问题：
+
+- 设置请求响应编码
+
+  - 如上
+
+- 配置Spring提供的过滤器
+
+  ```xml
+  try (final ServletOutputStream outputStream = resp.getOutputStream();) {
+      String str = "起飞!!!起飞!!!起飞!!!起飞!!!起飞!!!";
+      final byte[] bytes = str.getBytes();
+      outputStream.write(bytes);
+      outputStream.flush();
+  }
+  <filter>
+      <filter-name>encoding</filter-name>
+      <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+      <init-param>
+          <param-name>encoding</param-name>
+          <param-value>utf-8</param-value>
+      </init-param>
+  </filter>
+  <filter-mapping>
+      <filter-name>encoding</filter-name>
+      <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  ```
+
+- 自定义过滤器，并配置
 
 
 
+###### 响应错误
+
+- 设置响应状态
+
+  > 如果是500或其他错误状态显示浏览器错误页面
+
+  ```java
+  //设置响应状态码
+  resp.setStatus(HttpServletResponse.SC_OK);
+  //设置响应状态码
+  resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+  ```
+
+- 发送错误
+
+  > 发送错误信息，此时响应状态为500，如果没有设置错误页面，则跳转到tomcat默认错误页面，如果设置错误页面则跳转到指定页面。
+
+  ```java
+  //使用指定的状态向客户端发送错误响应，包含错误消息，跳转到tomcat默认错误页面
+  resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "错误");
+  //在web,xml设置默认错误页面
+  <error-page>
+      <location>
+      /WEB-INF/jsp/500.jsp
+      </location>
+  </error-page>
+  ```
 
 
 
+###### 发送cookie到客户端
+
+> cookie甜点的意思，web的会话技术。可以作为浏览器客户端缓存。
+
+```java
+private static void respSendCookie(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+    resp.addCookie(new Cookie("cookie1", "value1"));
+    resp.addCookie(new Cookie("cookie2", "value2"));
+    String reqp = "/WEB-INF/jsp/cookiesTest.jsp";
+    req.getRequestDispatcher(reqp).forward(req, resp);
+}
+```
+
+> Jsp获取Cookie方式
+>
+> - el表达式
+> - Jsp内置对象获取cookie
+
+```jsp
+<%@ page import="java.net.URLDecoder" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+<%
+    Cookie cookie = null;
+    Cookie[] cookies = request.getCookies();
+    out.println("java代码片段，内置对象获取session" + "<br>");
+    if (cookies != null) {
+        for (int i = 0; i < cookies.length; i++) {
+            cookie = cookies[i];
+            out.print("参数名 : " + cookie.getName());
+            out.print("<br>");
+            out.print("参数值: " + URLDecoder.decode(cookie.getValue(), "utf-8") + " <br>");
+        }
+    }
+%>
+<hr>
+<span>el表达式</span>
+<ol>
+    <li>
+        <p>cookie1: ${cookie.cookie1.name}, ${cookie.cookie1.value}</p>
+    </li>
+    <li>
+        <p>cookie2: ${cookie.cookie2.name}, ${cookie.cookie2.value}</p>
+    </li>
+</ol>
+</body>
+</html>
+```
 
 
 
+###### 重定向
 
-
-
-
-
-
-
-
-
+> 重定向可重定向到互联网上任意可访问资源。重定向会改变url，可认为是通过url直接访问资源，所以对于网站内部资源不可通过重定向访问。
 
 
 
