@@ -296,9 +296,9 @@ Servlet  +   JSP是sun公司提出的B\S架构，纯jiava代码实现，现在�
 
 #### 什么是Servlcet
 
-> 实现`javax.servlet.Servlet`接口的web程序叫做Servlcet。
+> 实现`javax.servlet.Servlet`接口规范、部署在web容器内的web程序叫做Servlcet。
 >
-> Servlet将请求信息放入req域，响应信息放入Resp域。
+> Servlet负责读取请求信息，将请求信息放入req域，封装响应信息放入Resp域。
 
 看一下Servlet的设计。
 
@@ -341,6 +341,26 @@ service(){
     }......
 }
 ```
+
+
+
+#### Servlet生命周期
+
+
+
+- 初始化，Servlet调用init()方法，完成初始化
+
+  > init()方法只在首次调用创建Servlet时调用一次
+
+- 业务，Servlet调用Service()方法处理浏览器请求
+
+  > servlce方法由HttpServlet实现，根据不同请求调用不同方法
+
+- 销毁，Servlet调用destroy()方法销毁当前servlet
+
+  > destroy()方法只会调用一次，用于一些善后操作（关闭数据库连接、持久化Cookies等等）。
+
+- GC，销毁后由GC进行回收
 
 
 
@@ -800,7 +820,322 @@ private static void respSendCookie(HttpServletRequest req, HttpServletResponse r
 
 ###### 重定向
 
-> 重定向可重定向到互联网上任意可访问资源。重定向会改变url，可认为是通过url直接访问资源，所以对于网站内部资源不可通过重定向访问。
+> 重定向可重定向到互联网上任意可访问资源。重定向会改变url，可认为是通过url直接访问资源，所以对于网站内部不可直接通过url访问的资源不可重定向访问(WEB-INF下的静态资源)。
+
+- 重定向到任意可访问的网络资源
+
+  ```java
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+  
+      resp.sendRedirect("https://www.baidu.com/");
+  
+  }
+  ```
+
+- 重定向不可直接访问网站内部资源，可直接访问web-inf之外的静态资源
+
+  ```java
+  //不可直接重定向访问web-inf下静态资源,爆出404
+  // resp.sendRedirect(this.getServletContext().getContextPath() + "/WEB-INF/jsp/reqDispatcher.jsp");
+  
+  //可直接访问
+  resp.sendRedirect(this.getServletContext().getContextPath() + "/index.jsp");
+  ```
+
+- 要是实在想通过重定向访问web-inf下的资源，可在web.xml中配置servlet，再通过重定向访问
+
+
+
+
+
+#####  会话
+
+> 前面提到过的session和cookie
+
+###### cookie
+
+> cookie存在于客户端(浏览器端)的文本文件，并保留了各种跟踪信息。
+>
+> 对于可达的服务器和路径，请求时会携带上cookie信息，response发送cookie到页面并保存在浏览器，通过设置maxAge为0删除cookie。
+
+| 1    | **public void setDomain(String pattern)**  | s设置可见域名，本地为localhost                               |
+| ---- | ------------------------------------------ | ------------------------------------------------------------ |
+| 2    | **public void setMaxAge(int expiry)**      | 设置 cookie 过期的时间（以秒为单位）。默认-1为session会话期间 |
+| 3    | **public String getName()**                | 返回 cookie 的名称。名称在创建后不能改变。                   |
+| 4    | **public void setValue(String newValue)**  | 设置或更新cookie值                                           |
+| 5    | **public void setPath(String uri)**        | 设置 cookie 可见的路径。如果您不指定路径，与当前页面相同目录下的（包括子目录下的）所有 URL 都会返回 cookie。 |
+| 6    | **public void setComment(String purpose)** | cookie描述信息                                               |
+|      |                                            |                                                              |
+
+例子：
+
+```java
+//获取所有的cookie
+//首次获取浏览器缓存的cookies
+final Cookie[] cookies = req.getCookies();
+System.out.println("===================");
+for (Cookie cookie : cookies) {
+    System.out.println("-----------");
+    System.out.println("cookie name:" + cookie.getName());
+    System.out.println("cookie value:" + URLDecoder.decode(cookie.getValue(), "utf-8"));
+    System.out.println("-----------");
+}
+System.out.println("===================");
+//创建cookie，cookie的name一旦设置就不可变
+Cookie cookie = new Cookie("name", "value");
+//setValue()设置cookie或更新cookie值，如果是中文的话需要进行编码
+cookie.setValue(URLEncoder.encode("值", "utf-8"));
+//对cookie进行描述
+cookie.setComment("cookie描述字段");
+//设置可见域名，默认情况下cookie只对发送他们的服务器可见。本地测试就是localhost
+// cookie.setDomain("");
+//设置cookie的过期时间(以秒为单位)，如果不设置此cookie只在session会话中有效,删除cookie设置masage为0
+cookie.setMaxAge(60 * 60 * 24);
+//设置cookie对当前服务器那些路径可见，默认当前页
+cookie.setPath(req.getContextPath());
+resp.addCookie(cookie);
+```
+
+浏览器端查看cookie：
+
+> 右击网页=>检查=>application=>cookie。
+>
+> - 会发现cookie的创建依赖于Session
+> - 设置中文需要编码，取值需要解码
+
+![image-20221114150322602](javaweb.assets/image-20221114150322602.png)
+
+
+
+> 当Response往网页发送cookie的时候，cookie的信息会包含在响应报文内。
+>
+> cookie存在于客户端浏览器，对于可见的服务器和路径，发送请求的时候会携带上cookie信息。
+
+![image-20221114150834519](javaweb.assets/image-20221114150834519.png)
+
+
+
+> jsp获取session，jsp就是Servlet，SessionScop
+
+```jsp
+<%@ page import="java.net.URLDecoder" %>
+<html>
+<body>
+
+<%
+    final Cookie[] cookies = request.getCookies();
+    for (Cookie cookie : cookies) {
+        out.write("cookie name   " + URLDecoder.decode(cookie.getName(), "utf-8"));
+        out.write("cookie value  " + URLDecoder.decode(cookie.getValue(), "utf-8") + "<br>");
+        out.flush();
+    }
+    //关闭jspWriter内置对象，下面内容输出不了
+    // out.close();
+    // request javax.servlet.http.HttpServletRequest  获取用户请求信息
+    // response    javax.servlet.http.HttpServletResponse 响应客户端请求，并将处理信息返回到客户端
+    // out javax.servlet.jsp.JspWriter    输出内容到 HTML 中
+    // session javax.servlet.http.HttpSession 用来保存用户信息
+    // application javax.servlet.ServletContext   所有用户共享信息
+    // config  javax.servlet.ServletConfig    这是一个 Servlet 配置对象，用于 Servlet 和页面的初始化参数
+    // pageContext javax.servlet.jsp.PageContext  JSP 的页面容器，用于访问 page、request、application 和 session 的属性
+    // page    javax.servlet.jsp.HttpJspPage  类似于 Java 类的 this 关键字，表示当前 JSP 页面
+    // exception   java.lang.Throwable    该对象用于处理 JSP 文件执行时发生的错误和异常；只有在 JSP 页面的 page 指令中指定 isErrorPage 的取值 true 时，才可以在本页面使用 exception 对象。
+
+%>
+
+${cookie.name.name}
+<br>
+${cookie.name.value}
+</body>
+</html>
+```
+
+
+
+###### session
+
+> HTTP 是一种"无状态"协议，这意味着每次客户端检索网页时，客户端打开一个单独的连接到 Web 服务器，服务器会自动不保留之前客户端请求的任何记录。
+>
+> session存在于服务器端，用于记录客户端和服务端连接记录，保存重要信息。
+>
+> 每个session都会被分配唯一的id。
+>
+> chrome和MicroSoft不同的浏览器会被分配两个不同的session。
+
+| 序号 | 方法 & 描述                                                  |
+| :--- | :----------------------------------------------------------- |
+| 1    | **public Object getAttribute(String name)** 该方法返回在该 session 会话中具有指定名称的对象，如果没有指定名称的对象，则返回 null。 |
+| 2    | **public Enumeration getAttributeNames()** 该方法返回 String 对象的枚举，String 对象包含所有绑定到该 session 会话的对象的名称。 |
+| 3    | **public long getCreationTime()** 该方法返回该 session 会话被创建的时间，自格林尼治标准时间 1970 年 1 月 1 日午夜算起，以毫秒为单位。 |
+| 4    | **public String getId()** 该方法返回一个包含分配给该 session 会话的唯一标识符的字符串。 |
+| 5    | **public long getLastAccessedTime()** 该方法返回客户端最后一次发送与该 session 会话相关的请求的时间自格林尼治标准时间 1970 年 1 月 1 日午夜算起，以毫秒为单位。 |
+| 6    | **public int getMaxInactiveInterval()** 该方法返回 Servlet 容器在客户端访问时保持 session 会话打开的最大时间间隔，以秒为单位。 |
+| 7    | **public void invalidate()** 该方法指示该 session 会话无效，并解除绑定到它上面的任何对象。 |
+| 8    | **public boolean isNew()** 如果客户端还不知道该 session 会话，或者如果客户选择不参入该 session 会话，则该方法返回 true。 |
+| 9    | **public void removeAttribute(String name)** 该方法将从该 session 会话移除指定名称的对象。 |
+| 10   | **public void setAttribute(String name, Object value)**  该方法使用指定的名称绑定一个对象到该 session 会话。 |
+| 11   | **public void setMaxInactiveInterval(int interval)** session失效时间，超过失效时间，会重新生成session，默认30分支 |
+
+
+
+例子：
+
+> 验证服务器会为每一个客户端分配一个Session
+
+jsp页面输入浏览器名称
+
+```jsp
+<form action="${pageContext.request.contextPath}/sessionApi" id="form" method="post">
+    浏览器名称：<input type="text" name="browser" id="browser"/>
+    <input type="submit" value="提交">
+    <input type="button" onclick="submit()" value="提交">
+</form>
+<script>
+    function submit() {
+        document.getElementById("form").submit();
+    }
+</script>
+```
+
+两个servlet一个设置servlet，一个取servlet
+
+```java
+@Override
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    System.out.println("设置session");
+    final String browser = req.getParameter("browser");
+    final HttpSession session = req.getSession();
+    session.setAttribute("browser", browser);
+}
+@Override
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    System.out.println("取session属性");
+    final HttpSession session = req.getSession();
+    System.out.println(session.getAttribute("browser"));
+}
+```
+
+配置servlet：
+
+```xml
+<servlet>
+    <servlet-name>sessionApi</servlet-name>
+    <servlet-class>com.roily.servlet.session.SessionApi</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>sessionApi</servlet-name>
+    <url-pattern>/sessionApi</url-pattern>
+</servlet-mapping>
+
+<servlet>
+    <servlet-name>sessionApiBrowserName</servlet-name>
+    <servlet-class>com.roily.servlet.session.SessionApiBrowserName</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>sessionApiBrowserName</servlet-name>
+    <url-pattern>/sessionApiBrowserName</url-pattern>
+</servlet-mapping>
+```
+
+
+
+##### servletContext
+
+> 代表web容器。
+
+```java
+@Override
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+    final ServletContext servletContext = getServletContext();
+
+    //获取根目录下资源文件
+    // servletContext.getResourceAsStream()
+
+    //程序根路径
+    final String contextPath = servletContext.getContextPath();
+    System.out.println("servletContext.getContextPath():" + contextPath);
+
+    //web容器初始化参数
+    final String s = servletContext.getInitParameter("");
+    final Enumeration initParameterNames = servletContext.getInitParameterNames();
+    while (initParameterNames.hasMoreElements()) {
+        final String initParam = (String) initParameterNames.nextElement();
+        System.out.println(initParam + " :" + servletContext.getInitParameter(initParam));
+    }
+
+    //返回一个字符串，其中包含给定虚拟路径的真实路径。
+    //E:\programmeTools\idea\git\JavaBase\web\web01\web_demo03_servlet\target\web_demo03_servlet\index.jsp
+    final String realPath = servletContext.getRealPath("/index.jsp");
+    System.out.println("servletContext.getRealPath(\"/index.jsp\"):" + realPath);
+
+    //获取servlet 总是返回null 会被弃用
+    // final ServletName servlet = (ServletName) servletContext.getServlet("servletName");
+    // servlet.doPost(req, resp);
+
+}
+```
+
+> web.xml设置初始化参数
+
+```xml
+<context-param>
+    <param-name>initparam1</param-name>
+    <param-value>initvalue1</param-value>
+</context-param>
+
+<context-param>
+    <param-name>initparam2</param-name>
+    <param-value>initvalue2</param-value>
+</context-param>
+```
+
+
+
+#### 过滤器
+
+
+
+#### 拦截器
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
