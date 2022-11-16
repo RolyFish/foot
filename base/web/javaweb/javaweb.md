@@ -52,34 +52,13 @@ mac系统进入目录命令行输入 sudo .\startup.sh
 
 ##### 如何创建web项目
 
-> 这里编译器选择idea，使用maven构建项目，有两种方式。
+> 编译器idea，使用maven构建项目。
 
-###### 方式一：
+首先创建一个父模块springweb，其余东西都删除掉，只留一个pom.xml作为依赖版本控制。
 
-- 首先创建模块
+![image-20221116120125263](javaweb.assets/image-20221116120125263.png)
 
-  > 首先创建一个空的maven模块，或创建一个空的maven项目
-
-![image-20221019134125573](javaweb.assets/image-20221019134125573.png)
-
-- 添加web支持
-
-> 此刻这个maven项目是一个空的maven项目，想要让其变为web项目，需要添加web支持
-
-右击项目 ---> 点击 Add Franework Support ---> 勾选web即可
-
-此刻就会多出来如下红色方框内的文件：
-
-- index.jsp     网站首页
-- web.xml       web项目的配置文件
-
-![image-20221019134549315](javaweb.assets/image-20221019134549315.png)
-
-- 配置
-
-**修改打包方式并引入插件**
-
-指定web.xml   资源文件路径   resource打包
+pom.xml文件内容：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -89,20 +68,149 @@ mac系统进入目录命令行输入 sudo .\startup.sh
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.roily</groupId>
-    <artifactId>web_demo01</artifactId>
+    <artifactId>springweb</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <!--  修改打包方式  -->
-    <packaging>war</packaging>
+    <packaging>pom</packaging>
+    <modules>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>4.13.2</junit.version>
+        <spring.web-mvc>5.3.23</spring.web-mvc>
+        <servlet.api>2.5</servlet.api>
+        <jsp.api>2.2</jsp.api>
+        <jstl>1.2</jstl>
+        <lombok.version>1.18.24</lombok.version>
+        <jackson-annotations.version>2.13.3</jackson-annotations.version>
+        <jackson-databind.version>2.13.3</jackson-databind.version>
+        <com.alibaba.fastjson.version>2.0.10</com.alibaba.fastjson.version>
+
+        <!--   以下依赖后期使用     -->
+        <mysql.version>8.0.30</mysql.version>
+        <mybatis.version>3.5.10</mybatis.version>
+        <jol-core.version>0.16</jol-core.version>
+        <spring.context.version>5.3.23</spring.context.version>
+        <hamcrest-core.version>2.2</hamcrest-core.version>
+        <jackson-core.version>2.13.3</jackson-core.version>
+
+        <google.gson.version>2.9.0</google.gson.version>
+        <!-- 常用包 -->
+        <apache.commons.lang3.version>3.12.0</apache.commons.lang3.version>
+        <apache.commons.collections4.version>4.4</apache.commons.collections4.version>
+        <apache.commons.io.version>2.11.0</apache.commons.io.version>
+        <apache.commons.codec.version>1.15</apache.commons.codec.version>
+        <google.guava.version>31.1-jre</google.guava.version>
+        <aspectjweaver.version>1.9.9.1</aspectjweaver.version>
+        <cglib.version>3.3.0</cglib.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${spring.web-mvc}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>servlet-api</artifactId>
+                <version>${servlet.api}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet.jsp</groupId>
+                <artifactId>jsp-api</artifactId>
+                <version>${jsp.api}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>jstl</artifactId>
+                <version>${jstl}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson-databind.version}</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${com.alibaba.fastjson.version}</version>
+            </dependency>
+        </dependencies>
+
+    </dependencyManagement>
+</project>
+```
+
+###### 方式一：
+
+> 创建空的maven模块，通过添加web支持的方式。此方式web程序资源文件夹名称为web。
+
+1. 第一步创建一个空的maven模块，配置父模块为上面创建的springweb。
+
+![image-20221116120426899](javaweb.assets/image-20221116120426899.png)
+
+![image-20221116120538273](javaweb.assets/image-20221116120538273.png)
+
+2. 第二部添加web支持：
+
+![image-20221116121143339](javaweb.assets/image-20221116121143339.png)
+
+![image-20221116121121658](javaweb.assets/image-20221116121121658.png)
+
+3. 第三步进行一些配置;
+
+01_createwebmodel.pom.xml:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>springweb</artifactId>
+        <groupId>com.roily</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>01_createwebmodel</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
 
+    <dependencies>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
+    </dependencies>
     <build>
         <!--    打包后的war包名称    -->
-        <finalName>web_demo1</finalName>
+        <finalName>01_createwebmodel</finalName>
         <plugins>
             <!--     引入插件，以及及配置打包资源文件       -->
             <plugin>
@@ -137,29 +245,78 @@ mac系统进入目录命令行输入 sudo .\startup.sh
 </project>
 ```
 
+01_createwebmodel.web.xml:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+    <servlet>
+        <servlet-name>helloServlet</servlet-name>
+        <servlet-class>com.roily.controller.HelloServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>helloServlet</servlet-name>
+        <url-pattern>/helloServlet</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+```
+
+写一个servlet：
+
+```java
+public class HelloServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doPost(req, resp);
+    }
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        final PrintWriter writer = resp.getWriter();
+        writer.println("Hello Servlet");
+        writer.flush();
+        writer.close();
+    }
+}
+```
 
 
-**配置一下Artifacts**
 
-> 路径的配置只是为了输出到指定目录
+配置前后对比：
 
-![image-20221020112612913](javaweb.assets/image-20221020112612913.png)
+![image-20221116121839073](javaweb.assets/image-20221116121839073.png)
 
+4. 打包并放入tomcat运行
 
+> 打包需要注意上面的pom文件配置，否则会过滤掉静态资源(jsp、web.xml)。
 
-- 打包
+打包完成后目录如下，类文件、依赖、静态资源一个不能少：
 
-> 点击package
-
-![image-20221020114406424](javaweb.assets/image-20221020114406424.png)
-
+![image-20221116123707234](javaweb.assets/image-20221116123707234.png)
 
 
-- 放入tomcat运行
 
-> 将war包放入tomcat ，执行startup.bat ，会自动解压成同名的文件夹。访问https:localhost:8080/项目名。
+放入tomcat的webapps目录下，启动tomcat
 
-![image-20221020124425834](javaweb.assets/image-20221020124425834.png)
+> 运行tomcat后XXXX.war会自动进行解压缩。
+
+![image-20221116123756298](javaweb.assets/image-20221116123756298.png)
+
+查看黑白窗有我们项目启动日志：
+
+![image-20221116123928732](javaweb.assets/image-20221116123928732.png)
+
+> 访问路径为，每个项目都有一个上下文路径，为项目名称
+
+```java
+http://localhost:8080/01_createwebmodel/helloServlet
+```
+
+![image-20221116124123504](javaweb.assets/image-20221116124123504.png)
 
 
 
@@ -167,21 +324,19 @@ mac系统进入目录命令行输入 sudo .\startup.sh
 
 ###### 方式二：
 
-> maven为我们呢提供创建web项目的模板，我们只需选择对应模板就行。
+> maven为我们提供创建web项目的模板，我们只需选择对应模板就行。
 
 - 选择web项目模板,
 
   > 填写好基本信息，会为我们生成基础的pom  web.xml  和一个index.jsp
 
-![image-20221020124636561](javaweb.assets/image-20221020124636561.png)
+![image-20221116132012201](javaweb.assets/image-20221116132012201.png)
 
-- 直接打吧即可
+![image-20221116132116227](javaweb.assets/image-20221116132116227.png)
 
-![image-20221020135311828](javaweb.assets/image-20221020135311828.png)
+- 添加基本配置，和上面一样
 
-- 运行
-
-![image-20221020135533595](javaweb.assets/image-20221020135533595.png)
+![image-20221116132746136](javaweb.assets/image-20221116132746136.png)
 
 
 
@@ -193,27 +348,57 @@ mac系统进入目录命令行输入 sudo .\startup.sh
 
 > 简单配置即可运行，web程序我们使用以上两个现成的即可。
 
-![image-20221020141629030](javaweb.assets/image-20221020141629030.png)
+![image-20221116133457827](javaweb.assets/image-20221116133457827.png)
 
-![image-20221020141755277](javaweb.assets/image-20221020141755277.png)
+![image-20221116133517529](javaweb.assets/image-20221116133517529.png)
+
+- edit   configrations
+
+- 点击右上角`+`号
+- 选择Tomcat  Server   local
+- 配置tomcat
+- 选择需要运行的web程序
+- 启动tomcat即可
+
+##### 注意点
 
 
 
-##### 运行
+###### web文件夹未被识别
 
-> 如上配置即可点击启动按钮，即可启动web项目。
+> web程序的资源目录有时不会被识别，没有蓝色的小点点。需要我们手动处理一下
 
-启动完成后可在，tomcat webapps下看见demo01文件夹
+选择project Structure，点击modules，选择对应的模块的web选项
 
-![image-20221020142039296](javaweb.assets/image-20221020142039296.png)
+![image-20221116134310810](javaweb.assets/image-20221116134310810.png)
+
+
+
+###### 依赖未被打包
+
+> 有时明明添加了依赖，打包过后依赖却不见了。
+
+选择project Structure，点击Artifacts，点击对应模块
+
+原因就是缺省lib目录
+
+![image-20221116135002845](javaweb.assets/image-20221116135002845.png)
+
+解决方式：
+
+- 删掉重新添加
+
+  > 推荐此方式
+
+- 手动创建lib并添加依赖
+
+  ![image-20221116135241845](javaweb.assets/image-20221116135241845.png)
 
 
 
 ##### 乱码
 
 > 可能会存在乱码问题，一样的道理，日志是tomcat输出到idea控制台的，输出的什么格式，idea控制台设置的什么格式？
-
-
 
 
 
