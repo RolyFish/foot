@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="1101">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_10_31,_21_01_[Changes]/HelloController3.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_10_31,_21_01_[Changes]/HelloController31.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_10_31,_21_01_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_10_31__21_01__Changes_.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/foot/pdai/spring/01.spring-base.md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/pdai/spring/01.spring-base.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,6 +80,7 @@
       <workItem from="1667220534664" duration="2440000" />
       <workItem from="1667398929752" duration="108000" />
       <workItem from="1668312193084" duration="1611000" />
+      <workItem from="1668613582487" duration="1337000" />
     </task>
     <task id="LOCAL-00001" summary="0802work">
       <created>1659435136175</created>
