@@ -1183,7 +1183,7 @@ jsp页面输入浏览器名称
 </script>
 ```
 
-两个servlet一个设置servlet，一个取servlet
+两个servlet一个设置Session，一个取Session
 
 ```java
 @Override
@@ -1278,11 +1278,206 @@ protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws S
 
 
 
+#### 监听器
+
+> 监听器(listening)就是一个**实现特定接口的普通java程序**，这个程序专门用于**监听另一个java对象的方法调用或属性改变**，当被监听对象发生上述事件后，监听器某个方法将立即被执行。
+>
+> 在web程序中一般用于监听整个web程序的状态。
+
+- 监听session的创建与销毁，可大致了解网站在线人数
+- 监听web容器的创建、属性的变化等
+
+##### 监听网站在线人数
+
+> 当我们首次访问一个网站的时候，服务器会为每一个客户端创建一个唯一的session，在最大超时时间内、且session为未被销毁则可获得同一个session，用这个做一个网站在线人数的统计。
+
+- 实现session的创建与销毁的监听接口：
+
+```java
+public class SessionListening implements HttpSessionListener {
+    @Override
+    public void sessionCreated(HttpSessionEvent se) {
+        System.out.println("sessionCreated");
+        // 上下文对象
+        final ServletContext servletContext = se.getSession().getServletContext();
+        //取出session注册个数
+        AtomicInteger onlineNum = (AtomicInteger) servletContext.getAttribute("onlineNum");
+        //为null则设置属性
+        if (null == onlineNum) {
+            onlineNum = new AtomicInteger(0);
+            onlineNum.incrementAndGet();
+            servletContext.setAttribute("onlineNum", onlineNum);
+        } else {
+            onlineNum.incrementAndGet();
+        }
+        System.out.println("当前在线人数：" + onlineNum.get());
+
+    }
+    @Override
+    public void sessionDestroyed(HttpSessionEvent se) {
+        System.out.println("sessionDestroyed");
+        // 上下文对象
+        final ServletContext servletContext = se.getSession().getServletContext();
+        final AtomicInteger onlineNum = (AtomicInteger) servletContext.getAttribute("onlineNum");
+        System.out.println("剩余在线人数：" + onlineNum.decrementAndGet());
+    }
+
+}
+```
+
+- 在web.xml中配置此监听器
+
+```xml
+<!--   监听器  -->
+<listener>
+    <listener-class>com.roily.servlet.listening.SessionListening</listener-class>
+</listener>
+```
+
+- 访问测试查看控制台
+
+> 使用不同浏览器访问index页面
+
+> 使用session.invalidate();设置session失效
+
+![image-20221114235221718](javaweb.assets/image-20221114235221718.png)
+
+##### 其他监听器
+
+> javax.servlet下定义了许多监听器接口规范，只需要去实现接口并在web.xml中配置即可。
+
+- HttpSessionAttributeListener session属性监听
+-  ServletContextListener  web容器创建销毁监听
+
+
+
 #### 过滤器
 
+> Servlet Filter 又称 Servlet 过滤器， request 对象和 response 对象进行检查和修改，过滤器可设置多个，当然过滤器需要放行才可以完成完整的请求。
+>
+> Filter 不是 Servlet，不能直接访问，它本身也不能生成 request 对象和 response 对象，它只能为 Web 资源提供以下过滤功能：
+>
+> - 在 Web 资源被访问前，检查 request 对象，修改请求头和请求正文，或对请求进行预处理操作。
+> - 将请求传递到下一个过滤器或目标资源。
+> - 在 Web 资源被访问后，检查 response 对象，修改响应头和响应正文。
+
+##### Filter接口
+
+| 描述             | api                                                          | 说明 |
+| ---------------- | ------------------------------------------------------------ | ---- |
+| 过滤器初始化方法 | init(FilterConfig filterConfig) throws ServletException {}   |      |
+| 过滤             | doFilter(ServletRequest request, ServletResponse response,  FilterChain chain) |      |
+| 销毁             | destroy()                                                    |      |
+
+##### 例子
+
+> 之前我们在web.xml中配置的一个编码过滤器，这就是一个过滤器，当一个请求达到servlet之前对请求对象进行编码，当响应对象返回后对响应对象进行编码处理。
+
+> 我们这里做一个敏感词汇的过滤功能。
+
+- from表单
+
+```jsp
+<form action="${pageContext.request.contextPath}/filterServlet" id="form" method="post">
+    测试过滤器：<input type="text" name="keyWorld" id="keyWorld"/>
+    <input type="submit" value="提交">
+</form>
+```
+
+- 编写过滤器
+
+```java
+public class FilterBwkFilter implements Filter {
+
+    private final List<String> keyWorlds = Arrays.asList("草", "fuck", "鸡");
+
+    private String replaceChar = "*";
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        System.out.println("FilterBwkFilter 敏感词汇过滤器 初始化");
+    }
+
+    /**
+     * @param request  拦截得到的请求对象
+     * @param response 拦截servlet返回的响应对象
+     * @param chain    调用 chain.doFilter(request, response);进行放行，给下一个过滤器或给到servlet
+     * @throws IOException
+     * @throws ServletException
+     */
+    @lombok.SneakyThrows
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        System.out.println("过滤器前置操作");
+        String keyWorld = request.getParameter("keyWorld");
+        if (!StringUtils.isEmpty(keyWorld)) {
+            for (String world : keyWorlds) {
+                String xx = keyWorld.replace(world, "***");
+                final Field value = keyWorld.getClass().getDeclaredField("value");
+                value.setAccessible(true);
+                value.set(keyWorld, xx.toCharArray());
+            }
+        }
+        chain.doFilter(request, response);
+        System.out.println("过滤器后置操作");
+    }
+
+    @Override
+    public void destroy() {
+        System.out.println("FilterBwkFilter 敏感词汇过滤器 销毁，一般跟随web容器");
+
+    }
+}
+```
+
+- 编写servlet
+
+```java
+public class FilterServlet extends HttpServlet {
 
 
-#### 拦截器
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doPost(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        final String keyWorld =  req.getParameter("keyWorld");
+        System.out.println(keyWorld);
+    }
+}
+```
+
+- 配置过滤器和servlet
+
+```xml
+<!--   过滤器  -->
+<filter>
+    <filter-name>fuckWorldFilter</filter-name>
+    <filter-class>com.roily.servlet.filtert.FilterBwkFilter</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>fuckWorldFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+
+<servlet>
+    <servlet-name>filterServlet</servlet-name>
+    <servlet-class>com.roily.servlet.filtert.FilterServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>filterServlet</servlet-name>
+    <url-pattern>/filterServlet</url-pattern>
+</servlet-mapping>
+```
+
+- 测试
+
+![image-20221115010043373](javaweb.assets/image-20221115010043373.png)
+
+
 
 
 
