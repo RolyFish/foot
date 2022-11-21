@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.roily.Mapper.DepartmentMapper">
+    <select id="queryDep" resultType="department">
+            select * from department
+    </select>
+
+    <select id="quertDepMap" resultType="department">
+            select * from department
+            <where>
+                id=#{id}
+            </where>
+    </select>
+    <delete id="delDep">
+        delete from department
+        <where>
+            id=#{id}
+        </where>
+    </delete>
+    <update id="updateDep">
+        update department
+        <set>
+            departmentName=#{departmentName}
+        </set>
+        <where>
+            id=#{id}
+        </where>
+    </update>
+    <insert id="addDep">
+        insert into department(departmentName)
+        values (#{departmentName})
+    </insert>
+</mapper>

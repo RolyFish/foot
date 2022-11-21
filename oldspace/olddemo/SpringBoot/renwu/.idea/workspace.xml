@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="ff125aa9-e644-409e-ab3f-26931c200e68" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FavoritesManager">
+    <favorites_list name="renwu" />
+  </component>
+  <component name="JsFlowSettings">
+    <service-enabled>true</service-enabled>
+    <exe-path />
+    <other-services-enabled>true</other-services-enabled>
+    <auto-save>true</auto-save>
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="localRepository" value="E:\devTools\maven\maven_repository" />
+        <option name="mavenHome" value="E:/devTools/maven/apache-maven-3.5.2" />
+        <option name="userSettingsFile" value="E:\devTools\maven\apache-maven-3.5.2\conf\settings.xml" />
+      </MavenGeneralSettings>
+    </option>
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="importAutomatically" value="true" />
+        <option name="vmOptionsForImporter" value="-Xmx768m" />
+      </MavenImportingSettings>
+    </option>
+  </component>
+  <component name="MavenRunner">
+    <option name="jreName" value="1.8" />
+    <option name="vmOptions" value="-DarchetypeCatalog=internal" />
+  </component>
+  <component name="ProjectId" id="212yt1uyiI2fcfaxKTzdabFGBG8" />
+  <component name="ProjectViewState">
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RequestMappingsPanelOrder0" value="0" />
+    <property name="RequestMappingsPanelOrder1" value="1" />
+    <property name="RequestMappingsPanelWidth0" value="75" />
+    <property name="RequestMappingsPanelWidth1" value="75" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../SpringBoot2/renwu" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="settings.editor.selected.configurable" value="MavenSettings" />
+  </component>
+  <component name="RebelAgentSelection">
+    <selection>jr</selection>
+  </component>
+  <component name="RunManager">
+    <configuration name="DemoApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+      <module name="renwu" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.roily.DemoApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration>C:\Users\Roly_Fish\AppData\Roaming\Subversion</configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ff125aa9-e644-409e-ab3f-26931c200e68" name="Default Changelist" comment="" />
+      <created>1637153687674</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1637153687674</updated>
+      <workItem from="1637153690533" duration="7420000" />
+      <workItem from="1637775762720" duration="68000" />
+      <workItem from="1641991749930" duration="362000" />
+      <workItem from="1642176747913" duration="60000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="421" y="115" key="FileChooserDialogImpl" timestamp="1642176802336">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state x="421" y="115" key="FileChooserDialogImpl/0.0.1280.720@0.0.1280.720" timestamp="1642176802336" />
+    <state width="1237" height="132" key="GridCell.Tab.0.bottom" timestamp="1637165164584">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state width="1237" height="132" key="GridCell.Tab.0.bottom/0.0.1280.720@0.0.1280.720" timestamp="1637165164584" />
+    <state width="1237" height="132" key="GridCell.Tab.0.center" timestamp="1637165164584">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state width="1237" height="132" key="GridCell.Tab.0.center/0.0.1280.720@0.0.1280.720" timestamp="1637165164584" />
+    <state width="1237" height="132" key="GridCell.Tab.0.left" timestamp="1637165164584">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state width="1237" height="132" key="GridCell.Tab.0.left/0.0.1280.720@0.0.1280.720" timestamp="1637165164584" />
+    <state width="1237" height="132" key="GridCell.Tab.0.right" timestamp="1637165164584">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state width="1237" height="132" key="GridCell.Tab.0.right/0.0.1280.720@0.0.1280.720" timestamp="1637165164584" />
+    <state width="1237" height="132" key="GridCell.Tab.1.bottom" timestamp="1637165164584">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state width="1237" height="132" key="GridCell.Tab.1.bottom/0.0.1280.720@0.0.1280.720" timestamp="1637165164584" />
+    <state width="1237" height="132" key="GridCell.Tab.1.center" timestamp="1637165164584">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state width="1237" height="132" key="GridCell.Tab.1.center/0.0.1280.720@0.0.1280.720" timestamp="1637165164584" />
+    <state width="1237" height="132" key="GridCell.Tab.1.left" timestamp="1637165164584">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state width="1237" height="132" key="GridCell.Tab.1.left/0.0.1280.720@0.0.1280.720" timestamp="1637165164584" />
+    <state width="1237" height="132" key="GridCell.Tab.1.right" timestamp="1637165164584">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state width="1237" height="132" key="GridCell.Tab.1.right/0.0.1280.720@0.0.1280.720" timestamp="1637165164584" />
+    <state x="142" y="3" key="SettingsEditor" timestamp="1641991789672">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state x="142" y="3" key="SettingsEditor/0.0.1280.720@0.0.1280.720" timestamp="1641991789672" />
+    <state x="28" y="62" key="new project wizard" timestamp="1637775829449">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state x="28" y="62" key="new project wizard/0.0.1280.720@0.0.1280.720" timestamp="1637775829449" />
+    <state x="297" y="161" key="run.anything.popup" timestamp="1637154989379">
+      <screen x="0" y="0" width="1280" height="720" />
+    </state>
+    <state x="297" y="161" key="run.anything.popup/0.0.1280.720@0.0.1280.720" timestamp="1637154989379" />
+  </component>
+</project>

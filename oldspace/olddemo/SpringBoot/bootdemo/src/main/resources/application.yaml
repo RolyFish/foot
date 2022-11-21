@@ -1,0 +1,60 @@
+spring:
+  thymeleaf:
+    cache: false
+  messages:
+    basename: i18n.login
+  mvc:
+    format:
+      date: yyyy/mm/dd
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://localhost:3306/bootmybatis?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initialSize: 1
+      minIdle: 1
+      maxActive: 20
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: select 'x'
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: false
+      maxOpenPreparedStatements: 20
+      #开启StatFilter
+      filter:
+        stat:
+          enabled: true
+          log-slow-sql: true
+          slow-sql-millis: 1000
+        #开启Slf4jFilter
+        slf4j:
+          enabled: true
+          data-source-log-enabled: false
+          connection-log-enabled: false
+          statement-log-enabled: false
+          result-set-log-enabled: false
+        #开启WallFilter
+        wall:
+          enabled: true
+          log-violation: true
+          throw-exception: false
+          config:
+            delete-where-none-check: true
+      #开启Web监控
+      web-stat-filter:
+        enabled: true
+        exclusions: /druid/*,*.js,*.gif,*.jpg,*.bmp,*.png,*.css,*.ico
+        url-pattern: /*
+      #开启监控页面
+      stat-view-servlet:
+        enabled: true
+        login-username: admin
+        login-password: 123456
+mybatis:
+  type-aliases-package: com.roily.POJO
+  mapper-locations: classpath:mybatis/mapper/*.xml

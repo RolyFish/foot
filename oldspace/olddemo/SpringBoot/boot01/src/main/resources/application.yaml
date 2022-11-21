@@ -1,0 +1,35 @@
+# 页面修改后立即生效，关闭缓存，立即刷新
+spring:
+  thymeleaf:
+    prefix: 'classpath:/static/'
+    suffix: '.html'
+game:
+  lol:
+    id: 1
+    name: 英雄联盟
+  cf:
+    id: 2
+    name: 穿越火线
+person:
+  name: 于闫闯${random.int(100)}
+  age: 23
+  flag: false
+  birth: 1998/05/20
+  map: {lol: li,cf: c2}
+  list:
+    - code
+    - girl
+    - music
+  dog:
+    name: 旺财${person.dog.age:wangwang}
+    age: 1
+  pre-name: 13
+
+roilyfish:
+  name: yyc
+
+server:
+  port: 9000
+  servlet:
+    context-path: /t
+

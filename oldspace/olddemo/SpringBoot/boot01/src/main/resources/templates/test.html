@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <title></title>
+
+</head>
+
+<body>
+
+<h1>Test页面</h1>
+<div th:text="${msg}"></div>
+<div th:utext="${msg}"></div>
+<h3 th:text="${msg}"></h3>
+<hr>
+asdad
+<!--<h3 th:each="user:${users}" th:text="${user}"></h3>-->
+<!--<hr>-->
+<!--<h3 th:each="user:${users}">[[ ${user} ]]</h3>-->
+<hr/>
+<a href="1.txt">点</a>
+<hr/>
+<a th:href="@{1.txt}">点</a>
+<hr/>
+<a th:href="@{index.html}">点</a>
+<hr/>
+
+<span th:text="${cat.name}"></span>
+<span th:text="${cat.age}"></span>
+<h1 th:text="${cat.toString()}"></h1>
+<hr/>
+
+<span th:each="cat:${catList}" th:text="${cat}"></span>
+<hr>
+<span th:each="cat:${catList}">
+    <p th:text="${cat}"/>
+</span>
+<hr>
+
+<span th:text="${map}">
+
+</span>
+<p th:text="${map.cat.name}"/>
+<p th:text="${map.name}"/>
+<p th:text="${map.age}"/>
+<hr>
+<span th:Object="${map}">
+    <p th:text="*{name}"/>
+    <p th:text="${name}"/>
+</span>
+<hr>
+<span>
+    <p th:text="#{name}"/>
+    <p th:text="#{age}"/>
+    <p th:text="#{sex}"/>
+</span>
+
+</body>
+<script th:src="@{/1.txt}"></script>
+</html>

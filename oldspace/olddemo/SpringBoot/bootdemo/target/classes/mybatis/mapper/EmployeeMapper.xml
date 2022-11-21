@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.roily.Mapper.EmployeeMapper">
+    <resultMap id="empMap" type="employee">
+        <result property="id" column="id"/>
+        <result property="lastName" column="lastname"/>
+        <result property="email" column="email"/>
+        <result property="gender" column="gender"/>
+        <result property="departmentid" column="departmentid"/>
+        <result property="birth" column="birth"/>
+        <association property="department" javaType="department">
+            <result property="id" column="did"/>
+            <result property="departmentName" column="ddepartmentName"/>
+        </association>
+    </resultMap>
+    <select id="queryEmploy" resultMap="empMap">
+        select e.*, d.id did, d.departmentName ddepartmentName
+         from employee e, department d
+        where e.departmentid=d.id
+    </select>
+    <select id="queryEmployMap" resultMap="empMap">
+        select e.*, d.id did, d.departmentName ddepartmentName
+         from employee e, department d
+        where e.departmentid=d.id
+        and e.id=#{id}
+    </select>
+
+    <insert id="addEmploy">
+        insert into employee(lastname,email,gender,departmentid,birth)
+        values (#{lastName},#{email},#{gender},#{departmentid},#{birth})
+    </insert>
+
+    <update id="delEmploy">
+        delete from employee where id=#{id}
+    </update>
+
+    <sql id="sqlset">
+        <if test="lastName != null and lastName!='' ">lastname=#{lastName},</if>
+        <if test="email != null and email !='' "> email=#{email},</if>
+        <if test=" gender gt -1 and gender lt 2 ">gender=#{gender},</if>
+        <if test="departmentid gt 0 ">departmentid=#{departmentid},</if>
+        <if test=" birth!=null  ">birth=#{birth}</if>
+    </sql>
+    <update id="updateEmploy">
+        update employee
+        <set>
+            <include refid="sqlset"/>
+        </set>
+        <where>
+            id=#{id}
+        </where>
+    </update>
+</mapper>
