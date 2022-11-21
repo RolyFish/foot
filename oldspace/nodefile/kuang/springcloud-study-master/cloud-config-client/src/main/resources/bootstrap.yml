@@ -1,8 +1,0 @@
-server:
-  port: 3002
-spring:
-  cloud:
-    config:
-      label: master
-      profile: dev
-      uri: http://localhost:3001

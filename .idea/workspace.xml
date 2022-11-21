@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
+    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="1117">
     <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="springmvc">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
@@ -79,7 +80,8 @@
       <workItem from="1667220534664" duration="2440000" />
       <workItem from="1667398929752" duration="108000" />
       <workItem from="1668312193084" duration="1611000" />
-      <workItem from="1668613582487" duration="1337000" />
+      <workItem from="1668613582487" duration="1356000" />
+      <workItem from="1668959202844" duration="607000" />
     </task>
     <task id="LOCAL-00001" summary="0802work">
       <created>1659435136175</created>
@@ -221,7 +223,14 @@
       <option name="project" value="LOCAL" />
       <updated>1667237849020</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="1117">
+      <created>1668616528334</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1668616528334</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -263,6 +272,8 @@
     <MESSAGE value="upload  image" />
     <MESSAGE value="optional" />
     <MESSAGE value="1101" />
+    <MESSAGE value="1117" />
+    <option name="LAST_COMMIT_MESSAGE" value="1117" />
     <MESSAGE value="springmvc" />
     <option name="LAST_COMMIT_MESSAGE" value="springmvc" />
   </component>

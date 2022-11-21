@@ -1,5 +1,0 @@
-server:
-  port: 3004
-spring:
-  application:
-    name: client-eureka
