@@ -274,7 +274,7 @@ spring:
 
 - mvc.static-path-pattern
 
-  > 静态资源过滤模式，以下定义含义为，只有url通过test才可访问静态资源、
+  > 静态资源过滤模式，以下定义含义为，只有包含test路径的url才可访问静态资源
 
 - web.resources.static-locations
 
@@ -288,3 +288,326 @@ spring:
     resources:
       static-locations: classpath:/test/
 ```
+
+
+
+## SpringBoot-mybatis
+
+> SpringBoot集成mybatis。
+
+### 例一
+
+#### 结构
+
+![image-20221122162931125](spring-demo-coll.assets/image-20221122162931125.png)
+
+#### 编码
+
+##### 脚本
+
+```sql
+-- 创建数据库
+create database if not exists spring_all;
+use spring_all;
+
+create table user_02
+(
+    `id`    int not null auto_increment comment '主键',
+    `name`  varchar(20) comment '姓名',
+    `email` varchar(20) comment '邮件',
+    primary key (`id`)
+) engine = innodb
+  charset = utf8mb3;
+
+insert into user_02(name, email)
+VALUES ('rolyfish', '105@qq.com'),
+       ('rolyfish2', '105@qq.com'),
+       ('李自成', '105@qq.com');
+```
+
+##### 依赖
+
+> mysql连接、druid数据源、和SpringBoot-Mybatis启动器。
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.mybatis.spring.boot</groupId>
+    <artifactId>mybatis-spring-boot-starter</artifactId>
+</dependency>
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+</dependency>
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid-spring-boot-starter</artifactId>
+</dependency>
+```
+
+##### 配置
+
+> mybatis的配置完全可以写在主配置文件中，也可以写在外部，再通过配置引入外部配置。
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+    </settings>
+    <!--   自动取别名  默认首字母小写  -->
+    <typeAliases>
+        <package name="com.springboot.bean"/>
+    </typeAliases>
+    <!--   配置mapper文件位置 -->
+    <mappers>
+        <mapper resource="mapper/User02Mapper.xml"/>
+    </mappers>
+</configuration>
+```
+
+> yml配置，主要配置druid数据源。
+
+```yml
+server:
+  servlet:
+    context-path: /mybatis
+
+spring:
+  profiles:
+    active: dev
+```
+
+```yml
+spring:
+  datasource:
+    # 数据库访问配置, 使用druid数据源
+    name: user_02
+    url: jdbc:mysql://localhost:3306/spring_all?serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&characterSetResults=utf8&useSSL=false
+    username: root
+    password: 123456
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    druid:
+      # 连接池配置
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      # 连接等待超时时间
+      max-wait: 30000
+      # 配置检测可以关闭的空闲连接间隔时间
+      time-between-eviction-runs-millis: 60000
+      # 配置连接在池中的最小生存时间
+      min-evictable-idle-time-millis: 300000
+      validation-query: select '1' from dual
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      # 打开PSCache，并且指定每个连接上PSCache的大小
+      pool-prepared-statements: true
+      max-open-prepared-statements: 20
+      max-pool-prepared-statement-per-connection-size: 20
+      # 配置监控统计拦截的filters, 去掉后监控界面sql无法统计, 'wall'用于防火墙
+      filters: stat,wall
+      # Spring监控AOP切入点，如x.y.z.service.*,配置多个英文逗号分隔
+      aop-patterns: com.springboot.servie.*
+
+
+      # WebStatFilter配置
+      web-stat-filter:
+        enabled: true
+        # 添加过滤规则
+        url-pattern: /*
+        # 忽略过滤的格式
+        exclusions: '*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*'
+
+      # StatViewServlet配置 
+      stat-view-servlet:
+        enabled: true
+        # 访问路径为/druid时，跳转到StatViewServlet
+        url-pattern: /druid/*
+        # 是否能够重置数据
+        reset-enable: false
+        # 需要账号密码才能访问控制台
+        login-username: druid
+        login-password: druid123
+        # IP白名单
+        # allow: 127.0.0.1
+        #　IP黑名单（共同存在时，deny优先于allow）
+        # deny: 192.168.1.218
+
+      # 配置StatFilter
+      filter:
+        stat:
+          log-slow-sql: true
+mybatis:
+#  mapperLocations: classpath:mapper/*.xml
+# 外部mybatis配置
+  config-location: classpath:mybatis/mybatis-config.xml
+#  typeAliasesPackage: com.springboot.bean
+
+server:
+  servlet:
+    context-path: /mb
+```
+
+
+
+##### 类
+
+> 实体类
+
+```java
+@AllArgsConstructor
+@Data
+public class User02 implements Serializable {
+    private static final long serialVersionUID = -1;
+
+    private Integer id;
+    private String name;
+    private String email;
+
+    public User02(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
+}
+```
+
+> mapper.java  &  mapper.xml。
+>
+> mapper可以通过注解配置也可以通过xml文件配置。
+
+```java
+@Component
+@Mapper
+public interface User02Mapper {
+
+    //@Insert("insert into user_02(name,email) values(#{name},#{email})")
+    int add(@Param("user02") User02 user02);
+
+    @Update("update user_02 " +
+            "set name=#{user02.name,jdbcType=VARCHAR}," +
+            "email=#{user02.email,jdbcType=VARCHAR} " +
+            "where id=#{user02.id,jdbcType=INTEGER}")
+    int update(@Param("user02") User02 user02);
+
+    @Delete("delete from user_02 where id=#{id}")
+    int deleteById(@Param("id") Integer id);
+
+    //@Select("select * from user_02 where id=#{id}")
+    //@Results(id = "user_02",value= {
+    //        @Result(property = "id", column = "id", javaType = Integer.class),
+    //        @Result(property = "name", column = "name", javaType = String.class),
+    //        @Result(property = "email", column = "email", javaType = String.class)
+    //})
+    User02 queryUserById(@Param("id") Integer id);
+
+}
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.mapper.User02Mapper">
+    <resultMap id="user02Map" type="user02">
+        <result column="id" property="id" javaType="INTEGER"/>
+        <result column="name" property="name" javaType="String"/>
+        <result column="email" property="email" javaType="String"/>
+    </resultMap>
+    <select id="queryUserById" resultMap="user02Map">
+        select id,
+               name,
+               email
+        from user_02
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+    <insert id="add" parameterType="user02">
+        insert into user_02(name, email)
+        values (#{user02.name,jdbcType=VARCHAR}, #{user02.email,jdbcType=VARCHAR})
+    </insert>
+</mapper>
+```
+
+> service层
+
+```java
+public interface User02Service {
+   int add(User02 user02);
+    int update(User02 user02);
+    int deleteById(Integer id);
+    User02 queryUserById(Integer id);
+}
+```
+
+```java
+@Service
+public class User02ServiceImp implements User02Service {
+    @Autowired
+    private User02Mapper user02Mapper;
+    @Override
+    public int add(User02 user02) {
+        return this.user02Mapper.add(user02);
+    }
+    @Override
+    public int update(User02 user02) {
+        return this.user02Mapper.update(user02);
+    }
+    @Override
+    public int deleteById(Integer id) {
+        return this.user02Mapper.deleteById(id);
+    }
+    @Override
+    public User02 queryUserById(Integer id) {
+        return this.user02Mapper.queryUserById(id);
+    }
+}
+```
+
+> controller层测试
+
+```java
+@RestController
+public class TestController {
+
+    @Autowired
+    private User02Service user02Service;
+
+    @RequestMapping(value = "/query", method = RequestMethod.GET)
+    public User02 queryById(Integer id) {
+        return this.user02Service.queryUserById(id);
+    }
+}
+```
+
+
+
+#### 小结
+
+
+
+##### mapper配置
+
+> mapper的配置除了可以在mapper接口上添加@Mapper注解外，还可以使用`@MapperScan(value = {"com.springboot.mapper"})`标注在启动类上。这两种方式达到的效果是一样的。
+
+
+
+
+
+
+
+
+
