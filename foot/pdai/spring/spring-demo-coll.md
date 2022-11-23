@@ -605,6 +605,436 @@ public class TestController {
 
 
 
+## Mybatis-MultiDataSource
+
+> SpringBoot配置多数据源。
+>
+> 这个例子配置两个数据源，mysql和postgresql。
+
+在未使用SpringBoot自动装配前普通的的spring-mybatis配置流程为
+
+- 编写mybatis配置文件
+- 借助SqlSessionFactoryBuilder，注入SqlSessionFactoryBean，DataSource的配置在构建SqlSessionFactoryBuilder时完成
+
+SpringBoot配置多数据源，此例放弃SpringBoot-Mybatis的自动装配，采用手动注入多个SqlSessionFactory的方式配置多数据源。
+
+### 依赖
+
+- mysql连接
+- postgresql连接
+- druid
+- mybatis-springbootstart
+
+```xml
+<dependencies>
+   <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+   </dependency>
+   
+   <dependency>
+       <groupId>org.mybatis.spring.boot</groupId>
+       <artifactId>mybatis-spring-boot-starter</artifactId>
+   </dependency>
+   
+   <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+   </dependency>
+
+   <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+   </dependency>
+   
+   <!-- mysql驱动 -->
+   <dependency>
+       <groupId>mysql</groupId>
+       <artifactId>mysql-connector-java</artifactId>
+   </dependency>
+
+   <!-- druid数据源驱动 -->
+   <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>druid-spring-boot-starter</artifactId>
+   </dependency>
+   
+</dependencies>
+```
+
+### pom配置
+
+> 这里路径自定义，后面通过@ConfigurationProperties注解引入数据源配置即可。
+
+```yml
+spring:
+  datasource:
+    druid:
+      # 数据库访问配置, 使用druid数据源
+      # 数据源1 mysql
+      mysql:
+        url: jdbc:mysql://localhost:3306/spring_all?serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&characterSetResults=utf8&useSSL=false
+        username: root
+        password: 123456
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+      # 数据源2 postgresql
+      postgresql:
+        url: jdbc:postgresql://127.0.0.1:5432/springall?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&characterSetResults=utf8&useSSL=false&allowMultiQueries=true
+        username: rolyfish
+        password: Xiaochuang6
+        driver-class-name: org.postgresql.Driver
+        type: com.alibaba.druid.pool.DruidDataSource
+```
+
+
+
+### mybatis配置
+
+> 如果需要进行精细的区别管理可为每一个数据源写一个mybatis配置，这里只是配置日志输出配置，可共用。
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+    </settings>
+</configuration>
+```
+
+
+
+### 数据库脚本
+
+> 简单初始化测试表结构
+
+- mysql
+
+```sql
+-- -- 05.Spring-Boot-MyBatis-MultiDataSource 多数据源创建表
+drop table if exists `student`;
+create table if not exists `student`(
+    `id` int not null  auto_increment comment '主键',
+    `sno` varchar(100),
+    `sname` varchar(100),
+    primary key (id)
+)engine=innodb,charset=utf8mb3;
+
+alter table student modify column sno varchar(100) comment '学号';
+alter table student modify column sname varchar(100) comment '姓名';
+
+insert into spring_all.student( sno, sname)
+values('001','闯王'),
+('002','rolyfish');
+```
+
+- postgresql
+
+```sql
+create sequence if not exists seq_student start 1 minvalue 1 maxvalue 999999999 no cycle;
+
+create table if not exists springall.student
+(
+    id    int4 not null,
+    sno   varchar(100),
+    sname varchar(100),
+    primary key (id)
+    );
+comment on column springall.student.id is '主键';
+comment on column springall.student.sno is '学号';
+comment on column springall.student.sname is '姓名';
+
+alter table springall.student
+    alter column id set default nextval('seq_student'::regclass);
+
+insert into springall.student(sno, sname)
+values ('001','rolyfish'),
+       ('002','李自成'),
+       ('003','鱼味');
+```
+
+
+
+### 多数据源配置
+
+> 这里放弃了mybatis的自动配置，选择通过JavaConfig的方式手动注入SqlSessionFactory。
+
+#### Mysql
+
+> @MapperScan(basePackages = MysqlDatasourceConfig.PACKAGE, sqlSessionFactoryRef = "mysqlSqlSessionFactory")
+
+此注解 - 指定此数据源mapper扫描路径  - 上下文中存在多个数据源通过sqlSessionFactoryRef 属性指定数据源（值为数据源beanname）。
+
+>  @ConfigurationProperties("spring.datasource.druid.mysql")
+
+通过ConfigrationProperties将yml中数据源的配置引入，配置其前缀属性即可。这个注解工作原理他会找到方法返回Bean的setter方法，匹配引入配置，将属性注入。比如`DruidAbstractDataSource.setUrl`方法就会匹配 `spring.datasource.druid.mysql.url`。
+
+>  mysqlSqlSessionFactory(@Qualifier("mysqldatasource") DataSource dataSource)
+
+此处的@Qualifier是必须的，因为存在多个数据源。并且此处的@Autowired被省略了。
+
+```java
+@Configuration
+/**
+ * 指定mapper扫描路径    
+ * 只有当spring上下文中存在多个数据源时指定sqlSessionFactory
+ */
+@MapperScan(basePackages = MysqlDatasourceConfig.PACKAGE, sqlSessionFactoryRef = "mysqlSqlSessionFactory")
+public class MysqlDatasourceConfig {
+
+    // mysqldao扫描路径
+    static final String PACKAGE = "com.springboot.mysqlmapper";
+    // mybatis mapper扫描路径
+    static final String MAPPER_LOCATION = "classpath:mapper/mysql/*.xml";
+    static final String MYBATIS_CONFIG = "classpath:mybatis/mybatis-config.xml";
+
+    @Primary
+    @Bean(name = "mysqldatasource")
+    @ConfigurationProperties("spring.datasource.druid.mysql")
+    public DataSource mysqlDataSource() {
+        final DruidDataSource dataSource = DruidDataSourceBuilder.create().build();
+        return dataSource;
+    }
+
+    @Bean(name = "mysqlTransactionManager")
+    @Primary
+    public DataSourceTransactionManager mysqlTransactionManager() {
+        return new DataSourceTransactionManager(mysqlDataSource());
+    }
+
+    @Bean(name = "mysqlSqlSessionFactory")
+    @Primary
+    public SqlSessionFactory mysqlSqlSessionFactory(@Qualifier("mysqldatasource") DataSource dataSource)
+            throws Exception {
+        final SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
+        sessionFactory.setDataSource(dataSource);
+        //如果不使用xml的方式配置mapper，则可以省去下面这行mapper location的配置。
+        sessionFactory.setMapperLocations(
+                new PathMatchingResourcePatternResolver().getResources(MysqlDatasourceConfig.MAPPER_LOCATION));
+        sessionFactory.setTypeAliasesPackage("com.springboot.entity");
+        sessionFactory.setConfigLocation(new PathMatchingResourcePatternResolver().getResource(MysqlDatasourceConfig.MYBATIS_CONFIG));
+        return sessionFactory.getObject();
+    }
+}
+```
+
+
+
+#### postgresql
+
+> 同理，只是改个名字。
+
+```java
+@Configuration
+@MapperScan(basePackages = PostgresqlDatasourceConfig.PACKAGE,
+        sqlSessionFactoryRef = "postgresqlSqlSessionFactory")
+public class PostgresqlDatasourceConfig {
+
+    // postgresqldao扫描路径
+    static final String PACKAGE = "com.springboot.postgresqlmapper";
+    // mybatis mapper扫描路径
+    static final String MAPPER_LOCATION = "classpath:mapper/postgresql/*.xml";
+
+    @Bean(name = "postgresqldatasource")
+    @ConfigurationProperties("spring.datasource.druid.postgresql")
+    public DataSource postgresqlDataSource() {
+        return DruidDataSourceBuilder.create().build();
+    }
+
+    @Bean(name = "postgresqlTransactionManager")
+    public DataSourceTransactionManager postgresqlTransactionManager() {
+        return new DataSourceTransactionManager(postgresqlDataSource());
+    }
+
+    @Bean(name = "postgresqlSqlSessionFactory")
+    public SqlSessionFactory postgresqlSqlSessionFactory(@Qualifier("postgresqldatasource") DataSource dataSource) throws Exception {
+        final SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
+        sessionFactory.setDataSource(dataSource);
+        //配置mapperLocation
+        sessionFactory.setMapperLocations(new PathMatchingResourcePatternResolver()
+                .getResources(PostgresqlDatasourceConfig.MAPPER_LOCATION));
+        sessionFactory.setTypeAliasesPackage("com.springboot.entity");
+        //引入外部配置，例如日志配置
+        sessionFactory.setConfigLocation(new PathMatchingResourcePatternResolver().getResource(MysqlDatasourceConfig.MYBATIS_CONFIG));
+        return sessionFactory.getObject();
+    }
+}
+```
+
+
+
+### 其余编码
+
+#### 实体
+
+> 此例为多模块项目，lombok依赖继承自父模块。
+
+```java
+@Data
+public class Student {
+    Integer id;
+    String sno;
+    String sname;
+}
+```
+
+#### mapper & mapper.xml
+
+- mysql
+
+```java
+@Mapper
+public interface MysqlStudentMapper {
+   List<Student> getAllStudents();
+}
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>    
+    <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"   
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">     
+<mapper namespace="com.springboot.mysqlmapper.MysqlStudentMapper">
+    <select id="getAllStudents" resultType="student">
+        select * from student
+    </select>
+</mapper>
+```
+
+- postgresql
+
+```java
+@Mapper
+public interface PostgresqlStudentMapper {
+   List<Student> getAllStudents();
+}
+```
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>    
+    <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"   
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">     
+<mapper namespace="com.springboot.postgresqlmapper.PostgresqlStudentMapper">
+    <select id="getAllStudents" resultType="student">
+        select * from springall.student
+    </select>
+</mapper>
+```
+
+#### service
+
+```java
+public interface StudentService {
+   List<Student> getAllStudentsFromOralce();
+   List<Student> getAllStudentsFromMysql();
+}
+```
+
+```java
+@Service
+public class StudentServiceImp implements StudentService{
+   @Autowired
+   private PostgresqlStudentMapper postgresqlStudentMapper;
+   @Autowired
+   private MysqlStudentMapper mysqlStudentMapper;
+   @Override
+   public List<Student> getAllStudentsFromOralce() {
+      return this.postgresqlStudentMapper.getAllStudents();
+   }
+   @Override
+   public List<Student> getAllStudentsFromMysql() {
+      return this.mysqlStudentMapper.getAllStudents();
+   }
+}
+```
+
+#### controller
+
+```java
+@RestController
+public class StudentController {
+   @Autowired
+   private StudentService studentService;
+   @RequestMapping("querystudentsfrompostgresql")
+   public List<Student> queryStudentsFromPostgresql(){
+      return this.studentService.getAllStudentsFromPostgresql();
+   }
+   @RequestMapping("querystudentsfrommysql")
+   public List<Student> queryStudentsFromMysql(){
+      return this.studentService.getAllStudentsFromMysql();
+   }
+}
+```
+
+
+
+### 测试
+
+> 启动测试。
+
+- postgresql
+
+![image-20221123141855158](spring-demo-coll.assets/image-20221123141855158.png)
+
+- mysql
+
+![image-20221123141914262](spring-demo-coll.assets/image-20221123141914262.png)
+
+
+
+
+
+## Spring-Boot-AOP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
