@@ -1,0 +1,81 @@
+var stus = [
+  {
+    'name': 'rolyfiush',
+    'grades': [
+      {
+        'name': 'math',
+        'source': 90,
+        'sort': 1
+      },
+      {
+        'name': 'english',
+        'source': 85,
+        'sort': 2
+      },
+      {
+        'name': 'chinese',
+        'source': 90,
+        'sort': 1
+      }
+    ]
+  },
+  {
+    'name': 'lizicheng',
+    'grades': [
+      {
+        'name': 'math',
+        'source': 90,
+        'sort': 1
+      },
+      {
+        'name': 'english',
+        'source': 85,
+        'sort': 2
+      },
+      {
+        'name': 'chinese',
+        'source': 90,
+        'sort': 1
+      }
+    ]
+  },
+  {
+    'name': 'chuangwang',
+    'grades': [
+      {
+        'name': 'math',
+        'source': 90,
+        'sort': 1
+      },
+      {
+        'name': 'english',
+        'source': 85,
+        'sort': 2
+      },
+      {
+        'name': 'chinese',
+        'source': 90,
+        'sort': 1
+      }
+    ]
+  }
+];
+db.stus.insertMany(stus);
+
+var  col  = [
+{_id: 1, category: "café", status: "A"
+},
+{
+_id: 2, category: "cafe", status: "a"
+},
+{
+_id: 3, category: "cafE", status: "a" }
+];
+
+db.col.insertMany(
+  [
+    { _id: 1, category: "café", status: "A" },
+    { _id: 2, category: "cafe", status: "a" },
+    { _id: 3, category: "cafE", status: "a" }
+  ]
+)

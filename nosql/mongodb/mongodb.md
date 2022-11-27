@@ -21,28 +21,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ### shell命令
 
 > 使用`mongosh`连接mongodb实例。
@@ -484,6 +462,8 @@ updateApi:
 ```powershell
 db.collection.updateOne();
 db.collection.updateMany();
+db.collection.replaceOne();
+db.collection.update();
 ```
 
 updateForm:
@@ -540,7 +520,7 @@ db.users.updateOne({name:'rolyfish'},{$max:{age:29}})
  db.users.updateOne({name:'rolyfish'},{$min:{age:29}})
 ```
 
-> $mul`  指定属性乘以指定数值。
+> `$mul`  指定属性乘以指定数值。
 >
 > 以下例子age×2
 
@@ -585,20 +565,223 @@ db.users.updateOne({name:'tangsan'},{$inc:{age:10}})
 db.users.updateOne({name:'tangsan'},{$unset:{age:'',sex:''}})
 ```
 
+> `$currentDate`更新日期为当前时间.
+>
+> 如果字段不存在则创建该字段。
+>
+> 属性操作符`$type`可修改属性
+
+```shell
+db.users.updateOne({name:'tangsan'},{$currentDate:{modifilyDate:true}});
+
+db.users.updateOne({name:'tangsan'},{$currentDate:{modifilyTimestamp:{$type:`timestamp`}}})
+```
+
 
 
 ###### 集合
 
 | Name                                                         | Description                                                  |
 | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| [`$`](https://www.mongodb.com/docs/v3.6/reference/operator/update/positional/#up._S_) | Acts as a placeholder to update the first element that matches the query condition. |
-| [`$[\]`](https://www.mongodb.com/docs/v3.6/reference/operator/update/positional-all/#up._S_[]) | Acts as a placeholder to update all elements in an array for the documents that match the query condition. |
-| [`$[\]`](https://www.mongodb.com/docs/v3.6/reference/operator/update/positional-filtered/#up._S_[]) | Acts as a placeholder to update all elements that match the `arrayFilters` condition for the documents that match the query condition. |
-| [`$addToSet`](https://www.mongodb.com/docs/v3.6/reference/operator/update/addToSet/#up._S_addToSet) | Adds elements to an array only if they do not already exist in the set. |
-| [`$pop`](https://www.mongodb.com/docs/v3.6/reference/operator/update/pop/#up._S_pop) | Removes the first or last item of an array.                  |
-| [`$pull`](https://www.mongodb.com/docs/v3.6/reference/operator/update/pull/#up._S_pull) | Removes all array elements that match a specified query.     |
-| [`$push`](https://www.mongodb.com/docs/v3.6/reference/operator/update/push/#up._S_push) | Adds an item to an array.                                    |
-| [`$pullAll`](https://www.mongodb.com/docs/v3.6/reference/operator/update/pullAll/#up._S_pullAll) | Removes all matching values from an array.                   |
+| [`$`](https://www.mongodb.com/docs/manual/reference/operator/update/positional/#mongodb-update-up.-) | Acts as a placeholder to update the first element that matches the query condition. |
+| [`$[]`](https://www.mongodb.com/docs/manual/reference/operator/update/positional-all/#mongodb-update-up.---) | Acts as a placeholder to update all elements in an array for the documents that match the query condition. |
+| [`$[identifier]`](https://www.mongodb.com/docs/manual/reference/operator/update/positional-filtered/#mongodb-update-up.---identifier--) | Acts as a placeholder to update all elements that match the `arrayFilters` condition for the documents that match the query condition. |
+| [`$addToSet`](https://www.mongodb.com/docs/manual/reference/operator/update/addToSet/#mongodb-update-up.-addToSet) | Adds elements to an array only if they do not already exist in the set. |
+| [`$pop`](https://www.mongodb.com/docs/manual/reference/operator/update/pop/#mongodb-update-up.-pop) | Removes the first or last item of an array.                  |
+| [`$pull`](https://www.mongodb.com/docs/manual/reference/operator/update/pull/#mongodb-update-up.-pull) | Removes all array elements that match a specified query.     |
+| [`$push`](https://www.mongodb.com/docs/manual/reference/operator/update/push/#mongodb-update-up.-push) | Adds an item to an array.                                    |
+| [`$pullAll`](https://www.mongodb.com/docs/manual/reference/operator/update/pullAll/#mongodb-update-up.-pullAll) | Removes all matching values from an array.                   |
+
+
+
+初始化数据：
+
+```shell
+var stus = [{ "_id" : 1, "grades" : [ 85, 82, 80 ] },
+{ "_id" : 2, "grades" : [ 88, 90, 92 ] },
+{ "_id" : 3, "grades" : [ 85, 100, 90 ] }];
+db.collection.insertMany(stus);
+```
+
+> `$`更新匹配到的首个集合内的首个元素
+
+```shell
+db.collection.updateOne(
+   { <query selector> },
+   { <update operator>: { "array.$.field" : value } }
+)
+```
+
+```shell
+ ## query filter中匹配文档条件必须有集合。可以匹配到多个
+ db.stus.updateOne(
+ 		{_id:1,grades:80},
+ 		{$set:{'grades.$':80}}
+ );
+```
+
+> `$[]`。更新匹配到的首个集合内的所有元素
+
+```shell
+db.collection.updateOne(
+   { <query conditions> },
+   { <update operator>: { "<array>.$[].field" : value } }
+)
+```
+
+```shell
+db.stus.updateOne(
+		{grades:99},
+		{$set:{'grades.$[]':999}}
+)
+```
+
+```json
+var stus = [
+  {
+    'name': 'rolyfiush',
+    'grades': [
+      {
+        'name': 'math',
+        'source': 90,
+        'sort': 1
+      },
+      {
+        'name': 'english',
+        'source': 85,
+        'sort': 2
+      },
+      {
+        'name': 'chinese',
+        'source': 90,
+        'sort': 1
+      }
+    ]
+  },
+  {
+    'name': 'lizicheng',
+    'grades': [
+      {
+        'name': 'math',
+        'source': 90,
+        'sort': 1
+      },
+      {
+        'name': 'english',
+        'source': 85,
+        'sort': 2
+      },
+      {
+        'name': 'chinese',
+        'source': 90,
+        'sort': 1
+      }
+    ]
+  },
+  {
+    'name': 'chuangwang',
+    'grades': [
+      {
+        'name': 'math',
+        'source': 90,
+        'sort': 1
+      },
+      {
+        'name': 'english',
+        'source': 85,
+        'sort': 2
+      },
+      {
+        'name': 'chinese',
+        'source': 90,
+        'sort': 1
+      }
+    ]
+  }
+];
+db.stus.insertMany(stus);
+```
+
+```shell
+db.stus.updateOne(
+		{name:'rolyfish'},
+		{$set:{'grades.$[].sort':11}}
+)
+```
+
+> `$[identifier]`。带有过滤条件,该`arrayFilters`参数允许您指定过滤文档的数组，以确定要修改的数组元素。identifier为符合过滤条件的数组元素
+
+```shell
+db.collection.updateOne(
+   { <query conditions> },
+   { <update operator>: { "<array>.$[<identifier>]" : value } },
+   { arrayFilters: [ { <identifier>: <condition> } ] }
+)
+```
+
+```shell
+db.stus.updateOne(
+		{name:'lizicheng'},
+		{$set:{'grades.$[ele].sort':2}},
+		{arrayFilters:[{'ele.name':'math'}]}
+)
+```
+
+> `$addToSet`,addToSet操作添加一个元素到数组除非该元素已经存在。
+
+```shell
+db.sources.insertMany({'a','b','c'});
+```
+
+```shell
+## 不做操作
+db.sources.updateOne({},{$addToSet:{sources:'c'}});
+## 添加元素 ‘d’到集合
+db.sources.updateOne({},{$addToSet:{sources:'d'}});
+## 添加元素['d','e']到集合
+db.sources.updateOne({},{$addToSet:{sources:['d','e']}})
+## 想要批量添加元素  则使用$each操作符
+db.sources.updateOne({},{$addToSet:{sources:{$each:['x','y','z']}}})
+```
+
+> `$pop`,弹出一个集合元素，1 从右边弹出， -1 从左边弹出
+
+```shell
+{ $pop: { <field>: <-1 | 1>, ... } };
+```
+
+```shell
+db.sources.updateOne({},{$pop:{sources:1}});
+```
+
+> `$pull`  从一个已存在的集合中移出匹配元素。只移出匹配元素，未匹配元素忽略
+
+```shell
+db.sources.updateOne({},{$pull:{sources:{$in:['b','c','x']}}});
+```
+
+> `$push`  从一个已存在的集合中插入指定元素。可重复
+
+```shell
+## 初始化集合
+db.students.insertOne( { _id: 1, scores: [ 44, 78, 38, 80 ] } )
+## ok  可以插入
+db.students.updateOne({},{$push:{scores:80}});
+## 使用$each控制符 插入多个元素
+db.students.updateOne({},{$push:{scores:{$each:[10,20,30]}}});
+## 使用$sort 控制符可进行排序
+db.students.updateOne({},{$push:{scores:{$each:[],$sort:1}}});
+## 使用$slice 截断数组  保留前三个，如果存在排序控制则阶段发生在排序之后
+db.students.updateOne({},{$push:{scores:{$each:[],$slice:3}}});
+```
+
+> `$pullAll`
+
+```shell
+db.students.updateOne({},{$push:{scores:{$each:[10,20,30,10,20,30],$sort:1}}});
+## 和$pull一样，可以一次性移出多个匹配值。只是语法差异
+db.students.updateOne({},{$pullAll:{scores:[10,20]}});
+```
 
 
 
@@ -611,5 +794,78 @@ db.users.updateOne({name:'tangsan'},{$unset:{age:'',sex:''}})
 | [`$slice`](https://www.mongodb.com/docs/v3.6/reference/operator/update/slice/#up._S_slice) | Modifies the [`$push`](https://www.mongodb.com/docs/v3.6/reference/operator/update/push/#up._S_push) operator to limit the size of updated arrays. |
 | [`$sort`](https://www.mongodb.com/docs/v3.6/reference/operator/update/sort/#up._S_sort) | Modifies the [`$push`](https://www.mongodb.com/docs/v3.6/reference/operator/update/push/#up._S_push) operator to reorder documents stored in an array. |
 
+控制符，`$each 所有 、$slice 截断数组、$sort 排序（1、-1）`
+
+`$position`可指定元素位置，比如插入位置
+
+```shell
+## 从数组下标为1处开始插入元素
+db.students.updateOne({},{$push:{scores:{$each:[1,2,3],$position:1}}});
+
+```
 
 
+
+##### 删除指定文档
+
+Api:
+
+```shell
+db.collection.deleteOne(
+   <filter>,
+   {
+      writeConcern: <document>,## 写入策略，可设置超时响应等
+      collation: <document> 
+   }
+)
+
+db.collection.deleteMany(
+   <filter>,
+   {
+      writeConcern: <document>,
+      collation: <document>
+   }
+)
+```
+
+
+
+```shell
+db.col.insertMany(
+  [
+    { _id: 1, category: "café", status: "A" }, 
+    { _id: 2, category: "cafe", status: "a" }, 
+    { _id: 3, category: "cafE", status: "a" }
+  ]
+)
+```
+
+```shell
+db.col.deleteOne({status:'a'})
+db.col.deleteMany({status:'a'})
+```
+
+###### remove
+
+> remove方法也可以移出元素
+
+```shell
+db.collection.remove(
+   <query>,
+   {
+     justOne: <boolean>,
+     writeConcern: <document>,
+     collation: <document>
+   }
+)
+```
+
+```shell
+db.col.remove({status:'a'},{justOne:true})
+```
+
+
+
+##### bulkWrite
+
+> 批量操作
