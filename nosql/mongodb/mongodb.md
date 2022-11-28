@@ -21,11 +21,11 @@
 
 
 
-### shell命令
+## crud
 
 > 使用`mongosh`连接mongodb实例。
 
-#### 数据库
+### 数据库
 
 > 查看所有数据库：
 
@@ -58,17 +58,19 @@ db.dropDatabase('testdb');
 
 ![image-20221125102901716](mongodb.assets/image-20221125102901716.png)
 
-#### 集合
+### 集合
 
-> 创建集合，查看集合
+
+
+#### 创建集合，查看集合
 
 options可选参数：
 
 ```powershell
 db.createCollection("collectionname",options);
 
-db.shwocollections;
-db.showtables;
+show collections;
+show tables;
 ```
 
 ![image-20221125103219295](mongodb.assets/image-20221125103219295.png)
@@ -79,7 +81,7 @@ db.showtables;
 
 ![image-20221125104405685](mongodb.assets/image-20221125104405685.png)
 
-> 删除集合
+#### 删除集合
 
 ```powershell
 db.collection.drop();
@@ -89,7 +91,24 @@ db.collection.drop();
 
 
 
-##### 插入文档
+#### 重命名集合
+
+> dropTaget  为true  如果目标名称以及存在则会先删除目标集合
+
+```shell
+db.collection.renameCollection(target, dropTarget)
+```
+
+```shell
+test> test> db.sstu.renameCollection('myCol',true)
+{ ok: 1 }
+```
+
+
+
+### 文档
+
+#### 插入文档
 
 > 插入文档到集合中，文档的数据结构和 JSON 基本一样。所有存储在集合中的数据都是 BSON 格式。
 >
@@ -97,96 +116,102 @@ db.collection.drop();
 >
 > 如果当下集合不存在，插入动作将会创建该集合。
 
-- 直接插入  db.insert({})
+##### api
 
-  > 可选择插入单个，也可选择插入多个
+```shell
+db.collection.insert();
+db.collection.insertOne();
+db.collection.insertMany();
+```
 
-  ```powershell
-  db.collection.insert(
-     <document or array of documents>,
-     {
-       writeConcern: <document>,
-       ordered: <boolean>
-     }
-  )
-  ```
+##### insert({})
 
-  例：
+> 可选择插入单个，也可选择插入多个
 
-  ```json
-  db.valuse.insert(
-      [
-         {
-             user2:{
-                 username:'rolyfish',
-                 userage:22
-             }
-         }
-      ],
-      {
-         writeConcern:1,
-         ordered:true
-      }
-  )
-  ```
+```powershell
+db.collection.insert(
+   <document or array of documents>,
+   {
+     writeConcern: <document>,
+     ordered: <boolean>
+   }
+)
+```
 
-- 插入单个文档  db.insertOne({})
+例：
 
-  
-
-  ```powershell
-  db.collection.insertOne(
-     <document>,
-     {
-        writeConcern: <document>
-     }
-  )
-  ```
-
-  例：
-
-  ```json
-  db.values.insertOne(
-    {
-    user2: {
-      username: 'rolyfish',
-      userage: 22
-    }
-    },
-    {
-      writeConcern: 1
-    }
-  )
-  ```
-
-- 插入多个文档  db.insertMany([])
-
-  ```powershell
-  db.collection.insertMany(
-     [ <document 1> , <document 2>, ... ],
-     {
-        writeConcern: <document>,
-        ordered: <boolean>
-     }
-  )
-  ```
-
-  ```json
-  db.values.insertMany(
+```json
+db.valuse.insert(
     [
-      {
-        user2: {
-          username: 'username',
-          userage: 22
-        }
-      }
+       {
+           user2:{
+               username:'rolyfish',
+               userage:22
+           }
+       }
     ],
     {
-    writeConcern: 1,
-    ordered: true
+       writeConcern:1,
+       ordered:true
     }
-  )
-  ```
+)
+```
+
+#####  db.insertOne({})
+
+```powershell
+db.collection.insertOne(
+   <document>,
+   {
+      writeConcern: <document>
+   }
+)
+```
+
+例：
+
+```json
+db.values.insertOne(
+  {
+  user2: {
+    username: 'rolyfish',
+    userage: 22
+  }
+  },
+  {
+    writeConcern: 1
+  }
+)
+```
+
+#####  db.insertMany([])
+
+```powershell
+db.collection.insertMany(
+   [ <document 1> , <document 2>, ... ],
+   {
+      writeConcern: <document>,
+      ordered: <boolean>
+   }
+)
+```
+
+```json
+db.values.insertMany(
+  [
+    {
+      user2: {
+        username: 'username',
+        userage: 22
+      }
+    }
+  ],
+  {
+  writeConcern: 1,
+  ordered: true
+  }
+)
+```
 
 参数说明：
 
@@ -194,9 +219,7 @@ db.collection.drop();
 - writeConcern：写入策略，默认为 1，即要求确认写操作，0 是不要求。
 - ordered：指定是否按顺序写入，默认 true，按顺序写入。
 
-
-
-###### 插入预定义元素
+##### 插入预定义元素
 
 > 可以先预定义属性再执行插入
 
@@ -216,23 +239,23 @@ test> db.users.insert(users)
 
 
 
-##### 查询文档(query document)
+#### 查询文档(query document)
 
 > 初始化数据
 
-[官网例子]([Query Documents — MongoDB Manual](https://www.mongodb.com/docs/v3.6/tutorial/query-documents/))
+[官网例子]([https://www.mongodb.com/docs/v3.6/tutorial/query-documents/)
 
-
-
-###### 查询集合中所有文档
+##### 查询集合中所有文档
 
 ```powershell
 db.collection.find({})
 ```
 
+```sql
+select * from table
+```
 
-
-###### 条件查询
+##### 条件查询
 
 - 简单等于匹配
 
@@ -244,7 +267,7 @@ db.collection.find({})
  db.inventory.find({'size.h':8.5})
 ```
 
-- 条件操作符 in
+- 查询操作符 in
 
   > `{ <field1>: { <operator1>: <value1> }, ... }`
 
@@ -252,7 +275,7 @@ db.collection.find({})
 db.inventory.find({'status':{$in:['A','D']}})
 ```
 
-- 条件操作符lt  lte  gt   gte
+- 查询操作符lt  lte  gt   gte
 
 ```powershell
 db.inventory.find({'size.h':{$gt:20}});
@@ -261,7 +284,7 @@ db.inventory.find({'size.h':{$lte:10}})
 db.inventory.find({'size.h':{$gte:10}})
 ```
 
-- 条件   and
+- and 且条件
 
 ```powershell
 db.inventory.find({'status':'A','size.h':{$gte:10}})
@@ -291,9 +314,7 @@ db.inventory.find({$or:[{'status':'A'},{'qty':{$gte:45}}], 'size.h':{$gt:20}})
 select * from inventory where (status = A or qty >= 45) and size.h > 20
 ```
 
-
-
-###### 匹配集合
+##### 查询集合
 
 初始化数据
 
@@ -315,7 +336,7 @@ db.col.insertMany([
 db.col.find( { tags: ["red", "blank"]})
 ```
 
-- 集合包含所有元素
+- 查询操作符  `$all`
 
 > 以下例子匹配都包含red和blank元素的集合，但是不关心其顺序的集合
 
@@ -332,7 +353,7 @@ db.col.find({tags:'blank'})
 db.col.find({dim_cm:{$gt:10,$lt:20}})
 ```
 
-- 匹配指定集合元素
+- `.`操作符指定下标
 
 > 指定集合的指定元素匹配条件。
 >
@@ -348,9 +369,7 @@ db.col.find({'dim_cm.0': { $gt: 19, $lt: 30 }})
 db.col.find({'tags': { $size: 2 }})
 ```
 
-
-
-###### 匹配对象集合
+##### 查询嵌入文档集合
 
 > 集合中的元素不是字符串，而是对象。
 
@@ -366,17 +385,17 @@ db.cole.insertMany( [
 ]);
 ```
 
-- 集合中包含对象
+- 集合中包含文档
 
-> instock集合中至少有一个元素匹配指定条件。
+> instock集合中至少有一个文档元素匹配指定条件。
+>
+> 需要注意的是:{ warehouse: "A", qty: 5 }顺序不可倒
 
 ```powershell
 db.cole.find({instock:{ warehouse: "A", qty: 5 }})
 ```
 
-> 需要注意的是:{ warehouse: "A", qty: 5 }顺序不可倒
-
-- 集合中对象属性
+- 集合中文档属性
 
 > instock集合中至少有一个元素对象的qty属性大于15
 
@@ -394,7 +413,22 @@ db.cole.find( { "instock": {$elemMatch:{qty:15, warehouse: "B"}}})
 
 
 
-###### 操作符
+##### 返回指定属性
+
+> find()方法默认返回所有属性，可通过手动设置返回属性。
+
+```powershell
+ db.collection.find(
+ 	{query operator},
+ 	{<field>:0/1 ......}
+ )
+```
+
+```powershell
+ db.inventory.find({status:'D'},{_id:0,item:1,status:1,size:1});
+```
+
+##### 操作符
 
 > $type,属性操作符。
 >
@@ -430,17 +464,18 @@ BSON   type列表：
 | Min key                 | -1     | “minKey”              |                     |
 | Max key                 | 127    | “maxKey”              |                     |
 
-
-
+> 查询属性为null 和 属性不存在的文档。 
+>
 > $exists,    属性是否存在
 
 ```powershell
- db.cole.find({itemx:{$exists:false}})
+-- item  属性为null
+db.cole.find({item:null})
+-- iteam 属性不存在
+db.cole.find({itemx:{$exists:false}})
 ```
 
-
-
-##### 更新文档
+#### 更新文档
 
 初始化数据
 
@@ -478,7 +513,7 @@ updateForm:
 
 一些更新选项比如$set，当属性不存在时会创建属性。
 
-###### 属性
+##### 属性
 
 | Name                                                         | Description                                                  |
 | :----------------------------------------------------------- | :----------------------------------------------------------- |
@@ -577,9 +612,7 @@ db.users.updateOne({name:'tangsan'},{$currentDate:{modifilyDate:true}});
 db.users.updateOne({name:'tangsan'},{$currentDate:{modifilyTimestamp:{$type:`timestamp`}}})
 ```
 
-
-
-###### 集合
+##### 集合
 
 | Name                                                         | Description                                                  |
 | :----------------------------------------------------------- | :----------------------------------------------------------- |
@@ -783,9 +816,7 @@ db.students.updateOne({},{$push:{scores:{$each:[10,20,30,10,20,30],$sort:1}}});
 db.students.updateOne({},{$pullAll:{scores:[10,20]}});
 ```
 
-
-
-###### Modifiers
+##### Modifiers
 
 | Name                                                         | Description                                                  |
 | :----------------------------------------------------------- | :----------------------------------------------------------- |
@@ -804,9 +835,7 @@ db.students.updateOne({},{$push:{scores:{$each:[1,2,3],$position:1}}});
 
 ```
 
-
-
-##### 删除指定文档
+#### 删除指定文档
 
 Api:
 
@@ -845,7 +874,7 @@ db.col.deleteOne({status:'a'})
 db.col.deleteMany({status:'a'})
 ```
 
-###### remove
+##### remove
 
 > remove方法也可以移出元素
 
@@ -866,6 +895,548 @@ db.col.remove({status:'a'},{justOne:true})
 
 
 
-##### bulkWrite
+#### bulkWrite
 
 > 批量操作
+
+api：
+
+`bulkWrite()`
+
+form:
+
+```shell
+db.collection.bulkWrite(
+   [ <operation 1>, <operation 2>, ... ],
+   {
+      writeConcern : <document>,
+      ordered : <boolean>
+   }
+)
+```
+
+> `bulkWrite`方法支持如下写操作：
+
+- insertOne
+- updateOne
+- updateMany
+- replaceOne
+- deleteOne
+- deleteMany
+
+
+
+##### insertOne
+
+> 插入单个文档到集合
+
+form:
+
+```powershell
+db.collection.bulkWrite( [
+   { insertOne : { "document" : <document> } }
+] )
+```
+
+例子：
+
+```shell
+ db.users.bulkWrite([
+ 	{insertOne:{name:'yuyc',age:'22'}}
+ ])
+```
+
+> 效果等同于
+
+```shell
+ db.users.insertOne(
+ 	{name:'yuyc',age:22}
+ )
+```
+
+##### updateOne & updateMany
+
+form:
+
+```shell
+db.collection.bulkWrite( [
+   { updateOne :
+      {
+         "filter" : <document>,
+         "update" : <document>,
+         "upsert" : <boolean>,
+         "collation": <document>,
+         "arrayFilters": [ <filterdocument1>, ... ]
+      }
+   }
+] )
+```
+
+```powershell
+db.stus.bulkWrite([
+    {
+        updateOne:{
+            filter:{name:'chuangwangx'},
+            update:{$set:{'grades.$[e].sort':2}},
+            upsert:true,
+            arrayFilters:[{'e.name':'math'}]
+        }
+    }
+])
+```
+
+```shell
+db.stus.bulkWrite([ 
+    { 
+        updateMany: {
+            filter: {}, 
+            update: { $set: { 'grades.$[e].sort': 111 } }, 
+            arrayFilters: [{ 'e.name': 'math' ,'e.source':{$gt:88}}] } 
+    }
+])
+```
+
+##### deleteOne & deleteMany
+
+form:
+
+```she
+db.collection.bulkWrite([
+   { deleteOne :  { "filter" : <document> } }
+] )
+```
+
+例子：
+
+```shell
+ db.stus.bulkWrite([
+ 	{
+ 		deleteOne:{
+ 			filter:{'grades.sort':{$gte:110}}}
+     }
+])
+```
+
+```shell
+ db.stus.bulkWrite([
+ 	{
+ 		deleteMany:{
+ 			filter:{'grades.sort':{$gte:111}}}
+     }
+])
+```
+
+
+
+##### replcaeOne
+
+form
+
+```shell
+db.collection.bulkWrite([
+   { replaceOne :
+      {
+         "filter" : <document>,
+         "replacement" : <document>,
+         "upsert" : <boolean>,
+         "collation": <document>,                    // Available starting in 3.4
+         "hint": <document|string>                   // Available starting in 4.2.1
+      }
+   }
+] )
+```
+
+例子：
+
+```shell
+db.stus.bulkWrite([
+	{
+		replaceOne:{
+			filter:{name:'lizicheng'},
+			replacement:{name:'replace'}}
+     }
+])
+```
+
+#### other Api
+
+> collection的其他方法
+
+##### count
+
+> 返回集合文档个数
+
+form:
+
+```shell
+db.collection.count(query, options)
+```
+
+```shell
+test> db.inventory.count()
+5
+test> db.inventory.countDocuments()
+5
+test> db.inventory.estimatedDocumentCount()
+```
+
+> 可以设置查询条件
+
+```shell
+db.inventory.count({item:'paper'})
+```
+
+##### distinct
+
+> 去重，输出不重复数组。
+>
+> 可指定输出字段、查询过滤条件
+
+form：
+
+```shell
+db.collection.distinct(field, query, options)
+```
+
+- field    String
+- query document
+- option   document
+
+```shell
+db.col.bulkWrite([
+        {
+            insertOne:{"_id": 1, "dept": "A", "item": { "sku": "111", "color": "red" }, "sizes": [ "S", "M" ]}
+        },
+        {
+            insertOne:{ "_id": 2, "dept": "A", "item": { "sku": "111", "color": "blue" }, "sizes": [ "M", "L" ] }
+        },
+        {
+            insertOne:{ "_id": 3, "dept": "B", "item": { "sku": "222", "color": "blue" }, "sizes": "S" }
+        },
+        {
+            insertOne:{ "_id": 4, "dept": "A", "item": { "sku": "333", "color": "black" }, "sizes": [ "S" ] }
+        },
+    ]
+)
+```
+
+######  从属性中返回不重复值
+
+
+
+```shell
+test> db.col.distinct(<field>)
+
+test> db.col.distinct('dept')
+[ 'A', 'B' ]
+```
+
+
+
+###### 从文档中返回不重复值
+
+> 从一个对象（嵌入文档）返回不重复数据
+
+```shell
+test> db.col.distinct( "item.sku" )
+[ '111', '222', '333' ]
+```
+
+
+
+###### 从集合中返回不重复值
+
+```powershell
+test> db.col.distinct('sizes')
+[ 'L', 'M', 'S' ]
+```
+
+
+
+###### 可添加查询条件
+
+```shell
+test> db.col.distinct('sizes',{dept:'A'})
+[ 'L', 'M', 'S' ]
+```
+
+
+
+##### explain
+
+
+
+
+
+
+
+
+
+##### findAndModify
+
+> 更新文档，并默认返回旧文档记录，通过new：true返回更新后的文档记录
+
+  ```shell
+db.collection.findAndModify({
+    query: <document>,
+    sort: <document>,  ## -1 从后往前排序修改第一个 1 反之
+    remove: <boolean>,
+    update: <document or aggregation pipeline>, // Changed in MongoDB 4.2
+    new: <boolean>, ## 默认false 返回被修改前的文档记录  true反之
+    fields: <document>,  
+    upsert: <boolean>,
+    bypassDocumentValidation: <boolean>,
+    writeConcern: <document>,
+    collation: <document>,
+    arrayFilters: [ <filterdocument1>, ... ],
+    let: <document> // Added in MongoDB 5.0
+});
+  ```
+
+```shell
+db.myCol.insertMany(
+    [
+        { _id: 1, category: "café", status: "A" },
+        { _id: 2, category: "cafe", status: "a" },
+        { _id: 3, category: "cafE", status: "a" }
+    ]
+)
+```
+
+###### 更新
+
+> 更新status为a的首个倒序文档的category属性，且返回更新后的文档
+
+```shell
+db.myCol.findAndModify(
+    {
+        query:{status:'a'},
+        update:{$set:{category:'update'}},
+        sort:{_id:-1},
+        new:true
+    }
+)
+
+{ _id: 3, category: 'update', status: 'a' }
+```
+
+
+
+###### 移除
+
+> 移除元素
+
+```shell
+db.myCol.findAndModify(
+	{
+		query:{status:'a'},
+		sort:{_id:-1},
+		remove:true
+	}
+)
+
+{ _id: 3, category: 'update', status: 'a' }
+```
+
+
+
+###### 更新数组
+
+
+
+```shell
+test> db.students.insertMany( [
+...    { "_id" : 1, "grades" : [ 95, 92, 90 ] },
+...    { "_id" : 2, "grades" : [ 98, 100, 102 ] },
+...    { "_id" : 3, "grades" : [ 95, 110, 100 ] }
+... ] )
+{ acknowledged: true, insertedIds: { '0': 1, '1': 2, '2': 3 } }
+test> db.students.find()
+[
+  { _id: 1, grades: [ 95, 92, 90 ] },
+  { _id: 2, grades: [ 98, 100, 102 ] },
+  { _id: 3, grades: [ 95, 110, 100 ] }
+]
+test> db.students.findAndModify(
+	{
+		query:{_id:1},
+		update:{$set:{'grades.$[e]':999}},
+		arrayFilters:[{'e':{$gt:92}}]
+	}
+)
+{ _id: 1, grades: [ 95, 92, 90 ] }
+test> db.students.find()
+[
+  { _id: 1, grades: [ 999, 92, 90 ] },
+  { _id: 2, grades: [ 98, 100, 102 ] },
+  { _id: 3, grades: [ 95, 110, 100 ] }
+]
+```
+
+
+
+##### findOne
+
+> - query:  查询条件
+> - projection    `{<field>:1/0 .....}`    1  返回显示字段  0  返回不显示字段
+
+```she
+db.collection.findOne(query, projection, options)
+```
+
+例子：
+
+```shell
+test> db.students.findOne({},{_id:0,grades:1})
+{ grades: [ 999, 92, 90 ] }
+```
+
+
+
+##### findOneAndDelete
+
+> 找到并删除
+
+```shell
+test> db.students.find()
+[
+  { _id: 1, grades: [ 999, 92, 90 ] },
+  { _id: 2, grades: [ 98, 100, 102 ] },
+  { _id: 3, grades: [ 95, 110, 100 ] }
+]
+test> db.students.findOneAndDelete(
+	{
+		_id:{$gt:1}},
+		{sort:{_id:-1},  
+		projection:{_id:0,grades:1}   ## 返回结果字段显示
+	}
+ )
+{ grades: [ 95, 110, 100 ] }
+test> db.students.find()
+[
+  { _id: 1, grades: [ 999, 92, 90 ] },
+  { _id: 2, grades: [ 98, 100, 102 ] }
+]
+```
+
+
+
+##### findOneAndReplace
+
+form:
+
+```shell
+db.collection.findOneAndReplace(
+   <filter>,
+   <replacement>,
+   {
+     projection: <document>,
+     sort: <document>,
+     maxTimeMS: <number>,
+     upsert: <boolean>,
+     returnDocument: <string>,
+     returnNewDocument: <boolean>,
+     collation: <document>
+   }
+)
+```
+
+例子：
+
+```shell
+test> db.students.findOneAndReplace(
+	{_id:1},
+    {name:'yuyc',age:22,status:'a'},
+    {returnNewDocument:true,projection:{_id:0,grades:1}}
+)
+{}
+test> db.students.find()
+[
+  { _id: 1, name: 'yuyc', age: 22, status: 'a' },
+  { _id: 2, grades: [ 98, 100, 102 ] }
+]
+```
+
+##### findOneAndUpdate
+
+```shell
+test> db.students.find()
+[
+  { _id: 1, name: 'yuyc', age: 22, status: 'a' },
+  { _id: 2, grades: [ 98, 100, 102 ] }
+]
+test> db.students.findOneAndUpdate(
+	{_id:1},
+	{$set:{status:'b'},$inc:{age:1}},
+	{returnNewDocument:true}
+)
+{ _id: 1, name: 'yuyc', age: 23, status: 'b' }
+```
+
+
+
+##### update
+
+initdate：
+
+```shell
+db.books.remove({});
+
+
+db.students.insertMany( [
+  {
+    _id: 1,
+    item: 'TBD',
+    stock: 0,
+    info: { publisher: '1111', pages: 430 },
+    tags: [ 'technology', 'computer' ],
+    ratings: [ { by: 'ee', rating: 5 }, { by: 'ee', rating: 5 } ],
+    reorder: false
+  },
+  {
+    _id: 2,
+    item: 'XYZ123',
+    stock: 15,
+    info: { publisher: '5555', pages: 150 },
+    tags: [],
+    ratings: [ { by: '22', rating: 5 } ],
+    reorder: false
+  }
+
+] )
+```
+
+
+
+form：
+
+```shell
+db.collection.update(
+   <query>,
+   <update>,
+   {
+     upsert: <boolean>,
+     multi: <boolean>,  ## 是否批量操作
+     writeConcern: <document>,
+     collation: <document>,
+     arrayFilters: [ <filterdocument1>, ... ],
+     hint:  <document|string>, // Added in MongoDB 4.2
+     let: <document> // Added in MongoDB 5.0
+   }
+)
+```
+
+
+
+例子：
+
+```shell
+ db.books.update(
+ 	{},
+ 	{$set:{'ratings.$[e].by':'newEle'},$inc:{'ratings.$[e].rating':1}},
+ 	{multi:true,arrayFilters:[{'e.rating':5}]}
+)
+```
+
+
+
