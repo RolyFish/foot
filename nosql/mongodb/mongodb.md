@@ -1440,3 +1440,169 @@ db.collection.update(
 
 
 
+## Java Api
+
+> 使用Java操作Mongodb。
+
+- MongoDb提供的原生JavaApi
+- SpringDate对原生Api的封装
+
+
+
+### 原生JavaApi
+
+> 使用Mongodb提供的原生JavaApi操作mongodb。
+
+[官网例子](http://mongodb.github.io/mongo-java-driver/3.12/driver/getting-started/quick-start/)
+
+#### 简单例子
+
+##### 引入依赖
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.mongodb</groupId>
+        <artifactId>mongo-java-driver</artifactId>
+    </dependency>
+</dependencies>
+```
+
+##### 连接工具类
+
+```java
+public class MongoUtil {
+    public static MongoClient mongoClient(String host, Integer port) {
+        return new MongoClient(host, port);
+    }
+
+    public static MongoDatabase mongoDatabase(String host, Integer port, String db) {
+        return mongoClient(host,port).getDatabase(db);
+    }
+}
+```
+
+##### 实体
+
+```java
+@Data
+@Accessors(chain = true)
+public class User {
+    String name;
+    Integer age;
+    List<Score> scoreList;
+}
+@Data
+@AllArgsConstructor
+public class Score {
+    String name;
+    Integer score;
+    Integer sort;
+}
+```
+
+##### 连接测试
+
+```java
+public static void main(String[] args) {
+    MongoDatabase test = MongoUtil.mongoDatabase("127.0.0.1", 27017, "test");
+    final MongoCollection<Document> userCol = test.getCollection("users");
+
+    User user = new User()
+            .setName("rolyfish")
+            .setAge(22)
+            .setScoreList(Arrays.asList(
+                    new Score("math", 99, 1),
+                    new Score("english", 99, 1),
+                    new Score("chinese", 99, 1)));
+    final List<Document> users = Arrays.asList(Document.parse(JSON.toJSONString(user)), Document.parse(JSON.toJSONString(user)), Document.parse(JSON.toJSONString(user)));
+    userCol.insertMany(users);
+    final FindIterable<Document> documents = userCol.find();
+    final MongoCursor<Document> iterator = documents.iterator();
+    while (iterator.hasNext()) {
+        System.out.println(iterator.next().toJson());
+    }
+    iterator.close();
+}
+```
+
+![image-20221129111818515](mongodb.assets/image-20221129111818515.png)
+
+
+
+#### 补充
+
+##### 获取连接
+
+> 原生JavaApi获取mongo连接的方式。
+>
+> MongoClient实现了Closeable接口，使用try-with-resources方式关闭它。
+
+- `com.mongodb.MongoClient`构造函数
+
+  ```java
+  // 默认本地 27017
+  new MongoClient();
+  //可指定
+  new MongoClient(host, port);
+  //可指定MongoClientURI
+  MongoClientURI connectionString = new MongoClientURI("mongodb://localhost:27017,localhost:27017");
+  com.mongodb.MongoClient mongoClient = new com.mongodb.MongoClient(connectionString);
+  ```
+
+- `com.mongodb.client.MongoClients`的`create`方法
+
+  > `com.mongodb.client.MongoClients`的`create`方法返回`com.mongodb.client.MongoClient;`实例
+
+  ```java
+  //默认连接本地 27017的单个mongo实例
+  MongoClients.create();
+  //可指定 ConnectionString
+  MongoClient mongoClient = MongoClients.create(/*"mongodb://localhost:27017"*/);
+  
+  //除了指定 ConnectionString 有也可以构建 MongoClientSettings。 这里端口默认 27017，可不填
+  MongoClient mongoClient = MongoClients.create(
+                  MongoClientSettings.builder()
+                          .applyToClusterSettings(builder ->
+                                  builder.hosts(Collections.singletonList(new ServerAddress("localhost",27017))))
+                          .build());
+  ```
+
+
+
+##### 访问数据库
+
+> `Access a Collection`
+
+```java
+ MongoDatabase database = mongoClient.getDatabase("test");
+```
+
+
+
+##### 访问集合
+
+> 如果集合不存在则在首次设置集合数据时创建该集合。
+
+```java
+MongoCollection<Document> collection = database.getCollection("users");
+```
+
+
+
+##### 创建文档
+
+> 原生mogodb Java api 通过实例化Document的方式创建文档，创建的方式也很多
+
+
+
+
+
+
+
+
+
+
+
+
+
