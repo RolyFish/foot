@@ -1594,15 +1594,149 @@ MongoCollection<Document> collection = database.getCollection("users");
 
 > 原生mogodb Java api 通过实例化Document的方式创建文档，创建的方式也很多
 
+##### insert Document
+
+> 插入文档到集合。
+
+###### insertOne
+
+```java
+String LOCALHOST = "127.0.0.1";
+String DEFAULT_DB = "test";
+Integer DEFAULT_PORT = 27017;
+
+final MongoDatabase mongoDatabase = MongoUtil.mongoDatabase(LOCALHOST, DEFAULT_PORT, DEFAULT_DB);
+
+@Test
+public void testInsertOne() {
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    if (users.countDocuments() > 0)
+        users.drop();
+    final Document user = new Document("name", "yuyc").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+    users.insertOne(user);
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+}
+```
+
+![image-20221129145607866](mongodb.assets/image-20221129145607866.png)
 
 
 
+###### insertMany
+
+```java
+@Test
+public void testInsertMany() {
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    if (users.countDocuments() > 0)
+        users.drop();
+    final Document user1 = new Document("name", "yuyc1").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+    final Document user2 = new Document("name", "yuyc2").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+    final Document user3 = new Document("name", "yuyc3").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+    users.insertMany(Arrays.asList(user1, user2, user3));
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+}
+```
 
 
 
+###### bulkWrite
+
+例子：
+
+```java
+@Test
+public void testBulk() {
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    if (users.countDocuments() > 0)
+        users.drop();
+    final Document user1 = new Document("name", "yuyc1").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+    final Document user2 = new Document("name", "yuyc2").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+
+    final InsertOneModel<Document> userInsertOneModel1 = new InsertOneModel<>(Document.parse(JSON.toJSONString(user1)));
+    final InsertOneModel<Document> userInsertOneModel2 = new InsertOneModel<>(Document.parse(JSON.toJSONString(user2)));
+
+    final BasicDBObject filter = new BasicDBObject("name", "yuyc1");
+    final BasicDBObject update = new BasicDBObject("$set", new BasicDBObject("age", 99));
+    final UpdateOneModel<Document> userUpdate = new UpdateOneModel<>(filter, update);
+
+    users.bulkWrite(Arrays.asList(userInsertOneModel1, userInsertOneModel2, userUpdate));
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+}
+```
+
+![image-20221129155548761](mongodb.assets/image-20221129155548761.png)
 
 
 
+##### updateDocument
+
+> 更新文档
+
+###### UpdateOne
+
+> 更新单个文档或数组元素
+
+```java
+@Test
+public void testUpdateOne() {
+
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    System.out.println("=======初始数据=======");
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+    final Bson filter = new Document("name", "闯王");
+    final Bson updateField = new Document("$set", new Document("age", 777));
+
+    final Bson updateArray = Updates.set("scores.$[e]", 10);
+    final Bson arrayFilter = Filters.eq("e", 1);
+    final UpdateOptions updateOptions = new UpdateOptions().arrayFilters(Collections.singletonList(arrayFilter));
+    users.updateOne(filter, updateArray, updateOptions);
+    users.updateOne(filter, updateField);
+
+    System.out.println("=======更新后=======");
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+}
+```
+
+![image-20221129184150458](mongodb.assets/image-20221129184150458.png)
+
+###### updateMany
 
 
 
+```java
+@Test
+public void testUpdateMany() {
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    System.out.println("=======初始数据=======");
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+    final Bson filter = new Document();
+    final Bson updateArray = Updates.set("scores.$[e]", 10);
+    final Bson arrayFilter = Filters.eq("e", 2);
+    final UpdateOptions updateOptions = new UpdateOptions().arrayFilters(Collections.singletonList(arrayFilter));
+    users.updateOne(filter, updateArray, updateOptions);
+
+    users.updateMany(filter, updateArray, updateOptions);
+
+    System.out.println("=======更新后=======");
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+}
+```
+
+
+
+![image-20221129184457678](mongodb.assets/image-20221129184457678.png)
