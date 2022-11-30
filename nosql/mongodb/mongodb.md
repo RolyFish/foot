@@ -1740,3 +1740,245 @@ public void testUpdateMany() {
 
 
 ![image-20221129184457678](mongodb.assets/image-20221129184457678.png)
+
+
+
+###### bulkWrite
+
+```java
+@Test
+public void testBulkWrite() {
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    users.drop();
+    final Document user1 = new Document("name", "yuyc1").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+    final Document user2 = new Document("name", "yuyc2").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+    final Document user3 = new Document("name", "yuyc3").append("age", 22).append("scores", Arrays.asList(1, 2, 3));
+    users.insertMany(Arrays.asList(user1, user2, user3));
+    System.out.println("=======初始数据=======");
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+    /**
+     * 更新scores数组元素值为2的元素为10
+     */
+    final Bson filter = new Document();
+    final Bson updateArray = Updates.set("scores.$[e]", 10);
+    final Bson arrayFilter = Filters.eq("e", 2);
+    final UpdateOptions updateOptions = new UpdateOptions().arrayFilters(Collections.singletonList(arrayFilter));
+    final WriteModel<Document> updateManyModel1 = new UpdateManyModel<>(filter, updateArray, updateOptions);
+
+    final Bson in = Filters.in("name", "yuyc1", "yuyc2");
+    final Bson age = Updates.set("age", 99);
+    final WriteModel<Document> updateManyModel2 = new UpdateManyModel<>(in, age);
+    final BulkWriteResult bulkWriteResult = users.bulkWrite(Arrays.asList(updateManyModel1, updateManyModel2));
+    // db.users.bulkWrite([
+    //      {
+    //          updateMany:{
+    //              filter:{},
+    //              update:{$set:{'scores.$[e]':110}},
+    //              arrayFilters:[{'e':3}]
+    //          }
+    //      },
+    //         {updateMany:{
+    //             filter:{name:{$in:['yuyc1','yuyc2']}},
+    //             update:{$set:{age:333}}
+    //         }
+    //     }
+    // ])
+    System.out.println(bulkWriteResult);
+    System.out.println("=======更新后=======");
+    for (Document document : users.find()) {
+        System.out.println(document.toJson());
+    }
+}
+```
+
+![image-20221130101521674](mongodb.assets/image-20221130101521674.png)
+
+##### countDocuments
+
+- count()
+- countDocuments()
+- estimatedDocumentCount()
+
+```java
+@Test
+public void testCountCollections() {
+
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+
+    System.out.println("db.collection.count()" + users.count(new Document()));
+    System.out.println("db.collection.countDocuments()" + users.countDocuments(new Document()));
+    System.out.println("db.collection.estimatedDocumentCount()" + users.estimatedDocumentCount());
+
+}
+```
+
+
+
+##### query collection
+
+
+
+###### find first doc
+
+```java
+@Test
+public void testFindFirst() {
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    final Document first =
+            users.find().first();
+    System.out.println(first.toJson());
+}
+```
+
+
+
+###### filters Helper
+
+> 帮助构query filter。
+
+```java
+@Test
+public void testQueryFilter() {
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    final Bson eq2 = Filters.eq("age", 23);
+    final Bson eq3 = Filters.eq("name", "bulkWrite.insertOneModel");
+    final Bson and = Filters.and(eq2, eq3);
+    for (Document document : users.find(and)) {
+        System.out.println(document.toJson());
+    }
+}
+```
+
+
+
+###### projections
+
+> 指定返回属性。
+
+```shell
+db.users.find().projection({name:1});
+```
+
+只显示name属性
+
+```java
+@Test
+public void testProjections() {
+    final MongoCollection<Document> users = mongoDatabase.getCollection("users");
+    final Bson eq = Filters.eq("age", 23);
+    for (Document document : users.find(eq).projection(Projections.include("name"))) {
+        System.out.println(document.toJson());
+    }
+}
+```
+
+
+
+
+
+##### insert pojo
+
+> `code registry`会为未知类自动创建pojo`codec`，`codec`允许我们直接将pojo插入集合。
+
+例子：
+
+```java
+@Test
+public void insertPojo() {
+    CodecRegistry pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),                                                                		 CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+    MongoClientSettings settings = MongoClientSettings.builder()
+        .codecRegistry(pojoCodecRegistry)
+        .build();
+    MongoClient mongoClient = MongoClients.create(settings);
+    final MongoCollection<User2> users = mongoClient.getDatabase("test")
+        .withCodecRegistry(pojoCodecRegistry)
+        .getCollection("users", User2.class);
+    users.deleteMany(new Document());
+    System.out.println("初始数据");
+    for (User2 user2 : users.find()) {
+        System.out.println(user2);
+    }
+    System.out.println("insert a pojo into collection");
+    User2 userOne = new User2("insertOne", 22);
+    users.insertOne(userOne);
+    for (User2 user2 : users.find()) {
+        System.out.println(user2);
+    }
+    System.out.println("insert many pojo into collection");
+    User2 userMany = new User2("insertMany", 22);
+    users.insertMany(Arrays.asList(userMany, userMany, userMany));
+    for (User2 user2 : users.find()) {
+        System.out.println(user2);
+    }
+}
+```
+
+![image-20221130171245586](mongodb.assets/image-20221130171245586.png)
+
+
+
+##### replace Pojo
+
+```java
+@Test
+public void replacePojo() {
+    CodecRegistry pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+            CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+    MongoClientSettings settings = MongoClientSettings.builder()
+            .codecRegistry(pojoCodecRegistry)
+            .build();
+    MongoClient mongoClient = MongoClients.create(settings);
+    final MongoCollection<User2> users = mongoClient.getDatabase("test")
+            .withCodecRegistry(pojoCodecRegistry)
+            .getCollection("users", User2.class);
+    final UpdateResult updateResult = users.replaceOne(Filters.eq("name", "insertOne"), new User2("replaceOne", 22));
+    System.out.println(updateResult);
+}
+```
+
+
+
+
+
+### Spring
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
