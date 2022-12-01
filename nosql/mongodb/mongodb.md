@@ -1940,9 +1940,128 @@ public void replacePojo() {
 
 
 
+#### POJOS
 
+##### 例子
+
+> MongoDB 除了操作BSON外，还提供直接操作POJO的方案。
+
+###### 实体类
+
+```java
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public final class Person {
+
+    private ObjectId id;
+    private String name;
+    private int age;
+    private Address address;
+
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public final class Address {
+
+    private String street;
+    private String city;
+    private String zip;
+
+}
+```
+
+
+
+###### 获取MongoCollection工具类：
+
+```java
+public static <T> MongoCollection<T> mongoCollection(Class<T> pojoClass, String collectionName, String connectionStr, String database) {
+    CodecRegistry pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+            CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+    MongoClientSettings settings = MongoClientSettings.builder()
+            .codecRegistry(pojoCodecRegistry)
+            .applyConnectionString(new ConnectionString(connectionStr))
+            .build();
+    com.mongodb.client.MongoClient mongoClient = MongoClients.create(settings);
+    final MongoCollection<T> collection = mongoClient.getDatabase(database)
+            .getCollection(collectionName, pojoClass);
+    return collection;
+}
+
+private final static String defaultConnectionStr = "mongodb://localhost:27017";
+
+public static <T> MongoCollection<T> mongoCollection(Class<T> pojoClass, String collectionName, String database) {
+    return mongoCollection(pojoClass, collectionName, defaultConnectionStr, database);
+}
+```
+
+
+
+###### 测试
+
+```java
+@Test
+public void testInsertOne(){
+
+    final MongoCollection<Person> personCollection = MongoUtil.mongoCollection(Person.class, "person", "test");
+
+    final Person person = new Person();
+    person.setId(new ObjectId());
+    person.setAge(22);
+    person.setName("person1");
+    person.setAddress(new Address("长桥街道","上海","10010"));
+    personCollection.insertOne(person);
+
+    for (Person person1 : personCollection.find()) {
+        System.out.println(person1);
+    }
+
+}
+```
+
+![image-20221201110747049](mongodb.assets/image-20221201110747049.png)
+
+##### CodecRegistry
+
+> MongoDB基于POJO的crud操作依赖于CodecRegistry。
+
+- 创建自定义CodecRegistry
+
+  ```java
+  CodecRegistry pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+          CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+  ```
+
+- 使用CodecRegistry
+
+  > 有多种方式使用codecRegistry
+
+  ```java
+  // 1
+  MongoClientSettings settings = MongoClientSettings.builder()
+          .codecRegistry(pojoCodecRegistry)
+          .applyConnectionString(new ConnectionString(connectionStr))
+          .build();
+  com.mongodb.client.MongoClient mongoClient = MongoClients.create(settings);
+  
+  //2 with database
+  final MongoDatabase test = mongoClient.getDatabase("test").withCodecRegistry(pojoCodecRegistry);
+  
+  //3 with Collection
+  final MongoDatabase database = mongoClient.getDatabase("test");
+  final MongoCollection<T> collection = database1.getCollection(collectionName,pojoClass).withCodecRegistry(pojoCodecRegistry);
+  ```
 
 ### Spring
+
+
+
+#### helloWorld
+
+
 
 
 
