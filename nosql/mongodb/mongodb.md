@@ -2055,13 +2055,13 @@ public void testInsertOne(){
   final MongoCollection<T> collection = database1.getCollection(collectionName,pojoClass).withCodecRegistry(pojoCodecRegistry);
   ```
 
-### Spring
+## Spring
 
+> Spring整合MongoDB
 
+### helloWorld
 
-#### helloWorld
-
-
+> 使用`MongoTemplate`
 
 
 
