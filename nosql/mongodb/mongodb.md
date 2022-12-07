@@ -2059,6 +2059,15 @@ public void testInsertOne(){
 
 > Spring整合MongoDB
 
+
+
+> 在使用`spring-data-mongodb`和`mongodb-driver`的时候会有一些依赖的问题。
+>
+> 首先了解一下几个mongodb-driver依赖的关系。
+
+mongodb-driver分了好多个版本,spring整合时使用`mongodb-driver-sync`这个依赖。
+
+
 ### helloWorld
 
 > 使用`MongoTemplate`
