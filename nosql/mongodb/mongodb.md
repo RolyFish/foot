@@ -2065,26 +2065,341 @@ public void testInsertOne(){
 >
 > 首先了解一下几个mongodb-driver依赖的关系。
 
-mongodb-driver分了好多个版本,spring整合时使用`mongodb-driver-sync`这个依赖。
+mongodb-driver分了好多个版本,spring整合时使用以下其中一个依赖。
+
+```xml
+<!-- https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-sync -->
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-driver-sync</artifactId>
+    <version>4.8.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-legacy -->
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-driver-legacy</artifactId>
+    <version>4.8.0</version>
+</dependency>
+```
 
 
-### helloWorld
+### MongoTemplate
 
 > 使用`MongoTemplate`
 
+#### 依赖
+
+```xml
+<dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webmvc</artifactId>
+    <version>6.0.0</version>
+</dependency>
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-driver-legacy</artifactId>
+    <version>4.8.0</version>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-test</artifactId>
+    <version>6.0.2</version>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-mongodb</artifactId>
+    <version>4.0.0</version>
+</dependency>
+
+<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12 -->
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-log4j12</artifactId>
+    <version>2.0.5</version>
+</dependency>
+```
 
 
 
+#### 实体
+
+```java
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public final class Person {
+
+    private ObjectId id;
+
+    private String name;
+
+    private int age;
+
+    private Address address;
+
+    public Person setId(ObjectId id) {
+        this.id = id;
+        return this;
+    }
+}
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public final class Address {
+
+    private String street;
+    private String city;
+    private String zip;
+
+}
+```
 
 
 
+#### 日志配置 mongodb配置
+
+```properties
+log4j.rootLogger=DEBUG,console,file
+
+log4j.appender.stdout.layout.ConversionPattern=%d{ABSOLUTE} %5p %40.40c:%4L - %m%n
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.console = org.apache.log4j.ConsoleAppender
+log4j.appender.console.Target = System.out
+log4j.appender.console.Threshold=INFO
+log4j.appender.console.layout = org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=[%p][%c]-%m%n
+
+log4j.appender.file = org.apache.log4j.RollingFileAppender
+log4j.appender.file.File=./log/log.log
+log4j.appender.file.MaxFileSize=10mb
+log4j.appender.file.Threshold=DEBUG
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=[%p][%d{yy-MM-dd}][%c]%m%n
+```
+
+```properties
+mongo.host=127.0.0.1
+mongo.port=27017
+mongo.dbname=test
+```
+
+#### MongoTemplateUtil
+
+```java
+public class MongoTemplateUtil {
+
+    private static Log log = LogFactory.getLog(MongoTemplateUtil.class);
+
+
+    private static String port;
+    private static String host;
+    private static String db;
+
+    static {
+        try {
+            final InputStream in = MongoTemplateUtil.class.getClassLoader().getResourceAsStream("mongodb.properties");
+            final Properties properties = new Properties();
+            properties.load(in);
+            host = (String) properties.get("mongo.host");
+            port = (String) properties.get("mongo.port");
+            db = (String) properties.get("mongo.dbname");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    public static MongoOperations mongoOperations() {
+        final ConnectionString conStr = new ConnectionString("mongodb://" + host +":"+ port);
+        return new MongoTemplate(MongoClients.create(conStr), db);
+    }
+
+}
+```
 
 
 
+#### 测试
+
+```java
+public class MongoApp {
+
+    private static final Log log = LogFactory.getLog(MongoApp.class);
+
+    public static void main(String[] args) throws Exception {
+
+        final MongoOperations mongoOps = MongoTemplateUtil.mongoOperations();
+        final Person person = new Person();
+        person.setId(new ObjectId());
+        person.setAge(22);
+        person.setName("person4");
+        person.setAddress(new Address("长桥街道", "上海", "10010"));
+
+        log.info("insertMMany");
+        final Collection<Person> insertReturn = mongoOps.insert(Collections.singletonList(person), "person");
+        log.info("回写插入结果" + insertReturn);
+
+        log.info("bulkOps");
+        final BulkWriteResult bulkWriteResult = mongoOps.bulkOps(BulkOperations.BulkMode.ORDERED, Person.class, "person").insert(Collections.singletonList(person.setId(new ObjectId()))).execute();
+        log.info(bulkWriteResult);
+
+        log.info("find");
+        final List<Person> find = mongoOps.find(new Query(), Person.class, "person");
+        log.info(find);
+    }
+}
+```
+
+### Spring注册MongoTemplate
+
+#### javaConfig
+
+##### javaConfigg
+
+```java
+public class MongoClientConfig {
+
+    public @Bean MongoClient mongoClient() {
+        final ConnectionString conStr = new ConnectionString("mongodb://127.0.0.1:27017");
+        return MongoClients.create(conStr);
+    }
+
+    public @Bean MongoOperations mongoOperations(@Autowired MongoClient mongoClient) {
+        return new MongoTemplate(mongoClient, "test");
+    }
+
+}
+```
+
+##### 测试
+
+```java
+public class MongoClientTest {
+
+    Log log = LogFactory.getLog(MongoClientTest.class);
+
+    @Test
+    public void testMongoClient() {
+
+        final ApplicationContext applicationContext = new AnnotationConfigApplicationContext(com.roily.common.cnfig.MongoClientConfig.class);
+        final MongoOperations mongoTemplate = applicationContext.getBean(MongoOperations.class);
+        final List<Person> peoples = mongoTemplate.find(new Query(), Person.class);
+        for (Person people : peoples) {
+            log.info(people);
+        }
+
+    }
+}
+```
 
 
 
+#### xml
 
+##### mongo.properties
+
+```properties
+mongo.host=127.0.0.1
+mongo.port=27017
+mongo.dbname=test
+```
+
+##### mongodb.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation=
+               "http://www.springframework.org/schema/data/mongo https://www.springframework.org/schema/data/mongo/spring-mongo.xsd
+          http://www.springframework.org/schema/beans
+          https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder location="classpath:mongodb.properties"/>
+
+    <mongo:mongo-client host="${mongo.host}" port="${mongo.port}" id="mongoClient">
+    </mongo:mongo-client>
+
+    <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+        <constructor-arg name="mongoClient" ref="mongoClient"/>
+        <constructor-arg name="databaseName" value="test"/>
+    </bean>
+
+</beans>
+```
+
+
+
+##### 测试
+
+```java
+@Test
+public void testMongoClientXML() {
+
+    final ApplicationContext applicationContext = new ClassPathXmlApplicationContext("application-mongodb.xml");
+    final MongoOperations mongoTemplate = applicationContext.getBean(MongoOperations.class);
+    final List<Person> peoples = mongoTemplate.find(new Query(), Person.class);
+    for (Person people : peoples) {
+        log.info(people);
+    }
+
+}
+```
+
+
+
+#### use MongoDatabaseFactory 
+
+> 使用 MongoDatabaseFactory 
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation=
+               "http://www.springframework.org/schema/data/mongo https://www.springframework.org/schema/data/mongo/spring-mongo.xsd
+          http://www.springframework.org/schema/beans
+          https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder location="classpath:mongodb.properties"/>
+
+    <mongo:mongo-client host="${mongo.host}" port="${mongo.port}" id="mongoClient">
+    </mongo:mongo-client>
+
+    <!--  使用 SimpleMongoClientDatabaseFactory -->
+    <bean id="mongoClientDatabaseFactory"
+          class=" org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory">
+        <constructor-arg name="mongoClient" ref="mongoClient"/>
+        <constructor-arg name="databaseName" value="test"/>
+    </bean>
+    <bean id="mongoTemplate" class=" org.springframework.data.mongodb.core.MongoTemplate">
+        <constructor-arg name="mongoDbFactory" ref="mongoClientDatabaseFactory"/>
+    </bean>
+
+</beans>
+```
+
+
+
+#### 一些注解
+
+
+
+##### @ID
+
+> mongodb在插入文档到集合时，如果没有主键得话会自动生成一个主键。可以使用`@ID`注解标注一个属性为`_id`字段
 
 
 
