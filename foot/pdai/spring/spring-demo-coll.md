@@ -1007,9 +1007,154 @@ public class StudentController {
 
 
 
+## Spring-boot-Jackson
 
 
 
+### Serializer && DeSerializer
+
+> '序列化和反序列化'
+
+#### 序列化&反
+
+```java
+public class UserSerializer extends JsonSerializer<UserSerializerAndDe> {
+	@Override
+	public void serialize(UserSerializerAndDe user, JsonGenerator generator, SerializerProvider provider)
+			throws IOException, JsonProcessingException {
+		generator.writeStartObject();
+		generator.writeStringField("user-name", user.getUserName());
+		generator.writeNumberField("user-age", user.getAge());
+		generator.writeStringField("user-pass", user.getPassword());
+		generator.writeObjectField("birthday", user.getBirthday());
+		generator.writeEndObject();
+	}
+}
+public class UserDeserializer extends JsonDeserializer<UserSerializerAndDe> {
+    final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    @Override
+    public UserSerializerAndDe deserialize(JsonParser parser, DeserializationContext context)
+            throws IOException, JsonProcessingException {
+        JsonNode node = parser.getCodec().readTree(parser);
+        String userName = node.get("user-name").asText();
+        int age = node.get("age").asInt();
+        String password = node.get("pass-word").asText();
+        Date birthday = null;
+        try {
+            birthday = simpleDateFormat.parse(node.get("birthday").asText());
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        UserSerializerAndDe user = new UserSerializerAndDe()
+                .setUserName(userName)
+                .setAge(age)
+                .setPassword(password)
+                .setBirthday(birthday);
+        return user;
+    }
+}
+```
+
+
+
+#### 实体配置
+
+> `@JsonSerialize & @JsonDeserialize`使用这两个注解配置。
+
+```java
+@JsonSerialize(using = UserSerializer.class)
+@JsonDeserialize(using = UserDeserializer.class)
+@Data
+@Accessors(chain = true)
+public class UserSerializerAndDe implements Serializable {
+
+    private static final long serialVersionUID = 6222176558369919436L;
+
+    private String userName;
+
+    private int age;
+
+    private String password;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date birthday;
+
+}
+```
+
+#### 配置ObjectMapper
+
+```java
+@Configuration
+public class JacksonConfig {
+   @Bean
+   public ObjectMapper getObjectMapper(){
+      ObjectMapper mapper = new ObjectMapper();
+      mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
+      return mapper;
+   }
+}
+```
+
+
+
+#### 测试
+
+```java
+private static Log log = LogFactory.getLog(TestJsonController.class);
+@Autowired
+ObjectMapper mapper;
+
+@RequestMapping("getUserSerializerAndDe")
+@ResponseBody
+public UserSerializerAndDe getUserSerializerAndDe() {
+
+    UserSerializerAndDe user = new UserSerializerAndDe();
+    user.setUserName("rolyfish");
+    user.setAge(26);
+    user.setPassword("123456");
+    user.setBirthday(Calendar.getInstance().getTime());
+    return user;
+
+}
+
+@RequestMapping("deUserSerializerAndDe")
+@ResponseBody
+public void deUserSerializerAndDe(@RequestBody UserSerializerAndDe user) throws JsonProcessingException {
+    String str = mapper.writeValueAsString(user);
+    log.info(str);
+}
+```
+
+
+
+![image-20221215175019781](spring-demo-coll.assets/image-20221215175019781.png)
+
+![image-20221215175135165](spring-demo-coll.assets/image-20221215175135165.png)
+
+### JsonView
+
+> 视图，用于控制输出字段，比如一些铭感字段不输出
+
+
+
+### ObjectMapper
+
+
+
+### 其他注解
+
+
+
+#### 驼峰转化
+
+
+
+#### 忽略属性
+
+
+
+#### 
 
 
 
