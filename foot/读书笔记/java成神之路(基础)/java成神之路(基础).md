@@ -4464,13 +4464,13 @@ filter参数为Predicate，可使用多个Predicate配合and  or  组合成一�
 
 > `Stream`是集合或容器的视图，是对集合或容器的操作描述，但是如果我们想要得到结果的话，就需要使用最终操作来将流转化为我们想要的结果。遍历、统计(个数)、转化集合等。
 
-| 操作    | 说明     | 参数                                 |
-| ------- | -------- | ------------------------------------ |
-| foreach | 遍历     | Consumer<? super T> action           |
-| count   | 计数     |                                      |
-| Collect | 转化集合 | Collector<? super T, A, R> collector |
-| Reduce  | 聚合操作 |                                      |
-|         |          |                                      |
+| 操作    | 说明     | 参数                                                         |
+| ------- | -------- | ------------------------------------------------------------ |
+| foreach | 遍历     | Consumer<? super T> action                                   |
+| count   | 计数     |                                                              |
+| collect | 转化集合 | Collector<? super T, A, R> collector  或  Supplier、BiConsumer、BiConsumer |
+| Reduce  | 聚合操作 |                                                              |
+|         |          |                                                              |
 
 ##### Stream转化
 
