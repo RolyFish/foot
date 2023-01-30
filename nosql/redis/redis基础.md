@@ -6,7 +6,9 @@
 
 > redis只有linux版本的，平常在windows下使用的是微软转译过的。
 >
-> linux版本： Ubuntu 22.04 ARM64
+> 我是使用的linux版本： Ubuntu 22.04 ARM64
+>
+> 虚拟机选择：Parallels Desktop 18    或租一个服务器
 
 - 下载redis[官网下载](https://redis.io/download/)
 
@@ -276,9 +278,9 @@ To get help about Redis commands type:
 (integer) -2
 ```
 
+### 基本数据类型
 
-
-### String
+#### String
 
 String类型，也就是字符串类型，是Redis中最简单的存储类型。
 
@@ -364,9 +366,7 @@ OK
 OK
 ```
 
-
-
-#### 层次结构
+##### 层次结构
 
 > redis是一个key-value形式的存储结构，不允许存在重复key值，往往会有冲突。
 >
@@ -397,9 +397,7 @@ OK
 
 ![image-20221230002854599](redis基础.assets/image-20221230002854599.png)
 
-
-
-### hash
+#### hash
 
 > 使用String存储json字符串，不利于修改每一属性的值。使用redis的hash数据结构可对每一个属性单独存储，操作起来简单许多。
 
@@ -420,7 +418,7 @@ OK
 
 
 
-> HSET key field value [field value ....]  等同于  HMSET
+> HSET key field value [field value ....]  等同于  HMSET   （跟版本有关，有些版本hset不可批量设置）
 >
 > HGET key field
 >
@@ -467,9 +465,7 @@ OK
 2) "22"
 ```
 
-
-
-### list
+#### list
 
 Redis中的List类型与Java中的LinkedList类似，可以看做是一个双向链表结构。既可以支持正向检索和也可以支持反向检索。
 
@@ -518,9 +514,7 @@ Redis中的List类型与Java中的LinkedList类似，可以看做是一个双向
 (30.05s)
 ```
 
-
-
-### set
+#### set
 
 Redis的Set结构与Java中的HashSet类似，可以看做是一个value为null的HashMap。因为也是一个hash表，因此具备与HashSet类似的特征：
 
@@ -571,9 +565,7 @@ Redis的Set结构与Java中的HashSet类似，可以看做是一个value为null�
 1) "a"
 ```
 
-
-
-### sortedset
+#### sortedset
 
 Redis的SortedSet是一个可排序的set集合，与Java中的TreeSet有些类似，但底层数据结构却差别很大。SortedSet中的每一个元素都带有一个score属性，可以基于score属性对元素排序，底层的实现是一个跳表（SkipList）加 hash表。
 
@@ -644,9 +636,21 @@ SortedSet的常见命令有：
 
 
 
-## jedis
+### 特殊类型
 
-> redis  java客户端 ----jedis
+
+
+
+
+
+
+
+
+## redis客户端
+
+### jedis
+
+> redis  java客户端之一 ----jedis
 
 [redis客户端](https://redis.io/resources/clients/#java)
 
@@ -662,7 +666,13 @@ public void test() {
 }
 ```
 
+
+
+
+
 ### jedis连接池
+
+> jedis连接
 
 ```java
 public class JedisFactory {
@@ -717,4 +727,169 @@ public void jedisPool(){
 > RedisConnectionFactory接口下有两个实现类JedisConnectionFactory和LettuceConnectionFactory。
 
 ##### xml配置
+
+```xml
+<!--  如果redis设置密码，reids客户端需要auth命令验证，这里也需要配置  -->
+<bean id="redisPass" class="org.springframework.data.redis.connection.RedisPassword">
+    <constructor-arg value="123123"/>
+</bean>
+<bean id="redisStandaloneConfiguration"
+      class="org.springframework.data.redis.connection.RedisStandaloneConfiguration">
+    <!--        <property name="hostName" value="10.211.55.4"/>-->
+    <property name="hostName" value="127.0.0.1"/>
+    <property name="port" value="6379"/>
+    <!--        <property name="password" ref="redisPass"/>-->
+</bean>
+
+<!--  不设置则使用默认连接池配置  -->
+<bean id="jedisPoolConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+    <property name="maxTotal" value="1024"/>
+    <property name="maxIdle" value="10"/>
+    <property name="testOnBorrow" value="true"/>
+    <property name="testOnReturn" value="true"/>
+</bean>
+
+<bean id="jedisClientConfiguration"
+      class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory.MutableJedisClientConfiguration">
+    <property name="poolConfig" ref="jedisPoolConfig"/>
+</bean>
+
+<bean id="jedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+    <constructor-arg ref="redisStandaloneConfiguration"/>
+    <constructor-arg ref="jedisClientConfiguration"/>
+</bean>
+
+<bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+    <property name="connectionFactory" ref="jedisConnectionFactory"/>
+</bean>
+```
+
+验证：
+
+```java
+@Test
+public void test1() {
+    final ApplicationContext app = new ClassPathXmlApplicationContext("classpath:application.xml");
+    final String[] beanDefinitionNames = app.getBeanDefinitionNames();
+    for (String beanDefinitionName : beanDefinitionNames) {
+        System.out.println(beanDefinitionName);
+    }
+    final RedisTemplate redisTemplate = app.getBean(RedisTemplate.class);
+    final ValueOperations<String,String> valueOperations = redisTemplate.opsForValue();
+    valueOperations.set("redistemplate", "value");
+    System.out.println(valueOperations.get("redistemplate"));
+}
+```
+
+
+
+##### javaconfig配置
+
+```java
+public class RedisConfigration {
+
+    public @Bean RedisPassword redisPassword() {
+        return RedisPassword.of("123123");
+    }
+    public @Bean RedisStandaloneConfiguration redisStandaloneConfiguration(@Autowired RedisPassword redisPassword) {
+        final RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        // redisStandaloneConfiguration.setPassword(redisPassword);
+        redisStandaloneConfiguration.setHostName("127.0.0.1");
+        // redisStandaloneConfiguration.setHostName("10.211.55.4");
+        redisStandaloneConfiguration.setPort(6379);
+        return redisStandaloneConfiguration;
+    }
+    public @Bean JedisConnectionFactory jedisConnectionFactory(@Autowired RedisStandaloneConfiguration redisStandaloneConfiguration) {
+        return new JedisConnectionFactory(redisStandaloneConfiguration);
+    }
+
+    public @Bean RedisTemplate redisTemplate(@Autowired JedisConnectionFactory jedisConnectionFactory) {
+        final RedisTemplate redisTemplate = new RedisTemplate();
+        redisTemplate.setConnectionFactory(jedisConnectionFactory);
+        return redisTemplate;
+    }
+}
+```
+
+验证：
+
+```java
+@Test
+public void test2() {
+    final ApplicationContext app = new AnnotationConfigApplicationContext(RedisConfigration.class);
+    final String[] beanDefinitionNames = app.getBeanDefinitionNames();
+    for (String beanDefinitionName : beanDefinitionNames) {
+        System.out.println(beanDefinitionName);
+    }
+    final RedisTemplate redisTemplate = app.getBean(RedisTemplate.class);
+    final ValueOperations valueOperations = redisTemplate.opsForValue();
+    System.out.println(valueOperations.get("redistemplate"));
+}
+```
+
+
+
+#### SpringBoot配置
+
+依赖：
+
+```java
+<!--redis依赖-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+    <version>2.6.6</version>
+</dependency>
+```
+
+配置：
+
+```yml
+spring:
+ redis:
+#    host: 10.211.55.4
+    host: 127.0.0.1
+    port: 6379
+#    password: 123123
+    lettuce:
+      pool:
+        max-active: 8  #最大连接
+        max-idle: 8   #最大空闲连接
+        min-idle: 0   #最小空闲连接
+        max-wait: 100ms #连接等待时间
+```
+
+验证：
+
+```java
+@SpringBootApplication
+public class RedisDemoStart {
+    public static ApplicationContext applicationContext;
+    public static void main(String[] args) {
+        applicationContext =
+                SpringApplication.run(RedisDemoStart.class, args);
+        displayAllBeans();
+    }
+    /**
+     * 打印所以装载的bean
+     */
+    public static void displayAllBeans() {
+        String[] allBeanNames = applicationContext.getBeanDefinitionNames();
+        for (String beanName : allBeanNames) {
+            System.err.println(beanName);
+        }
+        final RedisTemplate redisTemplate = (RedisTemplate)applicationContext.getBean("redisTemplate");
+            redisTemplate.opsForValue().set("name", "虎哥");
+            // 获取string数据
+            Object name = redisTemplate.opsForValue().get("name");
+            System.out.println("name = " + name);
+    }
+}
+```
+
+
+
+
+
+
 

@@ -1134,17 +1134,123 @@ public void deUserSerializerAndDe(@RequestBody UserSerializerAndDe user) throws 
 
 ### JsonView
 
-> 视图，用于控制输出字段，比如一些铭感字段不输出
+> 视图，用于控制输出字段，比如一些铭感字段不输出。
+>
+> 未约束视图的属性不受影响
+
+```java
+@Data
+public class UserJsonView implements Serializable {
+
+   private static final long serialVersionUID = 6222176558369919436L;
+
+   public interface UserNameView {
+   };
+
+   public interface AllUserFieldView extends UserNameView {
+   };
+
+   @JsonView(UserNameView.class)
+   private String userName;
+   
+   @JsonView(AllUserFieldView.class)
+   private int age;
+
+   // @JsonIgnore
+   @JsonView(AllUserFieldView.class)
+   private String password;
+   //
+   // @JsonProperty("bth")
+   // @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+   // @JsonView(AllUserFieldView.class)
+   private Date birthday;
+   
+}
+```
+
+```java
+@JsonView(UserJsonView.AllUserFieldView.class)
+//@JsonView(UserJsonView.UserNameView.class)
+@RequestMapping("userjsonview")
+@ResponseBody
+public UserJsonView userJsonView() {
+    UserJsonView user = new UserJsonView();
+    user.setUserName("rolyfish");
+    user.setAge(26);
+    user.setPassword("123456");
+    user.setBirthday(Calendar.getInstance().getTime());
+    return user;
+}
+```
+
+
+
+![image-20230130174744109](spring-demo-coll.assets/image-20230130174744109.png)
 
 
 
 ### ObjectMapper
 
+> 常用API
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class DemoApplicationTests {
+   private static Log log = LogFactory.getLog(DemoApplicationTests.class);
+   @Autowired
+   ObjectMapper mapper;
+   @Test
+   public void userJsonView() throws IOException {
+
+      UserJsonView user = new UserJsonView();
+      user.setUserName("rolyfish");
+      user.setAge(26);
+      user.setPassword("123456");
+      user.setBirthday(Calendar.getInstance().getTime());
+
+      /**
+       * writeValueAsString
+       * writerWithView
+       */
+      log.info(mapper.writeValueAsString(user));
+      log.info(mapper.writerWithView(UserJsonView.UserNameView.class).writeValueAsString(user));
+
+      /**
+       * mapper.readTree
+       * mapper.readValue
+       * mapper.readerWithView
+       */
+      String jsonStr = "{\"userName\":\"rolyfish\",\"age\":26,\"password\":\"123456\",\"birthday\":\"2023-01-30 18:02:14\"}";
+      JsonNode node = mapper.readTree(jsonStr);
+      log.info(node.get("userName"));
+
+      UserJsonView userJsonView = mapper.readValue(jsonStr,UserJsonView.class);
+      log.info(userJsonView);
+
+      final UserJsonView readerWithView = mapper.readerWithView(UserJsonView.UserNameView.class).readValue(jsonStr, UserJsonView.class);
+      log.info(readerWithView);
+       
+       String jsonList = "[{\"userName\":\"rolyfish\",\"age\":26,\"password\":\"123456\",\"birthday\":\"2023-01-30 18:02:14\"},{\"userName\":\"rolyfish\",\"age\":26,\"password\":\"123456\",\"birthday\":\"2023-01-30 18:02:14\"}]";
+	  JavaType type = mapper.getTypeFactory().constructParametricType(List.class, UserJsonView.class);
+	  List<UserJsonView> list = mapper.readValue(jsonList, type);
+	  String value = "";
+	  for (UserJsonView temp : list) {
+	      value += temp.getUserName();
+	  }
+	  log.info(value);
+   }
+}
+```
+
 
 
 ### 其他注解
 
-
+```java
+@JsonIgnoreProperties({ "password", "age" })  //忽略属性
+@JsonNaming(PropertyNamingStrategy.LowerCaseWithUnderscoresStrategy.class)//属性 驼峰转下划线
+```
 
 #### 驼峰转化
 
