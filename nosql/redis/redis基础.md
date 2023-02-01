@@ -829,6 +829,42 @@ public void test2() {
 
 
 
+##### redis支持自定义范型
+
+> redisTemplate 可设置范型。
+>
+> 设置范型需要配合序列化工具使用
+
+```java
+/**
+ * 对非string的key和value 需要设置序列化工具
+ */
+@Test
+public void test3() {
+    final ApplicationContext app = new AnnotationConfigApplicationContext(RedisConfigration.class);
+
+    final RedisTemplate redisTemplate = app.getBean(RedisTemplate.class);
+    GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer();
+    redisTemplate.setKeySerializer(RedisSerializer.string());
+    redisTemplate.setHashKeySerializer(RedisSerializer.string());
+    redisTemplate.setValueSerializer(jsonRedisSerializer);
+    redisTemplate.setHashValueSerializer(jsonRedisSerializer);
+
+    final ListOperations<String, User> listOperations = redisTemplate.opsForList();
+    final List<User> users = Arrays.asList(new User("李自成", 21), new User("李自成", 21));
+    final Long count = listOperations.leftPushAll("users", users);
+    System.out.println(count);
+
+    final List<User> users2 = listOperations.range("users",0,listOperations.size("users"));
+    users2.forEach(System.out::println);
+    
+    final User users1 = listOperations.leftPop("users");
+    System.out.println(users1);
+}
+```
+
+
+
 #### SpringBoot配置
 
 依赖：
@@ -859,31 +895,48 @@ spring:
         max-wait: 100ms #连接等待时间
 ```
 
+```java
+/**
+    * 注册redisTemplate 并设置序列化工具
+    * @param connectionFactory
+    * @return
+*/
+public @Bean RedisTemplate<String, Object> redisTemplate(@Autowired RedisConnectionFactory connectionFactory){
+    // 创建RedisTemplate对象
+    RedisTemplate<String, Object> template = new RedisTemplate<>();
+    // 设置连接工厂
+    template.setConnectionFactory(connectionFactory);
+    // 创建JSON序列化工具
+    GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer();
+    // 设置Key的序列化
+    template.setKeySerializer(RedisSerializer.string());
+    template.setHashKeySerializer(RedisSerializer.string());
+    // 设置Value的序列化
+    template.setValueSerializer(jsonRedisSerializer);
+    template.setHashValueSerializer(jsonRedisSerializer);
+    // 返回
+    return template;
+}
+```
+
 验证：
 
 ```java
-@SpringBootApplication
-public class RedisDemoStart {
-    public static ApplicationContext applicationContext;
-    public static void main(String[] args) {
-        applicationContext =
-                SpringApplication.run(RedisDemoStart.class, args);
-        displayAllBeans();
+public static void main(String[] args) {
+    final ApplicationContext app = SpringApplication.run(RedisDemoApplication.class, args);
+    //打印beannames
+    final String[] beanNames = app.getBeanDefinitionNames();
+    for (String beanName : beanNames) {
+        System.out.println(beanName);
     }
     /**
-     * 打印所以装载的bean
+     * 得到redisTemplate并进行插入查询操作
      */
-    public static void displayAllBeans() {
-        String[] allBeanNames = applicationContext.getBeanDefinitionNames();
-        for (String beanName : allBeanNames) {
-            System.err.println(beanName);
-        }
-        final RedisTemplate redisTemplate = (RedisTemplate)applicationContext.getBean("redisTemplate");
-            redisTemplate.opsForValue().set("name", "虎哥");
-            // 获取string数据
-            Object name = redisTemplate.opsForValue().get("name");
-            System.out.println("name = " + name);
-    }
+    final RedisTemplate redisTemplate = app.getBean("redisTemplate",RedisTemplate.class);
+    final ValueOperations<String,Object> valueOperations = redisTemplate.opsForValue();
+    valueOperations.set("name","李自成");
+    final Object name = valueOperations.get("name");
+    log.info("name:{}",name);
 }
 ```
 
