@@ -149,6 +149,13 @@ drop table if exists tablename
 #### 操作表字段（alter）
 
 ```sql
+-- 修改表秒速
+alter table user comment '用户表';
+-- 修改字段秒速
+alter table user modify column version varchar(10) comment '乐观锁';
+-- 修改列名  
+alter table user change `delete` `is_delete` int4 comment '逻辑删除';
+
 alter table tablename rename as tablenewname  --修改tablename
 alter table teacher add age int(11) --添加字段
 --修改字段  属性给全
