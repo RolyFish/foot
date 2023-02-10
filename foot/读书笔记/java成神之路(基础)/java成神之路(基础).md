@@ -70,13 +70,9 @@
 
 > 继承是一种is -a 关系。
 >
-> 继承可提高代码复用，必须明确知道父类中的方法必须对所有子类都适用才可以使用，否则尽量避免使用，及使用集成时必须满足李氏替换原则。
+> 继承可提高代码复用，必须明确知道父类中的方法必须对所有子类都适用才可以使用，否则尽量避免使用，及使用继承时必须满足李氏替换原则。
 >
-> 继承是java为我们提供的可以实现代码复用的一种能力。可以拥有基类的所有属性和功能（包括私有属性和私有方法），并且可以在此基础上进行扩展。
-
-父类引用指向子类实例称为向上转型，向上转型不需要强制转化。对应的向下转型需要强制转化。
-
-
+> 继承是java为我们提供代码复用的能力。子类可以拥有基类的所有属性和方法（包括私有属性和私有方法），并且可以在此基础上进行扩展。
 
 ##### 多态
 
@@ -315,13 +311,19 @@ abstract class AbstractPersonX implements IPerson{
 }
 ```
 
-##### java单继承
+##### java类单继承
 
-> `java`通过`extends`关键字实现继承，且不支持多继承。
+> `java`通过`extends`关键字实现继承，且类不支持多继承，接口支持多继承。
 
 为什么
 
-> 菱形问题：假设B和C都继承自A，B和C都继承了父类A的所有属性和方法，如果java支持多继承的话，此刻有一个D继承自B和C，那么类D就同时拥有类B和类C的所有属性和方法，并且类D继承了两份来自于A的属性和方法，拥有同名属性和相同方法签名的方法是通过不了编译的，且如果通过编译，在调用的时候也会产生歧义。
+> 菱形问题：
+>
+> 假设B和C都继承自A，B和C都继承了父类A的所有属性和具体方法，如果java支持多继承的话，此刻有一个D继承自B和C，那么类D就同时拥有类B和类C的所有属性和具体方法，此刻类D继承了两份来自于A的属性和具体方法，拥有同名属性和相同方法签名的方法是通过不了编译的，且如果通过编译，在调用的时候也会产生歧义。
+>
+> 但是接口可以多继承：
+>
+> 对于接口而言若方法是抽象的，具体的表现形式由实现类决定。 但是接口中可以定义具体默认方法，如果继承自两个接口拥有同样的方法的话，必须重写来覆盖。
 
 <img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250770.png" alt="image-20220728231808420" style="zoom:50%;" />
 
@@ -475,7 +477,7 @@ class ClassD implements InterfaceC, InterfaceD {
 
 继承
 
-> 继承(Inheritance)是一种联结类与类的层次模型。指的是一个类(子类、子接口)继承另外一个类(父类、父接口)的功能。并且可以增加自己新的功能的能力。继承是一种`AS-a`的关系。
+> 继承(Inheritance)是一种联结类与类的层次模型。指的是一个类(子类、子接口)继承另外一个类(父类、父接口)的功能。并且可以增加自己新的功能的能力。继承是一种`is-a`的关系。
 
 ![image-20220729130759731](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282250283.png)
 
@@ -1670,9 +1672,9 @@ public void testAppend() {
 
 > StringBuffer  append方法基于StringBuilder实现，同时也是同步的，性能差一点点。
 
-> concat每次循环，都会进行数组拷贝，创建新字符串，性能差点。但也是为了保证字符串的不可变性
+> concat每次循环，都会进行数组拷贝，创建新字符串，性能差点。
 
-> StringUtils底层使用的StringBuilder实现，拼接过程存在很多其他操作，回去判断对象是否为空等，性能也差点
+> StringUtils底层使用的StringBuilder实现，拼接过程存在很多其他操作，会去判断对象是否为空等，性能也差点
 
 > `+`号是我们很常用的，性能却最差，这是为什么呢？
 
@@ -1729,8 +1731,6 @@ int count;
 
 
 
-
-
 ##### String.valueOf  & Intege.toString
 
 > 将一个`Integer`转化为`String`有几种方式？
@@ -1745,7 +1745,7 @@ public void test(){
 }
 ```
 
-> 第一种方式使用`StringBuilder`
+> 第一种方式底层使用`StringBuilder`
 
 ```java
 String str1 = (new StringBuilder()).append(i).append("").toString();
@@ -1759,7 +1759,7 @@ String str1 = (new StringBuilder()).append(i).append("").toString();
 
 > jdk7之后`switch`添加了对`String`的支持。
 >
-> `switch`目前支持的类型有Character, Byte, Short, Integer, String, or an enum，`switch`真正意义上只支持整型，对于`Character`会转化成ASCII码，ASCII是一个`int`类型的数据。`String`会优先通过`hashCode`判断，然后再通过`equals`进行安全检查，`hashCode`也是`int`类型的
+> `switch`目前支持的类型有Character, Byte, Short, Integer, String, or an enum，`switch`真正意义上只支持整型，对于`Character`会转化成ASCII码，ASCII是一个`int`类型的数据，对于`String`会优先通过`hashCode`匹配，然后再通过`equals`进行安全检查，`hashCode`也是`int`类型的，对于枚举会匹配其枚举项编号。
 
 ###### int&short&byte
 
@@ -2015,7 +2015,7 @@ public native String intern();
 >
 > 当我们不希望对象的某个变量需要被序列化的时候，比如我们定义一个变量，该变量我们只希望它在当前系统中使用，而不希望他在上下游系统传输，可以使用`transient`修饰。
 
-被transient修饰的引用类型也就是对象类型，在被反序列化的时候初始化为null，基本数据类型为默认值int就是0。
+被transient修饰的引用类型也就是对象类型，在被反序列化的时候初始化为null，基本数据类型为默认值。
 
 > 创建一个对象，注意需要实现序列化接口支持序列化操作。如果存在特殊需求可以重写writeObjec方法和readObject方法。
 
@@ -2066,8 +2066,6 @@ public void test2() throws IOException, ClassNotFoundException {
 }
 ```
 
-> 结果也如我们说的一样
-
 ![image-20220801235653264](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282252970.png)
 
 ##### instanceof
@@ -2096,8 +2094,6 @@ public void test() {
 
 > 后续重点看
 
-
-
 ##### volatile
 
 [volatile](https://juejin.cn/post/7077459563963908109)
@@ -2122,7 +2118,7 @@ public void test() {
 
 ###### final修饰方法
 
-> 表示该方法不可以被子类重写，但是可以在本类中重载。
+> 表示该方法不可以被子类重写，但是可以在子类中重载。
 
 
 
@@ -2350,6 +2346,12 @@ public class Son extends Parent{
 
 ![image-20221025173049847](java成神之路(基础).assets/image-20221025173049847.png)
 
+###### 内部类原理
+
+> 内部类是java提供的语法糖机制的一种，可以在普通类内部创建类，无需额外创建一个新的类。编译过后会生成独立的class字节码文件。
+>
+> 例如：外部类ClassDemo，内部类InnerClass，生成的内部类字节码文件名为 ClassDemo$InnerClass.class。
+
 ##### super
 
 > 通过super关键字可访问父类成员。
@@ -2556,11 +2558,11 @@ final class Season3 extends Enum
 }
 ```
 
-> 但是要想知道switch对枚举的支持的原理，其实就在构造函数内，会调用super(s,i)。s是String类型为枚举项的字段名称，i为自动生成的编号。
+> 但是要想知道switch对枚举的支持的原理，其实就在构造函数内，会调用super(s,i)。s是String类型为枚举项的名称，i为自动生成的编号。
 >
 > 我们使用jad对switch相关代码反编译一下：
 
-- 首先枚举类中的每一个枚举都是一个单例对象，在使用new 关键字创建实例的时候会为各个实例添加一个编号 ordinal
+- 首先枚举类中的每一个枚举都是一个单例，在使用new 关键字创建实例的时候会为各个实例添加一个编号 ordinal
 - 在引用了枚举类的类中，会在static代码块中初始化一个int类型的数组，用于描述各个枚举值对应的编号
 - switch还是对int做操作
 
@@ -2570,7 +2572,7 @@ final class Season3 extends Enum
      static 
      {
          $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3 = new int[Season3.values().length];
-         $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.SPRING.ordinal()] int= 1;
+         $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.SPRING.ordinal()] = 1;
          $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.WINTER.ordinal()] = 2;
          $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.AUTUMN.ordinal()] = 3;
          $SwitchMap$com$roily$booknode$javatogod$_01faceobj$javakeywords$aboutenum$Season3[Season3.SUMMER.ordinal()] = 4;
@@ -2597,17 +2599,11 @@ public void seasonUseEnum(Season3 season)
 
 
 
-
-
-
-
-
-
 ##### 枚举是单例的最佳实践
 
 > 单例的实现方式存在很多，懒汉式、饿汉式、双重检验锁、静态内部类、枚举
 
-单例的设计主要考虑两个问题：
+单例的设计需要考虑的问题：
 
 - 延时加载
 
@@ -2616,16 +2612,22 @@ public void seasonUseEnum(Season3 season)
 - 线程安全
 
   > 单例实现的复杂问题在于需要考虑线程安全问题，同时兼虑性能。懒汉式非线程安全。
+  
+- 序列化或反射是否破坏单例
 
-1、懒汉式可实现，但非线程安全
+  > 反序列化会创建一个全新的实例，破坏单例。
+  >
+  > 反射破坏构造函数私有化，破坏单例。
 
-2、饿汉式不行，饿汉式单例的创建由类加载器实现，但线程安全
+1、懒汉式可实现延时加载，但非线程安全
+
+2、饿汉式不可实现延时加载，饿汉式单例的创建由类加载器实现，但线程安全
 
 3、懒汉式配合Synchronized可实现，但影响性能(会对访问单例也进行加锁操作,但访问是没有线程安全问题的)
 
 4、双重检验锁可延时加载：是对懒汉式+锁机制的优化。避免读时加锁
 
-5、静态内部类可实现且线程安全，也是类加载器保证的线程安全	
+5、静态内部类可实现延时加载且线程安全，也是类加载器保证的线程安全	
 
 ###### 为何枚举是单例的最佳实现？
 
@@ -2717,7 +2719,7 @@ public void test2() {
 
 ###### 枚举可避免以上问题
 
-> 尝试使用反射破坏枚举单例：枚举的构造方法除枚举自定义的还有Enum类中的code。
+> 尝试使用反射破坏枚举单例：枚举的构造方法除自定义枚举的属性，还有Enum类中的code以及枚举名称。
 >
 > 会报出`IllegalArgumentException`异常，不可以使用反射创建枚举对象。
 
@@ -2790,15 +2792,15 @@ public void testy() {
 
 - 抽象类使用`abstract`修饰方法使用`abstract`修饰
 
-- 抽象类中国可以有抽象方法，抽象方法只能在抽象类中
+- 抽象类中可以有抽象方法，抽象方法只能在抽象类中
 
 - 抽象类不可实例化
 
 ##### 接口
 
-- java8之前，接口中不含任何方法实现
+- java8之前，接口中不允许存在任何具体方法
 - java8之后，接口中可以有默认方法实现，即dedfault修饰的方法
-- 接口中的所有字段即方法都是`public`的
+- 接口中的所有字段和方法都是`public`的
 - 接口中的字段默认是`static final`的
 
 ##### 小结
@@ -2923,9 +2925,7 @@ s[0]*31^(n-1) + s[1]*31^(n-2) + ... + s[n-1]
 
 ###### clone
 
-> object的clone()方法是protected的，也就是必须重写clone()方法，其他类才可以直接调用。
->
-> 重写clone()方法，必须标注cloneable接口。
+> object的clone()方法是protected的，重写clone()方法，必须标注cloneable接口。
 
 clone()方法的替代方案：
 
