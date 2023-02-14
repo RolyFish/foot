@@ -495,7 +495,7 @@ class ClassD implements InterfaceC, InterfaceD {
 
 |                             组合                             |                         继承                         |
 | :----------------------------------------------------------: | :--------------------------------------------------: |
-|            不会破坏封装，整体类与局部类之间松耦合            | 破坏封装，子类依赖于父类，表现为父类与父类之间强耦合 |
+|            不会破坏封装，整体类与局部类之间松耦合            | 破坏封装，子类依赖于父类，表现为子类与父类之间强耦合 |
 |         组合进来的可以是一个抽象，因此具有一定扩展性         |                   可通过定义新方法                   |
 | 整体类对组合进来的类进行包装，并可以做一些拓展，就是装饰器模式和代理模式 |                                                      |
 |             创建整体对象的时候，必须创建局部对象             |           创建子类对象，会自动创建父类对象           |
@@ -2784,7 +2784,7 @@ public void testy() {
 
 ##### 抽象类
 
-- 抽象类使用`abstract`修饰方法使用`abstract`修饰
+- 抽象类使用`abstract`修饰
 
 - 抽象类中可以有抽象方法，抽象方法只能在抽象类中
 
@@ -2794,12 +2794,11 @@ public void testy() {
 
 - java8之前，接口中不允许存在任何具体方法
 - java8之后，接口中可以有默认方法实现，即dedfault修饰的方法
-- 接口中的所有字段和方法都是`public`的
-- 接口中的字段默认是`static final`的
+- 接口中的所有字段和方法都是`public static final`的，必须初始化，且三个三个关键字都可以省略
 
 ##### 小结
 
-> 抽象类和接口的选择：当你明确确定一些类需要共用一些方法的时候，可以考虑使用抽象类，除了一些特殊处理(比如模板方法模式)，一律使用接口。接口的扩展比较容易。
+> 抽象类和接口的选择：当你明确确定一些类需要共用一些方法的时候，可以考虑使用抽象类，除了一些特殊处理(比如模板方法模式)，其他一律使用接口。接口的扩展比较容易。
 
 
 
@@ -3644,7 +3643,7 @@ public void test3() {
 
 #### collection
 
-> Collection接口中除了一些关于集合状态的方法合一些对集合操作的方法外，还有两个获取流的方法
+> Collection接口中除了一些关于集合状态的方法和一些对集合操作的方法外，还有两个获取流的方法
 
 <img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208282253664.png" alt="image-20220809150217164" style="zoom:50%;" />
 
@@ -3710,11 +3709,11 @@ public void test1() {
 
 #### Collectors
 
-> `Collectors`构造器私有化且未提供获取实例的方法，那么此类无法实例化。这是一个工具类，可以加快我们处理集合的效率。
+> `Collectors`构造器私有化且未提供获取实例的方法，那么此类无法实例化。这是一个工具类，用于构建`Collector`实例，以加快我们处理集合的效率。
 
 我们经常需要将一个处理过的Stream转化为集合类，需要调用collect()方法，此方法需要一个参数：Collector，实现Collector接口还是很麻烦的，所以Collectors提供了许多静态方法，给我们构建需要的Collector。
 
-+++以下例子基于着两个集合：
++++以下例子基于这两个集合：
 
 ```java
 final List<String> list1 = Arrays.asList("a", "ab", "abc", "abcd", "abcd");
@@ -3832,7 +3831,7 @@ System.out.println(size);
 
 > 做统计
 
-这里对集合内字符串长度做统计，得出合、最大、最小值
+这里对集合内字符串长度做统计，得出   和、最大、最小值
 
 ```java
 final IntSummaryStatistics intSummaryStatistics = list1.stream().collect(Collectors.summarizingInt(String::length));
@@ -3886,7 +3885,7 @@ Set：元素插入无序，不可重复。Set的实现由HashSet、TreeSet，虽
 >
 > ArrayList实现了`RandomAccess`接口，表明支持随机访问，搜索效率高。
 >
-> `elementData`使用`transient`修饰，优化序列化传输和存储
+> `elementData`使用`transient`修饰，优化序列化传输和存储，序列化传输会忽略空间节点。
 >
 > 如果说在使用ArrayList之前知道需要存入集合的元素大致个数，可以一次性将集合扩容足`ensureCapacity(int minCapacity) `,避免频繁扩容导致降低集合效率。
 
@@ -3910,7 +3909,7 @@ private static final int DEFAULT_CAPACITY = 10;
 优点：
 
 - 搜索效率高
-- 优化了序列话传输和序列化存储。（重写了WriteObject和ReadObject方法，不对null元素序列化传输）
+- 优化了序列化传输和序列化存储。（重写了WriteObject和ReadObject方法，不对null元素序列化传输）
 
 缺点：
 
@@ -3918,19 +3917,21 @@ private static final int DEFAULT_CAPACITY = 10;
 
 插入默认尾插法：如果插入时容量足够，直接在对应位置赋值即可，但是容量如果不足的化，首先需要扩容，扩容时就必须涉及数组的拷贝，效率自然受影响。
 
-如果说插入位置是程序员指定的，那么需要将该位置及其之后的元素都后移一位，然后再赋值，效率也会受影响。
+如果需要在指定位置插入元素，首先检查下标是否越界，再判断容量，然后将该位置及其之后的元素都后移一位，最后再赋值，效率也会受影响。
 
 
 
 ##### LinkedList
 
-> `LinkedList`除了实现了`List`接口，还实现了`Deque`接口，实现了`offer\peek\poll`等方法，对集合的操作更加灵活。
+> `LinkedList`除了实现了`List`接口，还实现了`Deque`接口，实现了`offer\peek\poll\pop`等方法，对集合的操作更加灵活。
 >
-> `LinkedList`底层是一个双向链表，数据不连续，没有容量限制。
+> `LinkedList`底层是一个双向链表，数据物理地址不连续，没有容量限制。
+>
+> `LinkedList`定制序列化和反序列化，因为`LinkedList`只有前驱节点尾节点，中间节点不知道，所以得遍历序列化。
 >
 > 对插入友好，对访问不友好。`LinkedList`不支持随机访问。
 >
-> 链表的访问效率地下，特别的：如果我们每次访问的元素在链表尾部的时候，那么每次遍历都几乎需要循环整个链表。
+> 链表的访问效率底下，极端情况下，如果访问的节点在链表中间位置的时候需要遍历半个链表。`LinkedList`对查找不友好，但是也做了相关优化，当需要访问节点的下标靠近表头则会从表头开始遍历，反之则从表尾开始遍历。
 
 重要属性:
 
@@ -3978,6 +3979,8 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
 #### Collections
 
+> 这是一个集合工具类，如果有遍历集合的操作，如果集合较大且不支持随机访问使用迭代器遍历，如果集合小或者支持随机访问则通过下标遍历。
+>
 > `Collections`的构造函数私有化被`private`修饰，不可实例化，除了构造方法外，存在很多被`static`修饰的静态方法，目的在于对集合进行操作。
 
 - 排序
@@ -4062,7 +4065,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
 - 拷贝
 
-  > 将源集合中的元素拷贝到目标集合。`src`是源集合，`dest`是目标集合。
+  > 将源集合中的元素拷贝到目标集合，浅拷贝。`src`是源集合，`dest`是目标集合。
   >
   > 目标集合的`size`需要大于等于源集合，否则会报出`IndexOutofBoundsException`异常。
   >
@@ -4126,7 +4129,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
 - 转化集合
 
-  > 注意转化为不可变集合后，源集合任然可以进行修改操作并且可以直接影响到,不可变集合的不可变性。因为`Collections`转化不可变集合的操作是将源集合作为转换后不可变集合的属性。
+  > 注意转化为不可变集合后，源集合任然可以进行修改操作并且可以直接影响到,不可变集合的不可变性。因为`Collections`转化不可变集合的操作是将源集合作为转换后不可变集合的成员变量。
 
   ```java
   //将目标集合转化成不可变集合，如果调用修改Api则会报出UnsupportedOperationException异常
@@ -4175,7 +4178,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
   
   ①两者实现同步的关键就在于使用`Synchronized`关键字实现，而`Vector`大部分代码使用的是同步方法，也就是锁的`this`。而`Collections.SynchronizedCollection`可以指定锁的对象`mutex`，如果不传默认锁的还是`this`。
   
-  ②`Vector`的底层是一个对象数组，在其构造函数的重载中，可以直接将一个`Collection`转化为`Vector`，但是如果被转化的集合是一个`LinkedList`的时候，需要改变其底层数据结构，也就是需要调用`toArray()`方法，将链表转化为数组。而`Collections.SynchronizedCollection`是不需要改变集合底层结构的，同样的被转化的集合作为`Collections.SynchronizedCollection`的内部属性。
+  ②`Vector`的底层是一个对象数组，在其构造函数的重载中，可以直接将一个`Collection`转化为`Vector`，需要调用`toArray()`方法，将链表转化为数组，作为`Vector`的成员变量。而`Collections.SynchronizedCollection`是不需要改变集合底层结构的，同样的源集合作为`Collections.SynchronizedCollection`类的内部成员变量。
   
   ```java
   <T> Collection<T> synchronizedCollection(Collection<T> c);
@@ -4197,7 +4200,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
 - TreeSet
 
-  `TreeSet`基于`TreeMap`实现，`TreeMap`底层是一颗红黑树(红黑树是对平衡二叉查找树的优化)。其内不可存储null元素(会报NPE异常)。
+  `TreeSet`基于`TreeMap`实现，`TreeMap`底层是一颗红黑树(红黑树是对平衡二叉查找树的优化)。其内不可存储null元素(会报NPE异常，因为需要调用compareTo方法)。
 
   其判重方式是：①如果元素实现了`Comparable`接口，直接使用元素的`compareTo()`方法。②如果元素没有实现`Comparable`接口必须指定`Comparator`，调用`Comparator.compare()`方法。
 
@@ -4231,7 +4234,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
   > `HashMap`键和值都可以添加null值，null值作为键只能出现一次(hashMap的`hash()`方法，null对应的是0)，null值作为value可以出现多次(即多个键值对应value都是null)。
   >
-  > `HashTable`键和值都可以不可以为null值，在`put`的时候，会对值进行空校验，会调用键的`hashCode()`方法。
+  > `HashTable`键和值都不可以为null值，在`put`的时候，会对值进行空校验，会调用键的`hashCode()`方法。
 
 - 容量Capacity & 扩容机制
 
@@ -4243,7 +4246,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
   > `HashMap`对`key`值的`hashCode`进行了哈希扰动，有效的降低了`HashMap`的哈希冲突。
   >
-  > `HashTable`直接使用的键的`hashCode`
+  > `HashTable`直接使用的键的`hashCode`，如果哈希算法较为糟糕，会频繁发生哈希冲突
 
 - 遍历方式
 
@@ -4327,7 +4330,7 @@ $$
 
 > hashMap的扩容方法是`reSize()`，扩容为2倍。
 >
-> 此方法不仅仅只做了扩容操作，它还会将链表缩短(缩短一倍)，比如在原数组(数组长度为len)下标j处有一个链表长度为5，经resize方法后，会将此链表拆为两份，分别为长度为2和长度为3的链表，分别放在 新数组(2 + len)j处和len + j处。
+> 此方法不仅仅只做了扩容操作，它还会将链表缩短(缩短一倍)，比如在原数组(数组长度为len)下标j处有一个链表长度为5，经resize方法后，会将此链表拆为两份，分别为长度为2和长度为3的链表，分别放在 新数组j处和（oldCap+ j）{j是旧数组需要截断列表的下标}处。
 
 - 转化红黑树
 
@@ -4400,7 +4403,7 @@ static int capacity(int expectedSize) {
 
 - 可消费性
 
-  > `Stream`可被消费，且只能被消费一次。一旦遍历过就会失效。想要在此操作必须重写生成流。
+  > `Stream`可被消费，且只能被消费一次。一旦遍历过就会失效。想要再次操作必须重新生成流。
 
   > 如下test2方法stringStream已被遍历过，再次对其操作会报出`java.lang.IllegalStateException: stream has already been operated upon or closed`错误。
   >
