@@ -1,0 +1,223 @@
+Index: .idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15__20_48__Changes_.xml
+===================================================================
+diff --git a/.idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15__20_48__Changes_.xml b/.idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15__20_48__Changes_.xml
+deleted file mode 100644
+--- a/.idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15__20_48__Changes_.xml	(revision 9cd48ca8ecac639055b3a96fcb28478d56540d2b)
++++ /dev/null	(revision 9cd48ca8ecac639055b3a96fcb28478d56540d2b)
+@@ -1,4 +0,0 @@
+-<changelist name="Uncommitted_changes_before_Update_at_2022_12_15,_20_48_[Changes]" date="1671108486177" recycled="true" deleted="true">
+-  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15,_20_48_[Changes]/shelved.patch" />
+-  <option name="DESCRIPTION" value="Uncommitted changes before Update at 2022/12/15, 20:48 [Changes]" />
+-</changelist>
+\ No newline at end of file
+Index: .idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15,_20_48_[Changes]/shelved.patch
+===================================================================
+diff --git a/.idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15,_20_48_[Changes]/shelved.patch b/.idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15,_20_48_[Changes]/shelved.patch
+deleted file mode 100644
+--- a/.idea/shelf/Uncommitted_changes_before_Update_at_2022_12_15,_20_48_[Changes]/shelved.patch	(revision 9cd48ca8ecac639055b3a96fcb28478d56540d2b)
++++ /dev/null	(revision 9cd48ca8ecac639055b3a96fcb28478d56540d2b)
+@@ -1,76 +0,0 @@
+-Index: .idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20,_23_58_[Changes]/shelved.patch
+-===================================================================
+-diff --git a/.idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20,_23_58_[Changes]/shelved.patch b/.idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20,_23_58_[Changes]/shelved.patch
+-deleted file mode 100644
+---- a/.idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20,_23_58_[Changes]/shelved.patch	(revision 85dfa9a580d59d798f74510234fd12c3f6541679)
+-+++ /dev/null	(revision 85dfa9a580d59d798f74510234fd12c3f6541679)
+-@@ -1,57 +0,0 @@
+--Index: .idea/workspace.xml
+--IDEA additional info:
+--Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+--<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"ChangeListManager\">\n    <list default=\"true\" id=\"bed07c71-5aa6-478f-ad22-84a18b2955be\" name=\"Changes\" comment=\"1101\">\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/foot/pdai/spring/01.spring-base.md\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/foot/pdai/spring/01.spring-base.md\" afterDir=\"false\" />\n    </list>\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\n      <map>\n        <entry key=\"$PROJECT_DIR$\" value=\"worktime\" />\n      </map>\n    </option>\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\n  </component>\n  <component name=\"GitSEFilterConfiguration\">\n    <file-type-list>\n      <filtered-out-file-type name=\"LOCAL_BRANCH\" />\n      <filtered-out-file-type name=\"REMOTE_BRANCH\" />\n      <filtered-out-file-type name=\"TAG\" />\n      <filtered-out-file-type name=\"COMMIT_BY_MESSAGE\" />\n    </file-type-list>\n  </component>\n  <component name=\"ProjectId\" id=\"2Ccb78KeUVafiMzq9wsiAXSh4AU\" />\n  <component name=\"ProjectViewState\">\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\n    <option name=\"showLibraryContents\" value=\"true\" />\n  </component>\n  <component name=\"PropertiesComponent\">\n    <property name=\"RunOnceActivity.OpenProjectViewOnStart\" value=\"true\" />\n    <property name=\"RunOnceActivity.ShowReadmeOnStart\" value=\"true\" />\n    <property name=\"WebServerToolWindowFactoryState\" value=\"false\" />\n    <property name=\"last_opened_file_path\" value=\"$PROJECT_DIR$\" />\n    <property name=\"nodejs_package_manager_path\" value=\"npm\" />\n    <property name=\"settings.editor.selected.configurable\" value=\"preferences.pluginManager\" />\n    <property name=\"vue.rearranger.settings.migration\" value=\"true\" />\n  </component>\n  <component name=\"RecentsManager\">\n    <key name=\"MoveFile.RECENT_KEYS\">\n      <recent name=\"D:\\File\\Desktop\\blogXX\\foot\\.idea\" />\n      <recent name=\"D:\\File\\Desktop\\blogXX\\foot\" />\n      <recent name=\"$PROJECT_DIR$/foot/读书笔记/java成神之路(基础)\" />\n    </key>\n  </component>\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\n  <component name=\"TaskManager\">\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\n      <changelist id=\"bed07c71-5aa6-478f-ad22-84a18b2955be\" name=\"Changes\" comment=\"\" />\n      <created>1659104649873</created>\n      <option name=\"number\" value=\"Default\" />\n      <option name=\"presentableId\" value=\"Default\" />\n      <updated>1659104649873</updated>\n      <workItem from=\"1659104651612\" duration=\"169000\" />\n      <workItem from=\"1659435026542\" duration=\"147000\" />\n      <workItem from=\"1659890507701\" duration=\"105000\" />\n      <workItem from=\"1659969602475\" duration=\"1918000\" />\n      <workItem from=\"1660143366549\" duration=\"1366000\" />\n      <workItem from=\"1660490810386\" duration=\"1601000\" />\n      <workItem from=\"1660660411651\" duration=\"2249000\" />\n      <workItem from=\"1660832696278\" duration=\"3859000\" />\n      <workItem from=\"1661667836964\" duration=\"1497000\" />\n      <workItem from=\"1661787423056\" duration=\"1709000\" />\n      <workItem from=\"1661953837429\" duration=\"1655000\" />\n      <workItem from=\"1662190268090\" duration=\"1208000\" />\n      <workItem from=\"1662308623396\" duration=\"31000\" />\n      <workItem from=\"1662311748618\" duration=\"18000\" />\n      <workItem from=\"1662390195820\" duration=\"637000\" />\n      <workItem from=\"1662399803500\" duration=\"19000\" />\n      <workItem from=\"1662478409533\" duration=\"1711000\" />\n      <workItem from=\"1662488501233\" duration=\"25000\" />\n      <workItem from=\"1665929584951\" duration=\"1256000\" />\n      <workItem from=\"1666101802613\" duration=\"681000\" />\n      <workItem from=\"1666708624763\" duration=\"75000\" />\n      <workItem from=\"1666711237229\" duration=\"612000\" />\n      <workItem from=\"1667220534664\" duration=\"2440000\" />\n      <workItem from=\"1667398929752\" duration=\"108000\" />\n      <workItem from=\"1668312193084\" duration=\"1611000\" />\n      <workItem from=\"1668613582487\" duration=\"1337000\" />\n    </task>\n    <task id=\"LOCAL-00001\" summary=\"0802work\">\n      <created>1659435136175</created>\n      <option name=\"number\" value=\"00001\" />\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1659435136175</updated>\n    </task>\n    <task id=\"LOCAL-00002\" summary=\"jvm\">\n      <created>1659890561272</created>\n      <option name=\"number\" value=\"00002\" />\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1659890561272</updated>\n    </task>\n    <task id=\"LOCAL-00003\" summary=\"collectors\">\n      <created>1660067029357</created>\n      <option name=\"number\" value=\"00003\" />\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1660067029357</updated>\n    </task>\n    <task id=\"LOCAL-00004\" summary=\"collectors\">\n      <created>1660582779319</created>\n      <option name=\"number\" value=\"00004\" />\n      <option name=\"presentableId\" value=\"LOCAL-00004\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1660582779319</updated>\n    </task>\n    <task id=\"LOCAL-00005\" summary=\"collectors\">\n      <created>1660668957167</created>\n      <option name=\"number\" value=\"00005\" />\n      <option name=\"presentableId\" value=\"LOCAL-00005\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1660668957167</updated>\n    </task>\n    <task id=\"LOCAL-00006\" summary=\"0818\">\n      <created>1660756297486</created>\n      <option name=\"number\" value=\"00006\" />\n      <option name=\"presentableId\" value=\"LOCAL-00006\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1660756297486</updated>\n    </task>\n    <task id=\"LOCAL-00007\" summary=\"0819\">\n      <created>1660842079046</created>\n      <option name=\"number\" value=\"00007\" />\n      <option name=\"presentableId\" value=\"LOCAL-00007\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1660842079046</updated>\n    </task>\n    <task id=\"LOCAL-00008\" summary=\"0828\">\n      <created>1661698651586</created>\n      <option name=\"number\" value=\"00008\" />\n      <option name=\"presentableId\" value=\"LOCAL-00008\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1661698651586</updated>\n    </task>\n    <task id=\"LOCAL-00009\" summary=\"0830\">\n      <created>1661797521570</created>\n      <option name=\"number\" value=\"00009\" />\n      <option name=\"presentableId\" value=\"LOCAL-00009\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1661797521570</updated>\n    </task>\n    <task id=\"LOCAL-00010\" summary=\"0830\">\n      <created>1661960203620</created>\n      <option name=\"number\" value=\"00010\" />\n      <option name=\"presentableId\" value=\"LOCAL-00010\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1661960203620</updated>\n    </task>\n    <task id=\"LOCAL-00011\" summary=\"0830\">\n      <created>1662311762550</created>\n      <option name=\"number\" value=\"00011\" />\n      <option name=\"presentableId\" value=\"LOCAL-00011\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1662311762550</updated>\n    </task>\n    <task id=\"LOCAL-00012\" summary=\"0905\">\n      <created>1662399811759</created>\n      <option name=\"number\" value=\"00012\" />\n      <option name=\"presentableId\" value=\"LOCAL-00012\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1662399811759</updated>\n    </task>\n    <task id=\"LOCAL-00013\" summary=\"0905\">\n      <created>1662488514712</created>\n      <option name=\"number\" value=\"00013\" />\n      <option name=\"presentableId\" value=\"LOCAL-00013\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1662488514712</updated>\n    </task>\n    <task id=\"LOCAL-00014\" summary=\"merge\">\n      <created>1663080411940</created>\n      <option name=\"number\" value=\"00014\" />\n      <option name=\"presentableId\" value=\"LOCAL-00014\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1663080411940</updated>\n    </task>\n    <task id=\"LOCAL-00015\" summary=\"merge\">\n      <created>1663080550814</created>\n      <option name=\"number\" value=\"00015\" />\n      <option name=\"presentableId\" value=\"LOCAL-00015\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1663080550814</updated>\n    </task>\n    <task id=\"LOCAL-00016\" summary=\"merge\">\n      <created>1664081524302</created>\n      <option name=\"number\" value=\"00016\" />\n      <option name=\"presentableId\" value=\"LOCAL-00016\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1664081524302</updated>\n    </task>\n    <task id=\"LOCAL-00017\" summary=\"upload  image\">\n      <created>1665581003440</created>\n      <option name=\"number\" value=\"00017\" />\n      <option name=\"presentableId\" value=\"LOCAL-00017\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1665581003440</updated>\n    </task>\n    <task id=\"LOCAL-00018\" summary=\"optional\">\n      <created>1665583356833</created>\n      <option name=\"number\" value=\"00018\" />\n      <option name=\"presentableId\" value=\"LOCAL-00018\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1665583356833</updated>\n    </task>\n    <task id=\"LOCAL-00019\" summary=\"optional\">\n      <created>1665929596869</created>\n      <option name=\"number\" value=\"00019\" />\n      <option name=\"presentableId\" value=\"LOCAL-00019\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1665929596869</updated>\n    </task>\n    <task id=\"LOCAL-00020\" summary=\"1101\">\n      <created>1667237849020</created>\n      <option name=\"number\" value=\"00020\" />\n      <option name=\"presentableId\" value=\"LOCAL-00020\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1667237849020</updated>\n    </task>\n    <option name=\"localTasksCounter\" value=\"21\" />\n    <servers />\n  </component>\n  <component name=\"TypeScriptGeneratedFilesManager\">\n    <option name=\"version\" value=\"3\" />\n  </component>\n  <component name=\"Vcs.Log.History.Properties\">\n    <option name=\"COLUMN_ID_ORDER\">\n      <list>\n        <option value=\"Default.Root\" />\n        <option value=\"Default.Author\" />\n        <option value=\"Default.Date\" />\n        <option value=\"Default.Subject\" />\n        <option value=\"Space.CommitStatus\" />\n      </list>\n    </option>\n  </component>\n  <component name=\"Vcs.Log.Tabs.Properties\">\n    <option name=\"TAB_STATES\">\n      <map>\n        <entry key=\"MAIN\">\n          <value>\n            <State />\n          </value>\n        </entry>\n      </map>\n    </option>\n    <option name=\"oldMeFiltersMigrated\" value=\"true\" />\n  </component>\n  <component name=\"VcsManagerConfiguration\">\n    <MESSAGE value=\"0802work\" />\n    <MESSAGE value=\"jvm\" />\n    <MESSAGE value=\"collectors\" />\n    <MESSAGE value=\"0818\" />\n    <MESSAGE value=\"0819\" />\n    <MESSAGE value=\"0828\" />\n    <MESSAGE value=\"0830\" />\n    <MESSAGE value=\"0905\" />\n    <MESSAGE value=\"merge\" />\n    <MESSAGE value=\"upload  image\" />\n    <MESSAGE value=\"optional\" />\n    <MESSAGE value=\"1101\" />\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"1101\" />\n  </component>\n</project>
+--Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+--<+>UTF-8
+--===================================================================
+--diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+----- a/.idea/workspace.xml	(revision c5d4427fa2500ff1c6a92792efebeb71def09d1b)
+--+++ b/.idea/workspace.xml	(date 1668959881198)
+--@@ -1,9 +1,8 @@
+-- <?xml version="1.0" encoding="UTF-8"?>
+-- <project version="4">
+--   <component name="ChangeListManager">
+---    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="1101">
+--+    <list default="true" id="bed07c71-5aa6-478f-ad22-84a18b2955be" name="Changes" comment="1117">
+--       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+---      <change beforePath="$PROJECT_DIR$/foot/pdai/spring/01.spring-base.md" beforeDir="false" afterPath="$PROJECT_DIR$/foot/pdai/spring/01.spring-base.md" afterDir="false" />
+--     </list>
+--     <option name="SHOW_DIALOG" value="false" />
+--     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+--@@ -80,7 +79,8 @@
+--       <workItem from="1667220534664" duration="2440000" />
+--       <workItem from="1667398929752" duration="108000" />
+--       <workItem from="1668312193084" duration="1611000" />
+---      <workItem from="1668613582487" duration="1337000" />
+--+      <workItem from="1668613582487" duration="1356000" />
+--+      <workItem from="1668959202844" duration="607000" />
+--     </task>
+--     <task id="LOCAL-00001" summary="0802work">
+--       <created>1659435136175</created>
+--@@ -222,7 +222,14 @@
+--       <option name="project" value="LOCAL" />
+--       <updated>1667237849020</updated>
+--     </task>
+---    <option name="localTasksCounter" value="21" />
+--+    <task id="LOCAL-00021" summary="1117">
+--+      <created>1668616528334</created>
+--+      <option name="number" value="00021" />
+--+      <option name="presentableId" value="LOCAL-00021" />
+--+      <option name="project" value="LOCAL" />
+--+      <updated>1668616528334</updated>
+--+    </task>
+--+    <option name="localTasksCounter" value="22" />
+--     <servers />
+--   </component>
+--   <component name="TypeScriptGeneratedFilesManager">
+--@@ -264,6 +271,7 @@
+--     <MESSAGE value="upload  image" />
+--     <MESSAGE value="optional" />
+--     <MESSAGE value="1101" />
+---    <option name="LAST_COMMIT_MESSAGE" value="1101" />
+--+    <MESSAGE value="1117" />
+--+    <option name="LAST_COMMIT_MESSAGE" value="1117" />
+--   </component>
+-- </project>
+--\ No newline at end of file
+-Index: .idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20__23_58__Changes_.xml
+-===================================================================
+-diff --git a/.idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20__23_58__Changes_.xml b/.idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20__23_58__Changes_.xml
+-deleted file mode 100644
+---- a/.idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20__23_58__Changes_.xml	(revision 85dfa9a580d59d798f74510234fd12c3f6541679)
+-+++ /dev/null	(revision 85dfa9a580d59d798f74510234fd12c3f6541679)
+-@@ -1,4 +0,0 @@
+--<changelist name="Uncommitted_changes_before_Update_at_2022_11_20,_23_58_[Changes]" date="1668959910549" recycled="true" deleted="true">
+--  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2022_11_20,_23_58_[Changes]/shelved.patch" />
+--  <option name="DESCRIPTION" value="Uncommitted changes before Update at 2022/11/20, 23:58 [Changes]" />
+--</changelist>
+-\ No newline at end of file
+Index: nosql/redis/redis基础.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># redis\n\n\n\n## 安装\n\n> redis只有linux版本的，平常在windows下使用的是微软转译过的。\n>\n> linux版本： Ubuntu 22.04 ARM64\n\n- 下载redis[官网下载](https://redis.io/download/)\n\n- 移动到`/usr/local/src`下，并解压\n\n  `mv  redis-6.2.6.tar.gz /usr/local/src/redis-6.2.6.tar.gz`\n\n  `tar -xzf redis-6.2.6.tar.gz`\n\n- 进入解压后的文件夹执行编译命令\n\n  `make && make install`\n\n### 启动redis方式\n\n\n\n#### 默认启动\n\n> redis编译好后会将`redis-server` 加入环境。直接执行redis-server即可。\n>\n> 这种启动属于`前台启动`，会阻塞整个会话窗口，窗口关闭或者按下`CTRL + C`则Redis停止。\n\n进入`usr/local/bin`查看\n\n```bash\ncd /usr/local/bin\n```\n\n![image-20221229185053900](redis基础.assets/image-20221229185053900.png) \t\t\n\n#### 自定义配置文件\n\n> 此方式，redis会以守护进程的方式启动。\n\n修改redis配置文件（`/usr/local/src/redis-6.2.6/redis.conf`）：\n\n修改前备份一下（`cp redis.conf  redis.conf.bak`）\n\n```bash\n##允许访问的地址，默认是127.0.0.1，会导致只能在本地访问。修改为0.0.0.0则可以在任意IP访问，生产环境不要设置为0.0.0.0\nbind 0.0.0.0\n# 守护进程，修改为yes后即可后台运行\ndaemonize yes \nrequirepass 123123\n```\n\n```bash\nport 6379\n# 工作目录，默认是当前目录，也就是运行redis-server时的命令，日志.持久化等文件会保存在这个目录\ndir .\n# 数据库数量，设置为1，代表只使用1个库，默认有16个库，编号0~15\ndatabases 1\n# 设置redis能够使用的最大内存\nmaxmemory 512mb\n# 日志文件，默认为空，不记录日志，可以指定日志文件名\nlogfile \"redis.log\"\n```\n\n启动redis：\n\n```bash\nredis-server redis.conf\n```\n\n\n\n#### 注册redis服务&开机自启\n\n首先，新建一个系统服务文件：\n\n```sh\nvi /etc/systemd/system/redis.service\n```\n\n```bash\n[Unit]\nDescription=redis-server\nAfter=network.target\n\n[Service]\nType=forking\nExecStart=/usr/local/bin/redis-server /usr/local/src/redis-6.2.6/redis.conf\nPrivateTmp=true\n\n[Install]\nWantedBy=multi-user.target\n```\n\n然后重载系统服务：\n\n```sh\nsystemctl daemon-reload\n```\n\n现在，我们可以用下面这组命令来操作redis了：\n\n```sh\n# 启动\nsystemctl start redis\n# 停止\nsystemctl stop redis\n# 重启\nsystemctl restart redis\n# 查看状态\nsystemctl status redis\n```\n\n执行下面的命令，可以让redis开机自启：\n\n```sh\nsystemctl enable redis\n```\n\n\n\n### redis客户端\n\n- redis-cli 自带的命令行客户端\n- 图形化客户端\n- 各种编程客户端\n\n#### redis-cli\n\nRedis安装完成后就自带了命令行客户端：redis-cli，使用方式如下：\n\n```sh\nredis-cli [options] [commonds]\n```\n\n其中常见的options有：\n\n- `-h 127.0.0.1`：指定要连接的redis节点的IP地址，默认是127.0.0.1\n- `-p 6379`：指定要连接的redis节点的端口，默认是6379\n- `-a 123321`：指定redis的访问密码 \n\n其中的commonds就是Redis的操作命令，例如：\n\n- `ping`：与redis服务端做心跳测试，服务端正常会返回`pong`\n\n不指定commond时，会进入`redis-cli`的交互控制台：\n\n![image-20221229190450851](redis基础.assets/image-20221229190450851.png)\n\n\n\n#### 图形化客户端\n\n> `quickredis`能用\n\n[下载地址](https://github.com/quick123official/quick_redis_blog/releases/)\n\n![image-20221229190531580](redis基础.assets/image-20221229190531580.png)\n\n\n\n## 常用命令\n\n\n\n### redis命令查询\n\n> 如何查询redis命令：\n\n- 官网查询\n- 命令查询\n\n[官网](https://redis.io/commands/)\n\n![image-20221229191126885](redis基础.assets/image-20221229191126885.png)\n\n> 官网给出的命令详情非常详细，命令行也可以给出命令简单信息：\n\n`help`命令\n\n```bash\n127.0.0.1:6379> help\nredis-cli 6.2.6\nTo get help about Redis commands type:\n      \"help @<group>\" to get a list of commands in <group>\n      \"help <command>\" for help on <command>\n      \"help <tab>\" to get a list of possible help topics\n      \"quit\" to exit\n```\n\n`help @group`:查看某一分组的所有命令\n\n```bash\n127.0.0.1:6379> help @String\n  APPEND key value\n  summary: Append a value to a key\n  since: 2.0.0\n  BITCOUNT key [start end]\n  summary: Count set bits in a string\n  since: 2.6.0\n  BITFIELD key [GET type offset] [SET type offset value] [INCRBY type offset increment] [OVERFLOW WRAP|SAT|FAIL]\n  summary: Perform arbitrary bitfield integer operations on strings\n  since: 3.2.0\n  \n.....\n```\n\n`help command `：查看某一具体命令\n\n```bash\n127.0.0.1:6379> help set\n  SET key value [EX seconds|PX milliseconds|EXAT timestamp|PXAT milliseconds-timestamp|KEEPTTL] [NX|XX] [GET]\n  summary: Set the string value of a key\n  since: 1.0.0\n  group: string\n```\n\n\n\n### 通用命令\n\n常用通用命令一般都是对key进行操作：\n\n- KEYS：查看符合模板的所有key\n- DEL：删除一个指定的key\n- EXISTS：判断key是否存在\n- EXPIRE：给一个key设置有效期，有效期到期时该key会被自动删除\n- TTL：查看一个KEY的剩余有效期\n\n例如：\n\n```bash\n127.0.0.1:6379> keys k*\n1) \"k3\"\n2) \"k2\"\n3) \"k1\"\n```\n\n```bash\n127.0.0.1:6379> del k1 k2\n(integer) 2\n127.0.0.1:6379> keys * \n1) \"k3\"\n```\n\n```bash\n127.0.0.1:6379> EXISTS k1 k2 k3\n(integer) 1\n# 只有一个k3存在\n```\n\n`expire`只会对存在的key生效：\n\n设置过期时间的key过期后ttl值为-2\n\n不设置过期时间的key，也就是永久有效，ttl值为-1\n\n```bash\n127.0.0.1:6379> EXPIRE k1 10\n(integer) 0\n127.0.0.1:6379> ttl k1\n(integer) -2\n127.0.0.1:6379> EXPIRE k3 10\n(integer) 1\n127.0.0.1:6379> ttl k3\n(integer) 5\n127.0.0.1:6379> ttl k3\n(integer) 1\n127.0.0.1:6379> ttl k3\n(integer) -2\n127.0.0.1:6379> ttl k3\n(integer) -2\n```\n\n\n\n### String\n\nString类型，也就是字符串类型，是Redis中最简单的存储类型。\n\n其value是字符串，不过根据字符串的格式不同，又可以分为3类：\n\n* string：普通字符串\n* int：整数类型，可以做自增.自减操作\n* float：浮点类型，可以做自增.自减操作\n\nString的常见命令有：\n\n* SET：添加或者修改已经存在的一个String类型的键值对\n* GET：根据key获取String类型的value\n* MSET：批量添加多个String类型的键值对\n* MGET：根据多个key获取多个String类型的value\n* INCR：让一个整型的key自增1\n* INCRBY:让一个整型的key自增并指定步长，例如：incrby num 2 让num值自增2\n* INCRBYFLOAT：让一个浮点类型的数字自增并指定步长\n* SETNX：添加一个String类型的键值对，前提是这个key不存在，否则不执行\n* SETEX：添加一个String类型的键值对，并且指定有效期\n\nexample：\n\n> set命令：如果key不存在则设置值，如果key存在则更新值\n\n```bash\n127.0.0.1:6379> set name yuyc\nOK\n127.0.0.1:6379> get name\n\"yuyc\"\n127.0.0.1:6379> set name yuycnew\nOK\n127.0.0.1:6379> get name\n\"yuycnew\"\n```\n\n> MSET key value [key value....]\n>\n> MGET key [key ......]\n\n```bash\n127.0.0.1:6379> MSET k1 v1 k2 v2 k3 v3\nOK\n127.0.0.1:6379> MGET k1 k2 k3\n1) \"v1\"\n2) \"v2\"\n3) \"v3\"\n```\n\n> Incr 命令，对存储的整数自增1\n>\n> incrby key increment ,对存储的整数自增,并指定步长\n>\n> INCRBYFLOAT key  increment\n\n```bash\n127.0.0.1:6379> set age 22\nOK\n127.0.0.1:6379> INCR age \n(integer) 23\n127.0.0.1:6379> INCR age \n(integer) 24\n127.0.0.1:6379> INCRBY age 2\n(integer) 26\n127.0.0.1:6379> INCRBYFLOAT age 0.1\n\"26.1\"\n```\n\n> setnx key value 当key不存在添加key，当key存在添加失败\n>\n> setex 添加key并指定过期时间，等同于set key value ex secends\n\n```bash\n127.0.0.1:6379> setnx age 22\n(integer) 0\n127.0.0.1:6379> setex age 10 22\nOK\n127.0.0.1:6379> ttl age\n(integer) 3\n127.0.0.1:6379> ttl age\n(integer) -2\n127.0.0.1:6379> set age 10 ex 10\nOK\n```\n\n\n\n#### 层次结构\n\n> redis是一个key-value形式的存储结构，不允许存在重复key值，往往会有冲突。\n>\n> 通过为key添加前缀解决冲突。\n\n```bash\n127.0.0.1:6379> set test:user:1 '{\"name\":lizicheng\",\"age\":33}'\nOK\n127.0.0.1:6379> set test:user:2 '{\"name\":yuyc\",\"age\":22}'\nOK\n127.0.0.1:6379> set test:dept:1 '{\"name\":\"dept1\",num:1}'\nOK\n127.0.0.1:6379> set test:dept:2 '{\"name\":\"dept2\",num:100}'\nOK\n```\n\n在redis-cli这里key值如下：\n\n```bash\n127.0.0.1:6379> keys test*\n1) \"test:user:1\"\n2) \"test:dept:2\"\n3) \"test:dept:1\"\n4) \"test:user:2\"\n```\n\n但是在quickredis中可分层次：\n\n![image-20221230002854599](redis基础.assets/image-20221230002854599.png)\n\n\n\n### hash\n\n> 使用String存储json字符串，不利于修改每一属性的值。使用redis的hash数据结构可对每一个属性单独存储，操作起来简单许多。\n\n**Hash类型的常见命令**\n\n- HSET key field value：添加或者修改hash类型key的field的值\n\n- HGET key field：获取一个hash类型key的field的值\n\n- HMSET：批量添加多个hash类型key的field的值   ( 现等同于HSET命令 )\n\n- HMGET：批量获取多个hash类型key的field的值\n\n- HGETALL：获取一个hash类型的key中的所有的field和value\n- HKEYS：获取一个hash类型的key中的所有的field\n- HINCRBY:让一个hash类型key的字段值自增并指定步长\n- HSETNX：添加一个hash类型的key的field值，前提是这个field不存在，否则不执行\n\n\n\n> HSET key field value [field value ....]  等同于  HMSET\n>\n> HGET key field\n>\n> HMGET key field [field ....]\n\n```bash\n127.0.0.1:6379> hset test:huser:1 name yuyc age 22\n(integer) 2\n127.0.0.1:6379> hset test:huser:2 name liziceng age 22\n(integer) 2\n127.0.0.1:6379> hget test:huser:1 name\n\"yuyc\"\n127.0.0.1:6379> HMGET test:huser:1 name age\n1) \"yuyc\"\n2) \"22\"\n```\n\n\n\n> HGETALL key 。\n>\n> 类似于HashMap的Entities\n\n```bash\n127.0.0.1:6379> HGETALL test:huser:1\n1) \"name\"\n2) \"yuyc\"\n3) \"age\"\n4) \"22\"\n```\n\n\n\n> HKEYS key     获取所有属性\n>\n> HVALS key     获取所有值\n\n```bash\n127.0.0.1:6379> hkeys test:huser:1\n1) \"name\"\n2) \"age\"\n127.0.0.1:6379> HVALS test:huser:1\n1) \"yuyc\"\n2) \"22\"\n```\n\n\n\n### list\n\nRedis中的List类型与Java中的LinkedList类似，可以看做是一个双向链表结构。既可以支持正向检索和也可以支持反向检索。\n\n特征也与LinkedList类似：\n\n* 有序\n* 元素可以重复\n* 插入和删除快\n* 查询速度一般\n\n常用来存储一个有序数据，例如：朋友圈点赞列表，评论列表等。\n\n**List的常见命令有：**\n\n- LPUSH key element ... ：向列表左侧插入一个或多个元素\n- LPOP key：移除并返回列表左侧的第一个元素，没有则返回nil\n- RPUSH key element ... ：向列表右侧插入一个或多个元素\n- RPOP key：移除并返回列表右侧的第一个元素\n- LRANGE key star end：返回一段角标范围内的所有元素 (end 为 -1 代表返回start之后所有元素) \n- BLPOP和BRPOP：与LPOP和RPOP类似，只不过在没有元素时等待指定时间，而不是直接返回nil\n\n```bash\n127.0.0.1:6379> lpush ids 1 2 3\n(integer) 3\n127.0.0.1:6379> rpush ids -1 -2 -3\n(integer) 6\n127.0.0.1:6379> lrange ids 0 -1\n1) \"3\"\n2) \"2\"\n3) \"1\"\n4) \"-1\"\n5) \"-2\"\n6) \"-3\"\n127.0.0.1:6379> lpop ids 2\n1) \"3\"\n2) \"2\"\n127.0.0.1:6379> rpop ids 2\n1) \"-3\"\n2) \"-2\"\n127.0.0.1:6379> lrange ids 0 -1\n1) \"1\"\n2) \"-1\"\n## 没有元素 等待 30 再返回nil\n127.0.0.1:6379> blpop l1 30\n(nil)\n(30.05s)\n```\n\n\n\n### set\n\nRedis的Set结构与Java中的HashSet类似，可以看做是一个value为null的HashMap。因为也是一个hash表，因此具备与HashSet类似的特征：\n\n* 无序\n* 元素不可重复\n* 查找快\n* 支持交集.并集.差集等功能\n\n**Set类型的常见命令**\n\n* SADD key member ... ：向set中添加一个或多个元素\n* SREM key member ... : 移除set中的指定元素\n* SCARD key： 返回set中元素的个数\n* SISMEMBER key member：判断一个元素是否存在于set中\n* SMEMBERS：获取set中的所有元素\n* SINTER key1 key2 ... ：求key1与key2的交集\n* SDIFF key1 key2 ... ：求key1与key2的差集\n* SUNION key1 key2 ..：求key1和key2的并集\n\n```bash\n127.0.0.1:6379> sadd c1 a b c \n(integer) 3\n127.0.0.1:6379> srem c1 c\n(integer) 1\n# 不可重复添加\n127.0.0.1:6379> sadd c1 a\n(integer) 0\n127.0.0.1:6379> scard c1\n(integer) 2\n127.0.0.1:6379> SMEMBERS c1\n1) \"a\"\n2) \"b\"\n127.0.0.1:6379> SISMEMBER c1 a\n(integer) 1\n127.0.0.1:6379> sadd c2 b c d\n(integer) 3\n# 交集\n127.0.0.1:6379> SINTER c1 c2\n1) \"b\"\n# 并集\n127.0.0.1:6379> SUNION c1 c2 \n1) \"c\"\n2) \"a\"\n3) \"b\"\n4) \"d\"\n# 差集\n127.0.0.1:6379> SDIFF c1 c2\n1) \"a\"\n```\n\n\n\n### sortedset\n\nRedis的SortedSet是一个可排序的set集合，与Java中的TreeSet有些类似，但底层数据结构却差别很大。SortedSet中的每一个元素都带有一个score属性，可以基于score属性对元素排序，底层的实现是一个跳表（SkipList）加 hash表。\n\nSortedSet具备下列特性：\n\n- 可排序\n- 元素不重复\n- 查询速度快\n\n因为SortedSet的可排序特性，经常被用来实现排行榜这样的功能。\n\nSortedSet的常见命令有：\n\n- ZADD key score member：添加一个或多个元素到sorted set ，如果已经存在则更新其score值\n- ZREM key member：删除sorted set中的一个指定元素\n- ZSCORE key member : 获取sorted set中的指定元素的score值\n- ZRANK key member：获取sorted set 中的指定元素的排名\n- ZCARD key：获取sorted set中的元素个数\n- ZCOUNT key min max：统计score值在给定范围内的所有元素的个数\n- ZINCRBY key increment member：让sorted set中的指定元素自增，步长为指定的increment值\n- ZRANGE key min max：按照score排序后，获取指定排名范围内的元素\n- ZRANGEBYSCORE key min max：按照score排序后，获取指定score范围内的元素\n- ZDIFF.ZINTER.ZUNION：求差集.交集.并集\n\n注意：所有的排名默认都是升序，如果要降序则在命令的Z后面添加REV即可，例如：\n\n- **升序**获取sorted set 中的指定元素的排名：ZRANK key member\n- **降序**获取sorted set 中的指定元素的排名：ZREVRANK key memeber\n\n\n\n```bash\n127.0.0.1:6379> zadd zsx 30 yuyc1 20 yuyc2 40 yuyc3 55 yuyc4 5 yuyc5\n(integer) 5\n127.0.0.1:6379> ZREM zsx yuyc1\n(integer) 1\n##  zrange key min max 获取指定名次\n127.0.0.1:6379> zrange zsx 0 -1\n1) \"yuyc5\"\n2) \"yuyc2\"\n3) \"yuyc3\"\n4) \"yuyc4\"\n127.0.0.1:6379> ZSCORE zsx yuyc2\n## 返回指定成员排名  从0开始\n127.0.0.1:6379> zrank zsx yuyc2\n(integer) 1\n## 返回成员个数\n127.0.0.1:6379> zcard zsx\n(integer) 4\n## 返回指定分数范围内的成员个数\n127.0.0.1:6379> zcount zsx 0 40\n(integer) 3\n## 给指定成员分数加3\n127.0.0.1:6379> ZINCRBY zsx 3 yuyc2\n\"23\"\n## 返回指定分数范围内的成员  对比 zrange \n127.0.0.1:6379> ZRANGEBYSCORE zsx 0 40\n1) \"yuyc5\"\n2) \"yuyc2\"\n3) \"yuyc3\"\n\n## 升序 降序获取成员排名\n127.0.0.1:6379> zrank zsx yuyc2\n(integer) 1\n127.0.0.1:6379> ZREVRANK zsx yuyc2\n(integer) 2\n```\n\n\n\n## jedis\n\n> redis  java客户端 ----jedis\n\n[redis客户端](https://redis.io/resources/clients/#java)\n\n测试链接：\n\n```java\n@Test\npublic void test() {\n   final Jedis jedis = new Jedis(\"10.211.55.4\", 6379);\n   jedis.auth(\"123123\");\n   jedis.set(\"key\", \"value\");\n   System.out.println(jedis.get(\"key\"));\n}\n```\n\n### jedis连接池\n\n```java\npublic class JedisFactory {\n    private static JedisPool pool;\n\n    static {\n\n        final GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();\n        config.setMaxTotal(1024);\n        config.setMaxIdle(10);\n        config.setTestOnBorrow(true);\n        config.setTestOnReturn(true);\n        pool = new JedisPool(config, \"10.211.55.4\", 6379, 6000, \"123123\");\n    }\n    public static Jedis jedis() {\n        return pool.getResource();\n    }\n    public static void close(Jedis jedis) {\n        jedis.close();\n    }\n}\n```\n\n```java\n@Test\npublic void jedisPool(){\n    final Jedis jedis = JedisFactory.jedis();\n    System.out.println(jedis.get(\"key\"));\n    JedisFactory.close(jedis);\n}\n```\n\n### SpringDataRedis-客户端\n\n> SpringData是Spring中数据操作的模块，包含对各种数据库的集成，其中对Redis的集成模块就叫做SpringDataRedis，官网地址：https://spring.io/projects/spring-data-redis\n\n* 提供了对不同Redis客户端的整合（Lettuce和Jedis）\n* 提供了RedisTemplate统一API来操作Redis\n* 支持Redis的发布订阅模型\n* 支持Redis哨兵和Redis集群\n* 支持基于Lettuce的响应式编程\n* 支持基于JDK.JSON.字符串.Spring对象的数据序列化及反序列化\n* 支持基于Redis的JDKCollection实现\n\n#### Spring配置\n\n想要通过IOC注册并使用RedisTemplate，必须先了解以下两个接口 `org.springframework.data.redis.connection` package and its `RedisConnection` and `RedisConnectionFactory` interfaces for working with and retrieving active connections to Redis.\n\n- RedisConnection\n- RedisConnectionFactory\n\n> RedisConnectionFactory接口下有两个实现类JedisConnectionFactory和LettuceConnectionFactory。\n\n##### xml配置\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nosql/redis/redis基础.md b/nosql/redis/redis基础.md
+--- a/nosql/redis/redis基础.md	(revision 9cd48ca8ecac639055b3a96fcb28478d56540d2b)
++++ b/nosql/redis/redis基础.md	(date 1672820809683)
+@@ -644,7 +644,21 @@
+ 
+ 
+ 
+-## jedis
++## redis 客户端
++
++| 客户端   | 描述                                                         |
++| -------- | ------------------------------------------------------------ |
++| jedis    | 非线程安全，api对应redis命令，多线程环境下需配合连接池使用   |
++| lettuce  | 高级 Java Redis 客户端，用于线程安全同步、异步和反应式使用。支持群集、哨兵、流水线和编解码器。 |
++| Redisson | 分布式锁                                                     |
++
++- Jedis是Redis官方推出的用于通过Java连接Redis客户端的一个工具包，提供了Redis的各种命令支持
++- Lettuce是一种可扩展的线程安全的 Redis 客户端，通讯框架基于Netty，支持高级的 Redis 特性，比如哨兵，集群，管道，自动重新连接和Redis数据模型。Spring Boot 2.x 开始 Lettuce 已取代 Jedis 成为首选 Redis 的客户端。
++- Redisson是架设在Redis基础上，通讯基于Netty的综合的、新型的中间件，企业级开发中使用Redis的最佳范本
++
++Jedis把Redis命令封装好，Lettuce则进一步有了更丰富的Api，也支持集群等模式。但是两者也都点到为止，只给了你操作Redis数据库的脚手架，而Redisson则是基于Redis、Lua和Netty建立起了成熟的分布式解决方案，甚至redis官方都推荐的一种工具集。
++
++SpringDataRedis对jedis和lettuce这两种做了抽象和封装。
+ 
+ > redis  java客户端 ----jedis
+ 
+@@ -718,3 +732,94 @@
+ 
+ ##### xml配置
+ 
++```xml
++<?xml version="1.0" encoding="UTF-8"?>
++<beans xmlns="http://www.springframework.org/schema/beans"
++       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
++
++    <bean id="redisPass" class="org.springframework.data.redis.connection.RedisPassword">
++        <constructor-arg value="123123"/>
++    </bean>
++    <bean id="redisStandaloneConfiguration"
++          class="org.springframework.data.redis.connection.RedisStandaloneConfiguration">
++        <property name="hostName" value="10.211.55.4"/>
++        <property name="port" value="6379"/>
++        <property name="password" ref="redisPass"/>
++    </bean>
++
++    <bean id="jedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
++        <constructor-arg ref="redisStandaloneConfiguration"/>
++    </bean>
++
++    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
++        <property name="connectionFactory" ref="jedisConnectionFactory"/>
++    </bean>
++</beans>
++```
++
++测试：
++
++```java
++@Test
++public void test1() {
++    final ApplicationContext app = new ClassPathXmlApplicationContext("classpath:application.xml");
++    final String[] beanDefinitionNames = app.getBeanDefinitionNames();
++    for (String beanDefinitionName : beanDefinitionNames) {
++        System.out.println(beanDefinitionName);
++    }
++    final RedisTemplate redisTemplate = app.getBean(RedisTemplate.class);
++    final ValueOperations valueOperations = redisTemplate.opsForValue();
++    valueOperations.set("redistemplate", "value");
++    System.out.println(valueOperations.get("redistemplate"));
++}
++```
++
++##### javaconfig
++
++```java
++public class RedisConfigration {
++
++    public @Bean RedisPassword redisPassword() {
++        return RedisPassword.of("123123");
++    }
++
++    public @Bean RedisStandaloneConfiguration redisStandaloneConfiguration(@Autowired RedisPassword redisPassword) {
++        final RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
++        redisStandaloneConfiguration.setPassword(redisPassword);
++        redisStandaloneConfiguration.setHostName("10.211.55.4");
++        redisStandaloneConfiguration.setPort(6379);
++        return redisStandaloneConfiguration;
++    }
++
++    public @Bean JedisConnectionFactory jedisConnectionFactory(@Autowired RedisStandaloneConfiguration redisStandaloneConfiguration) {
++        return new JedisConnectionFactory(redisStandaloneConfiguration);
++    }
++
++    public @Bean RedisTemplate redisTemplate(@Autowired JedisConnectionFactory jedisConnectionFactory) {
++        final RedisTemplate redisTemplate = new RedisTemplate();
++        redisTemplate.setConnectionFactory(jedisConnectionFactory);
++        return redisTemplate;
++    }
++
++}
++```
++
++测试：
++
++```java
++@Test
++public void test2() {
++    final ApplicationContext app = new AnnotationConfigApplicationContext(RedisConfigration.class);
++    final String[] beanDefinitionNames = app.getBeanDefinitionNames();
++    for (String beanDefinitionName : beanDefinitionNames) {
++        System.out.println(beanDefinitionName);
++    }
++    final RedisTemplate redisTemplate = app.getBean(RedisTemplate.class);
++    final ValueOperations valueOperations = redisTemplate.opsForValue();
++    System.out.println(valueOperations.get("redistemplate"));
++}
++```
++
++#### springboot配置
++

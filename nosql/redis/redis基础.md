@@ -232,6 +232,8 @@ To get help about Redis commands type:
 - EXISTS：判断key是否存在
 - EXPIRE：给一个key设置有效期，有效期到期时该key会被自动删除
 - TTL：查看一个KEY的剩余有效期
+- flushdb  删除当前数据库所有key
+- flushshall  删除所有数据库所有key
 
 例如：
 
@@ -639,13 +641,6 @@ SortedSet的常见命令有：
 ### 特殊类型
 
 
-
-
-
-
-
-
-
 ## redis客户端
 
 ### jedis
@@ -681,9 +676,17 @@ public class JedisFactory {
     static {
 
         final GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-        config.setMaxTotal(1024);
+        // 最大连接数
+        config.setMaxTotal(10);
+        // 最大空闲连接
         config.setMaxIdle(10);
+        // 最小空闲连接
+        config.setMinIdle(1);
+        // 等待时长
+        config.setMaxWait(Duration.ofMillis(2000));
+        // 从连接池得到连接前会进行校验，校验不通过则销毁当前连接，并借用一个新的连接
         config.setTestOnBorrow(true);
+        // 返回结果前对链接进行校验，校验不通过则销毁当前连接
         config.setTestOnReturn(true);
         pool = new JedisPool(config, "10.211.55.4", 6379, 6000, "123123");
     }
@@ -701,21 +704,39 @@ public class JedisFactory {
 public void jedisPool(){
     final Jedis jedis = JedisFactory.jedis();
     System.out.println(jedis.get("key"));
+  	// 这里close方法不再是关闭资源，而是将连接归还连接池
     JedisFactory.close(jedis);
 }
 ```
 
 ### SpringDataRedis-客户端
 
+
+
+#### 基础
+
 > SpringData是Spring中数据操作的模块，包含对各种数据库的集成，其中对Redis的集成模块就叫做SpringDataRedis，官网地址：https://spring.io/projects/spring-data-redis
 
 * 提供了对不同Redis客户端的整合（Lettuce和Jedis）
-* 提供了RedisTemplate统一API来操作Redis
+* 提供了RedisTemplate统一API来操作Redis - --标准
 * 支持Redis的发布订阅模型
 * 支持Redis哨兵和Redis集群
 * 支持基于Lettuce的响应式编程
-* 支持基于JDK.JSON.字符串.Spring对象的数据序列化及反序列化
+* 支持基于JDK.JSON.字符串.Spring对象的数据序列化及反序列化  -- 自动转化
 * 支持基于Redis的JDKCollection实现
+
+#### redisTemplate
+
+SpringDataRedis中提供了RedisTemplate工具类，其中封装了各种对Redis的操作。并且将不同数据类型的操作API封装到了不同的类型中：
+
+| **API**                         | **返回值类型**  | **说明**              |
+| ------------------------------- | --------------- | --------------------- |
+| **redisTemplate**.opsForValue() | ValueOperations | 操作String类型数据    |
+| **redisTemplate**.opsForHash()  | HashOperations  | 操作Hash类型数据      |
+| **redisTemplate**.opsForList()  | ListOperations  | 操作List类型数据      |
+| **redisTemplate**.opsForSet()   | SetOperations   | 操作Set类型数据       |
+| **redisTemplate**.opsForZSet()  | ZSetOperations  | 操作SortedSet类型数据 |
+| **redisTemplate**               |                 | 通用的命令            |
 
 #### Spring配置
 
@@ -743,10 +764,19 @@ public void jedisPool(){
 
 <!--  不设置则使用默认连接池配置  -->
 <bean id="jedisPoolConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
-    <property name="maxTotal" value="1024"/>
-    <property name="maxIdle" value="10"/>
-    <property name="testOnBorrow" value="true"/>
-    <property name="testOnReturn" value="true"/>
+       <bean id="jedisPoolConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+        <!--    最大连接数    -->
+        <property name="maxTotal" value="10"/>
+        <!--    最大空闲连接    -->
+        <property name="maxIdle" value="10"/>
+        <!--    最小空闲连接    -->
+        <property name="minIdle" value="1"/>
+        <!--    没有连接，等待时长    -->
+        <property name="maxWaitMillis" value="1000"/>
+        <!--        获取连接前对连接进行校验，校验不通过则销毁当前连接，重新借一个新的连接-->
+        <property name="testOnBorrow" value="true"/>
+        <property name="testOnReturn" value="true"/>
+    </bean>
 </bean>
 
 <bean id="jedisClientConfiguration"
@@ -887,6 +917,7 @@ spring:
     host: 127.0.0.1
     port: 6379
 #    password: 123123
+#    SpringBoot默认使用lettuce实现,必须配置否则连接池不就生效
     lettuce:
       pool:
         max-active: 8  #最大连接
@@ -895,7 +926,82 @@ spring:
         max-wait: 100ms #连接等待时间
 ```
 
+
+
+验证：
+
 ```java
+public static void main(String[] args) {
+    final ApplicationContext app = SpringApplication.run(RedisDemoApplication.class, args);
+    //打印beannames
+    final String[] beanNames = app.getBeanDefinitionNames();
+    for (String beanName : beanNames) {
+        System.out.println(beanName);
+    }
+    /**
+     * 得到redisTemplate并进行插入查询操作
+     */
+    final RedisTemplate redisTemplate = app.getBean("redisTemplate",RedisTemplate.class);
+    final ValueOperations<String,Object> valueOperations = redisTemplate.opsForValue();
+    valueOperations.set("name","李自成");
+    final Object name = valueOperations.get("name");
+    log.info("name:{}",name);
+}
+```
+
+![image-20230214220158257](redis基础.assets/image-20230214220158257.png)
+
+##### 序列化
+
+###### jdk
+
+> `SpringBootDate`支持自动将key、value以及hash结构，序列化和反序列化。
+>
+> `SpringBoot`默认使用的是Jdk序列化工具
+
+例子：
+
+```java
+@Autowired
+RedisTemplate redisTemplate;
+
+@Test
+public void testRedisTemplateSerializer() {
+    final ValueOperations valueOperations = redisTemplate.opsForValue();
+    valueOperations.set("name", "李自成");
+    final String name = (String) valueOperations.get("name");
+    System.out.println("name=" + name);
+}
+```
+
+通过redis-cli查看对应值：
+
+![image-20230214223322988](redis基础.assets/image-20230214223322988.png)
+
+> 通过查看`redisTemplate`的源码发现如果`redisTemplate`的默认序列化工具为空，则默认使用JDK序列化工具。
+>
+> 使用默认(JDK)序列化工具的缺点：
+>
+> - 可读性差
+> - 占内存
+
+```java
+public void afterPropertiesSet() {
+   if (defaultSerializer == null) {
+
+      defaultSerializer = new JdkSerializationRedisSerializer(
+            classLoader != null ? classLoader : this.getClass().getClassLoader());
+   }
+}
+```
+
+###### json
+
+> 不使用默认的`RedisTemlate`，我们选择手动注入自定义`RedisTemplate`，并设置其key-value的序列化工具。
+
+```java
+@Configuration
+public class RedisConfig {
 /**
     * 注册redisTemplate 并设置序列化工具
     * @param connectionFactory
@@ -919,30 +1025,84 @@ public @Bean RedisTemplate<String, Object> redisTemplate(@Autowired RedisConnect
 }
 ```
 
-验证：
+这样对于key和value，就不会使用JDK序列化工具了
+
+![image-20230214224728314](redis基础.assets/image-20230214224728314.png)
+
+![image-20230214230139886](redis基础.assets/image-20230214230139886.png)
+
+> 优点就是可读性强。缺点就是自动序列化时会夹带类信息，浪费存储空间。
+
+
+
+###### stringRedisTemplate
+
+> 无论是key和value都看成字符串进行处理，需要手动序列化和反序列化。
 
 ```java
-public static void main(String[] args) {
-    final ApplicationContext app = SpringApplication.run(RedisDemoApplication.class, args);
-    //打印beannames
-    final String[] beanNames = app.getBeanDefinitionNames();
-    for (String beanName : beanNames) {
-        System.out.println(beanName);
-    }
-    /**
-     * 得到redisTemplate并进行插入查询操作
-     */
-    final RedisTemplate redisTemplate = app.getBean("redisTemplate",RedisTemplate.class);
-    final ValueOperations<String,Object> valueOperations = redisTemplate.opsForValue();
-    valueOperations.set("name","李自成");
-    final Object name = valueOperations.get("name");
-    log.info("name:{}",name);
+@Test
+public void testStringRedisTemplate() {
+    final ValueOperations<String, String> valueOperation = stringRedisTemplate.opsForValue();
+    // 序列化
+    final User user = User.builder().age(22).name("李自成").build();
+    final String userStr = JSON.toJSONString(user);
+    valueOperation.set("user:1", userStr);
+    // 反序列化
+    final String s = valueOperation.get("user:1");
+    final User user1 = JSON.parseObject(s, User.class);
+    log.info("user1:" + user1);
 }
 ```
 
+![image-20230214231322083](redis基础.assets/image-20230214231322083.png)
+
+测试opsForHash,HashOptions的api和HashMap的api相似，而不是以命令命名。
+
+```java
+@Test
+void testHash() {
+    stringRedisTemplate.opsForHash().put("user:400", "name", "李自成");
+    stringRedisTemplate.opsForHash().put("user:400", "age", "21");
+
+    Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries("user:400");
+    System.out.println("entries = " + entries);
+}
+```
+
+![image-20230214231608007](redis基础.assets/image-20230214231608007.png)
 
 
 
+<hr>
+
+## 黑马点评项目
 
 
 
+### homebrew安装nginx
+
+> 通过homebrew安装nginx
+
+#### 安装命令
+
+```bash
+brew install nginx
+```
+
+#### 查看nginx安装信息
+
+```bash
+brew info nginx
+```
+
+![image-20230214234910957](redis基础.assets/image-20230214234910957.png)
+
+#### 启动nginx
+
+> 启动nginx并访问`http://localhost:8080`
+
+```bash
+brew services start nginx
+```
+
+![image-20230215000506916](redis基础.assets/image-20230215000506916.png)
