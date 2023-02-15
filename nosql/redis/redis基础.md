@@ -1106,3 +1106,23 @@ brew services start nginx
 ```
 
 ![image-20230215000506916](redis基础.assets/image-20230215000506916.png)
+
+
+
+### 问题记录
+
+- 使用Session进行短信登录
+
+- 拦截器，拦截需要校验的请求，校验登录状态
+
+- tomcat集群 session不共享
+
+  - 使用配置同步tomcat session  存在问题：内存空间浪费，多态tomcat都有数据副本
+  - 拷贝也要时间，性能问题
+
+- 使用  redis 替代session
+
+  - 发送登录凭证 tocken + userInfo 到redis。每次请求都会携带tocken，并将信息存储在ThreadLocal中供线程内共享
+
+    
+
