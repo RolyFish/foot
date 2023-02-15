@@ -3871,7 +3871,7 @@ System.out.println(map1);
 
 List：元素按顺序插入，可重复
 
-Set：元素插入无序，不可重复。Set的实现由HashSet、TreeSet，虽然set插入无序但是TreeSet底层原理是红黑树，元素整体上大小有序。
+Set：元素插入无序，不可重复。Set的实现有HashSet、TreeSet，虽然set插入无序但是TreeSet底层原理是红黑树，元素整体上大小有序。
 
 
 
@@ -3881,11 +3881,11 @@ Set：元素插入无序，不可重复。Set的实现由HashSet、TreeSet，虽
 
 ##### ArrayList
 
-> `ArrayList`底层是一个可边长数组，数据连续，当容量补不足的时候会进行扩容，扩1.5倍，使用Sysytem.arrayCopy()进行浅拷贝。
+> `ArrayList`底层是一个可边长数组，数据连续，当容量不足的时候会进行扩容，扩1.5倍，使用Sysytem.arrayCopy()进行浅拷贝。
 >
 > ArrayList实现了`RandomAccess`接口，表明支持随机访问，搜索效率高。
 >
-> `elementData`使用`transient`修饰，优化序列化传输和存储，序列化传输会忽略空间节点。
+> `elementData`使用`transient`修饰，优化序列化传输和存储，序列化传输会忽略空节点。
 >
 > 如果说在使用ArrayList之前知道需要存入集合的元素大致个数，可以一次性将集合扩容足`ensureCapacity(int minCapacity) `,避免频繁扩容导致降低集合效率。
 
