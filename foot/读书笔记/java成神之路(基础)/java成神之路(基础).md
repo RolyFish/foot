@@ -4196,7 +4196,7 @@ int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
 
   `HashSet`基于`HashMap`实现，`HashMap`的`key`值不重复，`HashSet`的元素就是`HashMap`的key值。只能存在一个null元素（`hashMap`中，null的hash值为0）。
 
-  其判重方法是：首先使用`hash`值(散列值)判断，如果散列值不相等那么直接就不相等，如果散列值相等再使用`equals()`方法进行安全校验。原因在于：哈希值的比较效率高于对象的`equals()`方法。
+  其判重方法是：首先使用`hash`值(散列值)判断，如果散列值不相等那么直接就不相等，如果散列值相等再使用`equals()`方法进行安全校验。原因在于：哈希值的比较效率高于对象的`equals()`方法，且存在哈希碰撞的可能。
 
 - TreeSet
 
@@ -4318,7 +4318,7 @@ $$
 
 `hashTable`是通过除取余的方式，同样的`hashMap`也是，也可以通过除取余的方式。
 
-但是当数组的长度为2^n^时候，除取余  =  hash()  &  table.length - 1。
+但是当数组的长度为2^n^时候，除取余  =  hash()  &  （table.length - 1）。
 
 - hashMap的扰动函数
 
@@ -4455,28 +4455,49 @@ final Stream<String> stream1 = Arrays.stream(new String[]{"1", "2", "3"});
 
 > 对`Stream`做处理，包括过滤、映射、排序等
 
-filter参数为Predicate，可使用多个Predicate配合and  or  组合成一个Predicate。
+filter参数为Predicate，predicate实例可以链式调用其默认方法and()、or()
 
-| 操作(Stream opration) | 说明                         | 参数                                    |
-| --------------------- | ---------------------------- | --------------------------------------- |
-| filter                | 过滤                         | Predicate<? super T> predicate          |
-| map                   | 映射                         | Function<? super T, ? extends R> mapper |
-| limit、skip           | 限制                         | long maxSize                            |
-| sorted                | 自然排序或指定比较器         | Comparator<? super T> comparator        |
-| distinct              | 使用元素的equals去除重复元素 |                                         |
-| flatMap               | 合并流                       | Function<? super T, ? extends R> mapper |
+```java
+Predicate<String> predicate = (ele) -> ele.equals("2");
+predicate =  predicate.or(ele->ele.equals("3"));
+```
+
+| 操作(Stream opration) | 说明                                 | 参数                                                      |
+| --------------------- | ------------------------------------ | --------------------------------------------------------- |
+| filter                | 过滤                                 | Predicate<? super T> predicate                            |
+| map                   | 映射，将一个类型的流转化为另一个类型 | Function<? super T, ? extends R> mapper                   |
+| limit、skip           | 限制                                 | long maxSize                                              |
+| sorted                | 自然排序或指定比较器                 | Comparator<? super T> comparator                          |
+| distinct              | 使用元素的equals去除重复元素         |                                                           |
+| flatMap               | 合并流,可以将多个流合并成一个流      | Function<? super T, ? extends Stream<? extends R>> mapper |
 
 ###### 最终操作
 
-> `Stream`是集合或容器的视图，是对集合或容器的操作描述，但是如果我们想要得到结果的话，就需要使用最终操作来将流转化为我们想要的结果。遍历、统计(个数)、转化集合等。
+> `Stream`是集合或容器的视图，是对集合或容器的操作描述，但是如果我们想要得到结果的话，就需要使用最终操作来将流转化为我们想要的结果。
+>
+> 遍历、统计(个数)、转化集合等。
 
 | 操作    | 说明     | 参数                                                         |
 | ------- | -------- | ------------------------------------------------------------ |
 | foreach | 遍历     | Consumer<? super T> action                                   |
 | count   | 计数     |                                                              |
-| collect | 转化集合 | Collector<? super T, A, R> collector  或  Supplier、BiConsumer、BiConsumer |
+| collect | 转化集合 | Collector<? super T, A, R> collector  或  （Supplier、BiConsumer、BiConsumer） |
 | Reduce  | 聚合操作 |                                                              |
 |         |          |                                                              |
+
+> 参数说明
+>
+> - Supplier<R> supplier    ---- 待返回结果
+> - BiConsumer<R, ? super T> accumulator   ---- 对元素和待返回结果进行操作
+> - BiConsumer<R, R> combiner   --- 合路器
+
+```java
+<R> R collect(Supplier<R> supplier,
+              BiConsumer<R, ? super T> accumulator,
+              BiConsumer<R, R> combiner);
+```
+
+
 
 ##### Stream转化
 
@@ -5085,7 +5106,25 @@ for (String s : list) {
 
 反编译看一下字节码
 
-![image-20220821180247553](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208211804530.png)
+<img src="https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208211804530.png" alt="image-20220821180247553" style="zoom:200%;" />
+
+
+
+> ArrayList中不仅仅只有一种迭代器，还有一种ListIterator，使用这种迭代器不会造成fail-fast机制。
+
+```java
+public void test3() {
+    final List<String> list = new ArrayList<>(Arrays.asList("1", "2", "3"));
+    final ListIterator<String> listIterator = list.listIterator();
+    while (listIterator.hasNext()) {
+        if ("3".equals(listIterator.next()))
+            listIterator.add("add");
+    }
+    System.out.println(list);
+}
+```
+
+![image-20230215144915718](java成神之路(基础).assets/image-20230215144915718.png)
 
 
 
@@ -5121,7 +5160,7 @@ for (String s : cowList) {
 ```java
 CopyOnWriteArrayList<String> cowList = new CopyOnWriteArrayList<>(Arrays.asList("1","2","3"));
 Iterator<String> iterator = cowList.iterator();
-//fail-sfae 集合修改
+//fail-safe 集合修改
 for (String s : cowList) {
     if ("1".equals(s)){
         cowList.remove(s);
@@ -5184,10 +5223,12 @@ System.out.println(list);
 ####  字符流&字节流
 
 > 从名称来看区别在于流的传输方式：字节  or    字符。
+>
+> 字符流通过装饰器模式将字节流组合进来，并指定编码。
 
 有了字节流为何还需要字符流？
 
-字符流可以认为是字节流＋编码方式。编码方式指导字节流如何处理字节，将其组合成字符。原因就在于方便操作，对于中文可能不同的编码方式得到的字节数据是不同的，那么使用字节流读取可能出现乱码的情况，那么有了字符流可以指定编码，指导字节流读几个字节作为一个汉字。
+字符流可以认为是字节流＋编码方式。编码方式指导字节流如何处理字符，将其组合成字符。原因就在于方便操作，对于中文可能不同的编码方式得到的字节数据是不同的，那么使用字节流读取可能出现乱码的情况，那么有了字符流可以指定编码，指导字节流读几个字节作为一个汉字。
 
 
 
@@ -5195,7 +5236,7 @@ System.out.println(list);
 
 - Bit   最小二进制单位，0或1.
 - Byte  字节，1 Byte = 8 Bit，取值 [-128,127]
-- Char 字符，1Char = 16Bit，人能直观认识的最小单位，取值 [0,2^16^-1]
+- Char 字符，1Char = 2Byte = 16Bit，人能直观认识的最小单位，取值 [0,2^16^-1]
 
 ##### 字节流
 
@@ -5237,7 +5278,7 @@ private final Object closeLock = new Object();
 //资源是否关闭
 private volatile boolean closed = false;
 
-//使用文件名创建一个文件输入流会调用FileInputStream(File file)方法
+//使用文件名创建一个文件输入流，会调用FileInputStream(File file)方法
 public FileInputStream(String name) throws FileNotFoundException；
 public FileInputStream(File file) throws FileNotFoundException；
 //打开流，本地方法由c\C++编写，无需主动调用，构造方法已经调用，且是私有方法
