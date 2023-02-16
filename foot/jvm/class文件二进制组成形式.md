@@ -2,7 +2,7 @@
 
 > java文件由程序员编写，但是不能直接运行，需要经历如下阶段才可以运行。
 
-`.java`文件  ----经历`java`编译器 ` javac`编译 ，此过程会对我们代码进行自动优化   ------------  》`.class`文件 (又叫`java`字节码文件) ---------`java`虚拟机解释----->机器码   ------》交给操作系统运行
+`.java`文件  ----经历`java`编译器 ` javac`编译 ，此过程会对我们代码进行自动优化   ------------  》`.class`文件 (又叫字节码文件) ---------`java`虚拟机解释----->机器码   ------》交给操作系统运行
 
 > `.class`文件又叫字节码文件，它只面向`java`虚拟机，不面向任何操作系统。这里学习一下`.class`文件的组成结构
 
@@ -49,7 +49,7 @@ public class Person {
 
 ####  javap
 
-> `javap`是`java  class`文件的分离器，可以对`class`文件进行简单解释，使得程序员不用直接面对字节码。
+> `javap`是 `JVM`提供 的工具，可以对`class`文件进行简单解释，使得程序员不用直接面对字节码。
 
 > 基本上使用  javap  -v    classpath\classname.class 来查看
 >
@@ -77,7 +77,7 @@ view ->show  bytecode with JclassLib
 
 
 
-jclasslib为我们友好的分了类：
+jclasslib插件对类成员做了分类，方便查看：
 
 ![image-20220807175316455](class文件二进制组成形式.assets/image-20220807175316455.png)
 
@@ -439,7 +439,7 @@ classFile{
 
 #### 有哪些cp_info
 
-> 常量池项(cp_info)记录着class文件中的字面量信息。那么存在多少中cp_info，以及如何区分。
+> 常量池项(cp_info)记录着class文件中的字面量信息。那么存在多少种cp_info，以及如何区分。
 
 cp_info中存在着一个tag属性，jvm会根据tag值来区分不同的常量池项
 
@@ -646,7 +646,7 @@ javap -v分析：
 
 对于StringBuffer来说，当前类并没有真正使用到它，所以编译器不会为其生成对应的class_info结构体
 
-<img src="class文件二进制组成形式.assets/image-20220807173233303.png" alt="image-20220807173233303" style="zoom:50%;" />
+<img src="class文件二进制组成形式.assets/image-20220807173233303.png" alt="image-20220807173233303" style="zoom: 200%;" />
 
 以CpInfoClass进一步分析：
 
@@ -660,8 +660,8 @@ CpInfoClass对应的`CONSTANT_Class_info`在常量池中的索引为#5，其内�
 
 > 小结：
 
-- 对于一个类或者接口，jvm编译器会将其自身、父类和接口的信息都各自封装到`CONSTANT_Class_info`中，并存入`CONSTANT_POO`常量池中
-- 只有真正使用到的类jvm编译器才会为其生成对应的`CONSTANT_Class_info`结构体，而对于未真正使用到的类则不会生成，比如只声明一个变量`StringBuffer sb2;`
+- 对于一个类或者接口，jvm编译器会将其自身、父类和接口的信息都各自封装到`CONSTANT_Class_info`中，并存入`CONSTANT_POOl`常量池中
+- 只有真正使用到的类jvm编译器才会为其生成对应的`CONSTANT_Class_info`结构体，而对于未真正使用到的类则不会生成，比如只声明一个变量`StringBuffer sb2;`则不会生成对应结构体
 
 
 
@@ -683,17 +683,17 @@ public class CpInfoField {
 
 使用javap -v 分析：
 
-> jvm在编译的时候会为每一个字段生成对应的`CONSTANT_Field_info`结构体，并且在使用到该字段的地方都会指向这个结构体。
+> jvm在编译的时候会为每一个字段生成对应的`CONSTANT_Fieldref_info`结构体，并且在使用到该字段的地方都会指向这个结构体。
 >
-> `CONSTANT_Field_info`结构体内保存着，class_index和nameAndType_index的索引，用于指向这两个结构体。
+> `CONSTANT_Fieldref_info`结构体内保存着，class_index和nameAndType_index的索引，用于指向这两个结构体。
 
 <img src="class文件二进制组成形式.assets/image-20220807203311563.png" alt="image-20220807203311563" style="zoom: 50%;" />
 
 > 通过上面的分析我们可以了解到，一个`CONSTANT_Field_info`结构的大概样子。
 >
-> `CONSTANT_Field_info`内部包含一个类的索引和一个NameAndType的索引，而类的索引内部包含一个类名(name_index)索引，那么这个NameAndType其内部是什么样子的？
+> `CONSTANT_Fieldref_info`内部包含一个类的索引和一个NameAndType的索引，而类的索引内部包含一个类名(name_index)索引，那么这个NameAndType其内部是什么样子的？
 >
-> `CONSTANT_NameAndIndex_info`内部包含一个 name_index索引指向程序员自定义的字段名称（比如说上面定义的sb sb2），和一个字段描述的索引`descriptor_index`指向该字段描述的索引(比如上面定义的`Ljava/lang/StringBuilder;`)
+> `CONSTANT_NameAndIndex_info`内部包含一个 name_index索引指向程序员自定义的字段名称（比如说上面定义的sb sb2），和一个字段描述的索引`descriptor_index`指向该字段描述的索引,也就是字段类型二进制的全限定名称(比如上面定义的`Ljava/lang/StringBuilder;`)
 
 ![image-20220807203919295](class文件二进制组成形式.assets/image-20220807203919295.png)
 
@@ -705,7 +705,7 @@ public class CpInfoField {
 
 
 
-###### 一个`CONSTANT_Field_info`与其他结构体的关系可以表示为：
+###### 一个`CONSTANT_Fieldref_info`与其他结构体的关系可以表示为：
 
 <img src="class文件二进制组成形式.assets/image-20220807205719621.png" alt="image-20220807205719621" style="zoom:50%;" />
 
