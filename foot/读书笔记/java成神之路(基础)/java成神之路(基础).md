@@ -6284,9 +6284,11 @@ public static void main(String[] args) {
 
 ![image-20220826005421217](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/java%E7%AC%94%E8%AE%B0/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/java%E6%88%90%E7%A5%9E%E4%B9%8B%E8%B7%AF/202208260054512.png)
 
+
+
 ### 范型
 
-> Java范型时JDK5引入的特性，允许在定义类、接口和方法的时候可以使用类型参数。Java范型是==伪范型==，即Java在语法上支持范型，但会在编译阶段会进行==类型擦除==，将范型替换为原始类型。在真正使用的时候会进行强制转化得到真正需要的类型。
+> Java范型是JDK5引入的特性，允许在定义 类、接口和方法的时候可以使用类型参数。Java范型是==伪范型==，即Java在语法上支持范型，但会在编译阶段==类型擦除==，将范型替换为原始类型。在真正使用的时候会进行强制转化得到真正需要的类型。
 >
 > java范型是java提供的语法糖，我们所定义的范型在编译期间都会进行类型擦除，使用泛型可提高代码的复用性。Java的集合框架都使用了范型，我们平常所定义的List<String>、List<Iteger>这两个集合类型是相同的，在编译的时候会进行类型擦除，擦除后的类型变为原始类型List。
 
@@ -6300,7 +6302,7 @@ public static void main(String[] args) {
 
 - 类型安全
 
-  > 即使用时可指定范型，编译器会进行类型检查和帮助强制类型转化
+  > 指定范型类型，编译前会进行类型安全检查，编译期间会进行类型推断并强制转化成需要的类型。
 
 
 
@@ -6335,7 +6337,7 @@ public class FanxClass {
 
 类型安全：
 
-编译器提高编译前检查
+编译器会编译前检查
 
 反编译查看可知 1、List不支持基本数据类型，会对基本数据类型进行自动装箱   2、编译器 类型擦除、强制转化  
 
@@ -6476,8 +6478,6 @@ public class FanXMethod<T> {
 
 ##### 类型擦除
 
-> 类型擦除是Java伪范型的具体实现。
->
 > 类型擦除指的是在编译期间将所有范型替换为(具体类型)原始类型。
 
 ###### 类型擦除原则
@@ -6500,7 +6500,7 @@ public class Demo01<T> {
     public void method() {
         /**
          * 这里我们声明范型参数为String
-         * 由于这是非限定通配符，在编译器期间会进行类型擦除，范型类型替换为Object
+         * 由于这是非限定通配符，在编译期间会进行类型擦除，范型类型替换为Object
          */
         final Demo01<String> stringDemo01 = new Demo01<>();
         /**
@@ -6806,7 +6806,7 @@ final List<? extends Serializable> method2 = Demo06.<Integer>method(Collections.
       list2.add("str");
   
       /**
-       * 此刻 new ArrayList<String>();  《》中String是置灰的
+       * 此刻 new ArrayList<String>();  <>中String是置灰的
        */
       final List<String> list3 = new ArrayList<String>();
       list3.add("str");
@@ -6823,95 +6823,126 @@ final List<? extends Serializable> method2 = Demo06.<Integer>method(Collections.
 
 ###### 范型多态 & 桥接方法
 
-> 多态可发生在继承关系中，也可发生在实现关系中。根据不同实例类型，表现不同得行为。 范型也满足多态，关键就在于桥接方法。
+> 多态可发生在继承关系中，也可发生在实现关系中，根据不同实例类型，表现不同的行为。
+>
+> 父类或接口范型全部擦除替换为最左边界，子类继承父类并指定父类范型，此刻子类所重写的方法并不是父类的方法，不符合多态。实现类实现接口并指定接口范型，此刻实现类所实现的方法并不是接口的方法，不符合多态。
+>
+>  事实上范型也支持多态，关键就在于实现类和子类会生成桥接方法桥接方法。
 
 先看两个例子：分别代表继承和实现
 
-原：
+例一：
 
 ```java
-class Parent<T> {
-    void method(T t) {
-
+/**
+ * 实现接口并指定范型类型
+ *
+ * 指定范型类型，那么CompareTo方法也必须指定类型，如果不指定那么就会替换为其左边界Object
+ * 编译后Comparable<String>的类型被擦除，对应的抽象接口方法变为compareTo(Object o)
+ * 那么直接导致子类未能实现compareTo方法
+ * 编译器检测到了，就给生成一个桥接方法compareTo(Object object)，桥接方法内部调用子类实现的compareTo(String o)
+ */
+class ImplInterfaceZD implements Comparable<String> {
+    @Override
+    public int compareTo(String o) {
+        return this.compareTo(o);
     }
 }
-class Son extends Parent<Date> {
+
+/**
+ * 实现接口不指定范型类型
+ *
+ * 不指定范型类型，编译期将范型类型擦除，并在使用时替换为最左边界类型 Object
+ * 对应抽象方法变为compareTo(Object o)
+ * 此刻不存在桥接方法
+ */
+class ImplInterfaceNotZD implements Comparable {
     @Override
-    void method(Date date) {
-        super.method(date);
+    public int compareTo(@NotNull Object o) {
+        return hashCode() - o.hashCode();
     }
 }
 ```
 
-反编译：使用javap   或  jad
+例一反编译后：
 
-```java
-class Parent {
-    Parent() {
+```class
+class ImplInterfaceZD implements Comparable {
+    ImplInterfaceZD(){
     }
-    void method(Object obj) {
+    public int compareTo(String o){
+        return compareTo(o);
+    }
+    public volatile int compareTo(Object obj){
+        return compareTo((String)obj);
     }
 }
-class Son extends Parent {
-    Son() {
+class ImplInterfaceNotZD implements Comparable{
+    ImplInterfaceNotZD(){
     }
-    void method(Date date) {
-        super.method(date);
+    public int compareTo(Object o){
+        return hashCode() - o.hashCode();
+    }
+}
+```
+
+例二：
+
+```java
+class Person<T>{
+    T t;
+    void method(T t){
+    }
+}
+class SonZD extends Person<String>{
+    @Override
+    void method(String s) {
+        super.method(s);
+    }
+}
+class SonNotZD extends Person{
+    @Override
+    void method(Object o) {
+        super.method(o);
+    }
+}
+```
+
+例二反编译：
+
+```class
+class SonZD extends Person{
+    SonZD() { }
+    void method(String s){
+        super.method(s);
     }
     volatile void method(Object obj) {
-        method((Date) obj);
+        method((String)obj);
+    }
+}
+class SonNotZD extends Person{
+    SonNotZD() {}
+    void method(Object o) {
+        super.method(o);
     }
 }
 ```
 
-原：
+> 测试
 
 ```java
-interface IPerson<T> {
-    void method(T t);
-}
-class CPerson implements IPerson<String> {
-    @Override
-    public void method(String s) {
-    }
-}
+// 1 编译前类型检查错误
+// Person<Integer> person = new SonZD();
+
+// 2 可以通过编译，但是在调用桥接方法时，需要类型强转，integer强转为String会爆出ClassCastException
+Person person = new SonZD();
+person.method(1);
 ```
 
-反编译：
+> 小结
 
-```java
-interface IPerson{
-    public abstract void method(Object obj);
-}
-class CPerson implements IPerson {
-    CPerson() {
-    }
-    public void method(String s1) {
-    }
-    public volatile void method(Object obj) {
-        method((String) obj);
-    }
-}
-```
-
-> 子类重写服了和实现父类都有@Override标识，表示重写，且是合法的，可通过编译。
->
-> 如果但从java源代码来看，这必然会造成多态的冲突。原因在于：父类范型擦除到Object，子类限定了父类范型为Date，父类和子类方法参数类型不一样，也就是未构成重写而是构成重载。
->
-> 回头再看反编译后的代码，发现子类（实现类）都有一个被Volatile修饰的方法，此方法和父类(接口)构成重写关系，也就是当子类的实例指向范型父类的引用，方法调用时调用的其实是桥接方法，通过桥接方法来调用具体实现方法。
-
-```java
-//ok
-final Parent<Date> son1 = new Son();
-son1.method(new Date());
-
-//桥接方法进行类型强转，ClassCastException
-final Parent son2 = new Son();
-son2.method(" ");
-
-// 编译报错
-// final Parent<String> son3 = new Son();
-```
+- 范型也兼容多态，方式是：实现类或子类生成对应的桥接方法
+- 桥接方法内需要类型强转，如果范型类型为非限定类型，则可能会出现类型转换异常
 
 
 
