@@ -6478,7 +6478,7 @@ public class FanXMethod<T> {
 
 ##### 类型擦除
 
-> 类型擦除指的是在编译期间将所有范型替换为(具体类型)原始类型。
+> 类型擦除指的是在编译期间将所有范型类型去除并替换为(具体类型)原始类型。
 
 ###### 类型擦除原则
 
@@ -6946,12 +6946,6 @@ person.method(1);
 
 
 
-###### 泛型类型不可为基本类型
-
-> 类型擦除后必为引用类型，基本类型和引用类型不可互相引用。
-
-
-
 ###### 范型类型不可实例化
 
 > 范型类型不可实例化，根本原因是由于类型擦除。
@@ -6976,7 +6970,7 @@ static <T> T newInstance(Class<T> tClass) throws InstantiationException, Illegal
 
 > 泛型类中的范型静态成员不可使用范型类所声明的范型参数。
 >
-> 因为范型类中的范型参数是在范型类实例化的时候指定的，而范型静态成员不属于实例，也就无法确定其类型，所以不支持范型静态成员。
+> 因为范型类中的范型参数是在范型类实例化的时候指定的，而静态成员不属于实例，也就无法确定其类型，所以不支持范型静态成员。
 
 例：
 
@@ -6998,9 +6992,7 @@ public class Demo10<T> {
 }
 ```
 
-
-
-###### 定义范型异常
+##### 定义范型异常
 
 > 可以定义范型异常么？
 >
@@ -7016,7 +7008,7 @@ public class Demo10<T> {
 
 **不可声明范型异常：**
 
-> 范型类不可继承Throwable，范型被擦除，会导致多次catch同一个异常
+> 范型类不可扩展Throwable。如果异常支持范型，范型被擦除，会导致多次catch同一个异常
 
 ![image-20221028175957575](java成神之路(基础).assets/image-20221028175957575.png)
 
@@ -7117,7 +7109,7 @@ class MyNumericValue2 implements Comparable {
 }
 ```
 
-> 对于一些范型接口的使用，如果接口的抽象方法的入参、出参是范型类型的话，如果在类型擦除时导致未能实现接口方法时，需要编译器生成桥接方法，通过此桥接方法调用原始方法。
+> 对于一些范型接口的使用，如果接口的抽象方法的入参、出参是范型类型的话，在类型擦除时导致实现类未能实现接口方法时，需要编译器生成桥接方法，通过此桥接方法调用实现方法。
 
 例三：
 
@@ -7161,8 +7153,6 @@ public void max(List list) {
 > 类型擦除的过程中jvm会将范型java代码转化为普通java代码，编译器直接操作的是字节码。
 
 #### 范型带来的问题
-
-> java的违范型机制，类似于语法糖，它方便了我们编写代码，并提高了代码的可复用性，那么复杂的工作就是由jvm待做。
 
 ###### 重载
 
@@ -7302,7 +7292,7 @@ class TestAB {
 
 
 
-> 表示上界，<? extends T>,可接收的泛型类型必须为T或T的派生类（可以是接口、也可以是子类）这里没有用任何意义上的继承关系
+> 表示上界，<? extends T>,可接收的泛型类型必须为T或T的派生类（可以是实现类、也可以是子类）这里没有用任何意义上的继承关系
 
 > <? extends T>表示可接收任意T即T的派生类类型。
 
@@ -7314,7 +7304,9 @@ class TestAB {
 
 > 为何作为上界不可存值
 
-List<String>只能添加String类型，而编译期间类型会被擦除，当作Comparable来处理，那么添加的类型就不确定了。
+List<String>只能添加String类型，而编译期间类型会被擦除，当作Comparable来处理。
+
+假设添加了Integer类型，在。
 
 
 
@@ -7440,16 +7432,6 @@ static <T> T[] createArray(Class<T> type, int size) {
     return (T[]) Array.newInstance(type, 10);
 }
 ```
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -7724,7 +7706,7 @@ public static void main(String[] args) {
 
 > Java中想要实现序列化必须实现Serializable接口。如果没有实现序列化接口却尝试使用序列化的话会报出`NotSerializableException`异常。
 >
-> `Serializable`接口没有任何方法，类似于一个标识接口，但是想要实现序列化必须实现此接口。当我们没有定制序列化时默认使用`ObjectOutputStream的defaultWriteObject()`和`InputOutputStream的defaultReadObject()`方法进行序列化。
+> `Serializable`接口没有任何方法，类似于一个标识接口，但是想要实现序列化必须实现此接口。当我们没有定制序列化时默认使用`ObjectOutputStream的defaultWriteObject()`和`ObjectInputStream的defaultReadObject()`方法进行序列化。
 >
 > 序列化时想要序列化父类属性，那么父类也必须实现序列化接口
 
@@ -8594,7 +8576,7 @@ public class Test01 {
 
 ##### 注解可继承么
 
-> 注解不支持基础，不能使用`extends`关键字来实现注解继承。
+> 注解不支持继承，不能使用`extends`关键字来实现注解继承。
 >
 > 注解也是java提供的一颗语法糖，编译期间注解会变为接口，并且此接口继承自`java.lang.annotation  Annotation`接口。即便接口可以实现多继承，但定义注解时仍无法实现继承。
 >
