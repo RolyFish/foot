@@ -1089,7 +1089,7 @@ resp.addCookie(cookie);
 > - 会发现cookie的创建依赖于Session
 > - 设置中文需要编码，取值需要解码
 
-![image-20221114150322602](javaweb.assets/image-20221114150322602.png)
+<img src="javaweb.assets/image-20221114150322602.png" alt="image-20221114150322602" style="zoom:200%;" />
 
 
 
@@ -1289,7 +1289,7 @@ protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws S
 
 ##### 监听网站在线人数
 
-> 当我们首次访问一个网站的时候，服务器会为每一个客户端创建一个唯一的session，在最大超时时间内、且session为未被销毁则可获得同一个session，用这个做一个网站在线人数的统计。
+> 当我们首次访问一个网站的时候，服务器会为每一个客户端创建一个唯一的session，可监听session的创建与销毁实现监听网站在线人数统计。
 
 - 实现session的创建与销毁的监听接口：
 
