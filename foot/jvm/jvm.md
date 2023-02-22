@@ -1,3 +1,567 @@
+## JVM
+
+### Java类字节码
+
+#### 基础
+
+- 多语言编程成字节码文件在JVM上运行
+
+  > Java是高级语言只有人类可以理解，JVM不可直接运行，计算机也无法识别，计算机中所有操作都是一个个指令。所以Java源文件需要编程成对应的字节码文件，然后JVM转换成对于指令交由计算机运行。
+  >
+  > JVM不只支持Java，有许多基于JVM的编程语言，如Groovy, Scala, Koltin等等。
+
+- 字节码文件只面向JVM，不针对任何平台
+
+  > 针对不同的操作系统有不同的JVM版本，同样的字节码文件给不同的JVM转换，在不同平台上运行可得到相同的结果。
+
+class文件本质上是一个以8位字节为基础单位的二进制流，各个数据项目严格按照顺序紧凑的排列在class文件中。jvm根据其特定的规则解析该二进制数据，从而得到相关信息。
+
+Class文件采用一种伪结构来存储数据，它有两种类型：无符号数和表。
+
+
+
+#### 如何查看字节码文件
+
+写一个Class类：
+
+```java
+public class Person {
+    private String name;
+    public String getName() {
+        return name;
+    }
+    public static void main(String[] args) {
+    }
+}
+```
+
+通过javac命令编程生成字节码文件：
+
+```class
+package com.roily.booknode.javatogod._13jvm;
+public class Person {
+    private String name;
+    public Person() {
+    }
+    public String getName() {
+        return this.name;
+    }
+    public static void main(String[] var0) {
+    }
+}
+```
+
+##### 支持16进制的文本编译器
+
+> `.class`文件是字节码文件，一字节八位，我们采用支持16进制文本编辑器查看。使用`NotePad++`、`UltraEdit`或其他支持工具。
+>
+> nodepad++需要安装HEX-EDITOR插件。
+
+![image-20230222142201711](jvm.assets/image-20230222142201711.png)
+
+
+
+##### Javap工具
+
+> 使用JVM提供的Javap工具分析字节码：
+
+```class
+Classfile /E:/programmeTools/idea/git/JavaBase/javabase/javabase_base/src/main/java/com/roily/booknode/javatogod/_13jvm/Person.class
+  Last modified 2023-2-22; size 415 bytes
+  MD5 checksum 6b6c5fc0baa51da4b4d0db5bdea7b5a4
+  Compiled from "Person.java"
+public class com.roily.booknode.javatogod._13jvm.Person
+  minor version: 0
+  major version: 52
+  flags: ACC_PUBLIC, ACC_SUPER
+Constant pool:
+   #1 = Methodref          #4.#17         // java/lang/Object."<init>":()V
+   #2 = Fieldref           #3.#18         // com/roily/booknode/javatogod/_13jvm/Person.name:Ljava/lang/String;
+   #3 = Class              #19            // com/roily/booknode/javatogod/_13jvm/Person
+   #4 = Class              #20            // java/lang/Object
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #2                  // Field name:Ljava/lang/String;
+         4: areturn
+      LineNumberTable:
+        line 12: 0
+
+  public static void main(java.lang.String[]);
+    descriptor: ([Ljava/lang/String;)V
+    flags: ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=0, locals=1, args_size=1
+         0: return
+      LineNumberTable:
+        line 17: 0
+}
+SourceFile: "Person.java"
+
+```
+
+
+
+##### 使用idea字节码分析工具插件JclassLib
+
+> 首先搜索安装此插件，view --> show ByteCode with Jclasslib
+
+![image-20230222142319156](jvm.assets/image-20230222142319156.png)
+
+
+
+#### Class字节码结构
+
+![image-20220807010445339](jvm.assets/image-20220807010445339-1677046267377.png)
+
+##### 魔数
+
+> 占4字节
+>
+> 魔数(magic)，值为 CA FE BA BE  是`JVM`用于识别是否是`JVM`认可的字节码文件。
+>
+> 以文件后缀不可确定一个文件类型，很多文件都有魔数比如PNG，jepg在文件头都有魔数
+
+当`JVM`准备加载某个`class`文件到内存的时候，会首先读取该字节码文件的首四位字节码，判断是否是CA FE BA BE,如果是则JVM认可，如果不是JVM则会拒绝加载该字节码文件。
+
+> Class文件不一定都是由`.java`文件编译而来的，`Kotlin`以及其他java虚拟机支持的都可以。
+
+##### 版本号
+
+> 总4个字节，分别占2字节。
+>
+> 版本号包括主版本号(major_version)和副版本号(minor_version)。
+>
+> 我们一般只需要关注主版本号，平常所说的java8其实是java1.8。副版本号主要是对主版本的一个优化和bug修复。目前java版本都来到了17了。
+>
+> JDK1.0的主版本号为45，以后版本每升级一个版本就在此基础上加一，那么JDK1.8对应的版本号为52，对应16进制码为0x34。
+>
+> 一个版本的JVM只可以加载一定范围内的`Class`文件版本号，一般来说高版本的`JVM`支持加载低版本号的`Class`文件，反之不行。`JVM`在首次加载`class`文件的时候会去读取`class`文件的版本号，将读取到的版本号和`JVM`的版本号进行对比，如果`JVM`版本号低于`class`文件版本号，将会抛出`java.lang.UnsupportedClassVersionError`错误。
+
+我们修改一下`Person.class`关于版本号的数据，提高`class`文件的版本号为0x39 ,为10进制57，jvm版本为java1.13。
+
+通过`java <classpath>.classname`运行一下：
+
+提示说我们的jvm只支持运行`java`版本最高为52的`class`文件，也就是`java1.8`。
+
+```bash
+PS E:\programmeTools\idea\git\JavaBase\javabase\javabase_base\target\classes>  java com.roily.booknode.javatogod._13jvm.Person
+Error: A JNI error has occurred, please check your installation and try again
+Exception in thread "main" java.lang.UnsupportedClassVersionError: com/roily/booknode/javatogod/_13jvm/Person has been compiled by a more recent version of the Java Runtime (class file version 57.0), this version of the Java Runtime only recogniz
+es class file versions up to 52.0
+        at java.lang.ClassLoader.defineClass1(Native Method)
+        at java.lang.ClassLoader.defineClass(ClassLoader.java:763)
+        at java.security.SecureClassLoader.defineClass(SecureClassLoader.java:142)
+        at java.net.URLClassLoader.defineClass(URLClassLoader.java:467)
+        at java.net.URLClassLoader.access$100(URLClassLoader.java:73)
+        at java.net.URLClassLoader$1.run(URLClassLoader.java:368)
+        at java.net.URLClassLoader$1.run(URLClassLoader.java:362)
+        at java.security.AccessController.doPrivileged(Native Method)
+        at java.net.URLClassLoader.findClass(URLClassLoader.java:361)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:424)
+        at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:349)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:357)
+        at sun.launcher.LauncherHelper.checkAndLoadMain(LauncherHelper.java:495)
+```
+
+
+
+##### 常量池计数器(constant_pool_count)
+
+> 2个字节。
+>
+> 紧跟于版本号后面的是常量池计数器占两个字节。记录整个class文件的字面量信息个数，决定常量池大小。
+>
+> `constant_pool_count` =  常量池元素个数 + 1。  只有索引在 （0，constant_pool_count）范围内才会有效，索引从1开始。
+
+
+
+##### 常量池数据区(constant_pool)
+
+> 常量池类似于一张二维表，每一个结构项代表一条记录，包含`class`文件结构及其子结构中引用的所有字符串常量、类、接口、字段和其他常量。且常量池中每一个元素都具备相似的结构特征，每一个元素的第一字节用做于识别该项是哪种数据类型的常量，称为`tag byte`。
+
+
+
+##### 访问标志(access_flags)
+
+> 用于表示一个类、接口、以及方法的访问权限。占用两个字节。
+>
+> access_flags占用两个字节也就是16位，每一位可以表示一个ACC_FLAG，一个类存在多个ACC_FLAG会通过按位与的方式进行保存。
+>
+> 那么以上只有8个标志，那么还剩余的是为了以后预留的。
+
+| 标记           | 值（0x） | 作用                                   |
+| -------------- | -------- | -------------------------------------- |
+| ACC_PUBLIC     | 0x0001   | 公共的                                 |
+| ACC_FINAL      | 0x0010   | 不允许被继承                           |
+| ACC_SUPER      | 0x0020   | 需要特殊处理父类方法                   |
+| ACC_INTERFACE  | 0x0200   | 标记为接口，而不是类                   |
+| ACC_ABSTRACT   | 0x0400   | 抽象的，不可被实例化                   |
+| ACC_SYNTHETIC  | 0x1000   | 表示由编译器自己生成的，比如说桥接方法 |
+| ACC_ANNOCATION | 0x2000   | 表示注解                               |
+| ACC_ENUM       | 0x4000   | 表示枚举                               |
+|                |          |                                        |
+
+
+
+##### 类索引(this_class)
+
+> 类索引的值必须是constant_pool表中的一个有效索引值。constant_pool表在这个索引处的项必须是CONSTANT_CLASS_INFO类型的常量，表示这个Class文件所定义的类或接口。
+
+##### 父类索引(super_class)
+
+> 2个字节
+>
+> 父类索引
+>
+> 对于类来说，super_class的值必须为0或者是constant_pool表中的一个有效索引值。如果super_class的值不为0，那么constant_pool表在这个索引处的项必须是CONSTANT_CLASS_INFO类型的常量，表示这个Class文件所定义的直接父类。==当前类的直接父类以及他的所有间接父类的access_flag都不可以带有ACC_FINAL标识==。
+>
+> 对于接口来说也是一样super_class必须为constant_pool表中的一个有效索引。
+>
+> 如果class文件的`Super_class`的值为0，那么它只能定义为`java.lang.objec`类，只有它没有父类。
+
+##### 接口计数器(interfaces_count)
+
+> 标识当前类直接接口的数量
+
+##### 接口信息数据区
+
+> Interfaces[interface_coount]。接口信息表Interfaces[]中的每一个成员的值都必须为constant_info表中的一个有效的索引值。constant_pool在对应索引处的项必须是CONSTANT_CLASS_INFO类型的常量。
+>
+> 且接口信息表中的索引值是有序的，即编译器生成的class文件实现接口的顺序。
+
+##### 字段计数器(fields_count)
+
+> 字段计数器，表示当前类声明的类字段和实例字段（成员变量）的个数。
+
+##### 字段信息数据区(fields[])
+
+> 字段表，长度为fields_count。字段表fields[]中的每一个成员都是`fields_info`结构的数据项，用于描述该字段的完整信息。
+>
+> 字段表`fields[]`用于记录当前接口或类声明的所有字段信息，但不包括从父类或父接口中继承过来的部分。
+
+##### 方法计数器(method_count)
+
+> 方法计数器，表示当前类定义的方法个数。
+
+##### 方法数据区(methods[])
+
+> 方法表，长度为method_count。方法表methods[]中的每一个成员都是`method_info`结构的数据项，用于描述该方法的完整信息。
+>
+> 如果一个`method_info`结构中的`access_flags`既不包含`ACC_NATIVE`也不包含`ACC_ABSTRACT`标识。那么标识当前方法可以被`jvm`直接加载，而不需要依赖其他类。
+>
+> 方法表`methods[]`记录着当前接口或接口中定义的所有方法，包括静态方法、实例方法、初始化方法(init 、cinit)。不包括从父类或父接口中继承过来的方法。
+
+##### 属性计数器
+
+> 属性个数
+
+##### 属性数据区
+
+> `attributes[]`。属性表中的每一项都是一个`Attribute_info`结构。
+>
+> 包括  SourceFile:
+
+##### 小结
+
+
+
+> 根据以上总结，一个class文件可以表示为
+
+```java
+classFile{
+  u4          			magic;//魔数
+  u2         				minor_version;//服版本号（一般不用管）
+  u2         				major_version;//主版本号  jdk1.0为45，高本版递增
+  u2								constant_pool_count;//常量池计数器
+  cp_info						constant_pool[constant_pool_count-1];//常量池数据区
+  u2								access_flags;//访问标志
+  u2								this_class;//类索引。是constant_pool中的一个有效索引
+  u2								super_class;//父类索引。只有object此项为0
+  u2								interfaces_count;//直接接口数量
+  u2								interfaces[interfaces_count];//接口数据区
+  u2								fields_count;//类的成员变量数量
+  field_info				fields[fields_count];//类的成员变量数据区
+  u2								methods_count;//定义方法个数
+  method_info				methods[methods_count];//方法数据区
+  u2 							  attributes_count;//属性数量
+  attribute_info	  attributes[attributes_count]//属性数据区
+}
+```
+
+
+
+<hr>
+
+#### class常量池
+
+> class常量池是很重要的一个数据区。
+
+##### class常量池在什么位置
+
+> class常量池在`class`文件中的什么位置？
+>
+> 如下图，在主版本号之后的区域就是常量池相关的数据区了。首先是两个字节的常量池计数器，紧接着就是常量池数据区。
+
+<img src="class文件二进制组成形式.assets/image-20220807010456561.png" alt="image-20220807010456561" style="zoom:67%;" />
+
+> 常量池计数器的数值为何比常量池项数量大一？
+
+常量池计数器是从1开始计数的而不是0，如果常量池计数器的数值为15那么常量池中常量项(cp_info)的数量就为14。常量池项个数 = constant_count-1。
+
+将第一位空出来是有特殊考虑的，当某些索引表示不指向常量池中任何一个常量池项的时候，可以将索引设置为0。
+
+
+
+##### 有哪些cp_info
+
+> Constant_pool
+>
+> 常量池项(cp_info)记录着class文件中的字面量信息。那么存在多少种cp_info，以及如何区分。
+
+cp_info中存在着一个tag属性，jvm会根据tag值来区分不同的常量池结构体
+
+| Tag  | 结构                             | 说明                     |
+| ---- | -------------------------------- | ------------------------ |
+| 1    | CONSTANT_Utf8_info               | 字符串常量值             |
+| 3    | CONSTANT_Integer_info            | INT类型常量              |
+| 4    | CONSTANT_Float_into              | FLOAT类型常量            |
+| 5    | CONSTANT_Double_info             | DOUBLE类型常量           |
+| 7    | CONSTANT_Class_info              | 类或接口全限定名常量     |
+| 8    | CONSTANT_String_info             | String类型常量对象       |
+| 9    | CONSTANT_Fieldref_info           | 类中的字段               |
+| 10   | CONSTANT_Methodref_info          | 类中的方法               |
+| 11   | CONSTANT_InterfaceMethodref_info | 所实现接口的方法         |
+| 12   | CONSTANT_NameAndType_info        | 字段或方法的名称和类型   |
+| 15   | CONSTANT_MethodHandler_info      | 方法句柄                 |
+| 16   | CONSTANT_MethodType_info         | 方法类型                 |
+| 18   | CONSTANT_InvokeDynamic_info      | 表示动态的对方法进行调用 |
+|      |                                  |                          |
+
+##### int和float的cp_info
+
+> int的常量池项结构为`CONSTANT_Integer_info`。float的常量池项结构为`CONSTANT_Float_info`。且这两种数据类型所占空间都为四个字节。所对应的结构如下：
+
+![image-20220807134442528](jvm.assets/image-20220807134442528.png)
+
+```java
+// 此字段在当前类中没有使用，不会生成对应Fieldref结构体。但会存储字段名称
+private Integer age;
+// 作为引用类型 Ljava/lang/Integer
+private static Integer num1 = 10;
+// 基本数据类型，对应类型为 I
+private static int num2 = 10;
+```
+
+对应字节码表示：结构体中只有字段结构体，并没有Integer结构体，若想要存Constant_Integer_info进class常量池，需要用final修饰或者定义的大一点
+
+例子：
+
+```java
+private final int num3 = 10;
+// 大于 32767
+private int num4 = 32768;
+```
+
+```bash
+#3 = Integer            32768
+#20 = Integer            10
+```
+
+##### long&double
+
+> Long的常量池项结构为`CONSTANT_Long_info`。double的常量池项结构为`CONSTANT_Double_info`。且这两种数据类型所占空间都为8个字节。所对应的结构如下：
+
+![image-20220807153756946](jvm.assets/image-20220807153756946.png)
+
+会将对应结构存入constant_pool中
+
+```java
+private long num5 = 1L;
+private Long num6 = 2L;
+private double num7 = 1D;
+private Double num8 = 2D;
+```
+
+```bash
+#6 = Long               2l
+#11 = Double             2.0d
+```
+
+
+
+##### String的cp_info
+
+> String的常量池项结构为`CONSTANT_String_info`。所对应的结构如下：
+
+![image-20220807164705511](jvm.assets/image-20220807164705511.png)
+
+> String常量在常量池中的表示，为一个`CONSTANT_String_info`结构体，这个结构体除了一个tag外，还有一个指向`CONSTANT_Utf8_info`结构体的索引string_index。
+>
+> 所以说每一个字符串在编译的时候，编译器都会为其生成一个不重复的`CONSTANT_String_info`结构体，并放置于`CONSTANT_poll`class常量池中，而这个结构体内的索引string_index会指向某个`CONSTANT_Utf8_info`结构体，在`CONSTANT_Utf8_info`结构体内才正真存储着字符串的字面量信息。
+
+`CONSTANT_Utf8_info`结构体的结构为：
+
+其中legth为字节数组长度
+
+bytes[length]存储着字符串字面量信息的字符数组
+
+![image-20220807165558000](jvm.assets/image-20220807165558000.png)
+
+```java
+private String str = "yuyc" ;
+```
+
+```bash
+#16 = Fieldref           #21.#66        // com/roily/booknode/javatogod/_13jvm/Person.str:Ljava/lang/String;
+#21 = Class              #72            // com/roily/booknode/javatogod/_13jvm/Person
+#66 = NameAndType        #42:#24        // str:Ljava/lang/String;
+#24 = Utf8               Ljava/lang/String;
+#42 = Utf8               str
+#72 = Utf8               com/roily/booknode/javatogod/_13jvm/Person
+#15 = String             #65            // yuyc
+#65 = Utf8               yuyc
+
+构造方法:
+取出utf结构体字面量数据，设置到str中
+47: ldc           #15                 // String yuyc
+49: putfield      #16                 // Field str:Ljava/lang/String;
+```
+
+整合起来的结构就是这个样子的：
+
+![image-20230222175407770](jvm.assets/image-20230222175407770.png)
+
+
+
+##### 类(class)的cp_info
+
+> 定义的类和在类中引用到的类在常量池中如何组织和存储的？
+
+> 和String类型一样涉及到两个结构体，分别是：`CONSTANT_Class_info`和`CONSTANTT_Utf8_info`。编译器会将，定义和引用到类的完全限定名称以二进制的形式封装到`CONSTANT_Class_info`中，然后放入到class常量池中。结构如下：
+
+![image-20220807172355220](jvm.assets/image-20220807172355220.png)
+
+类的完全限定名称和二进制形式的完全限定名称
+
+> 类的完全限定名称：`com.roily.booknode.javatogod._13jvm.Person`,以点·分隔
+>
+> 二进制形式的类的完全限定名称：编译器在编译时，会将点替换为/，然后存入class文件，所以称呼`com/roily/booknode/javatogod/_13jvm/Person`为二进制形式的类的完全限定名称。
+
+例子：
+
+```bash
+#21 = Class              #72            // com/roily/booknode/javatogod/_13jvm/Person
+#72 = Utf8               com/roily/booknode/javatogod/_13jvm/Person
+#22 = Class              #73            // java/lang/Object
+#73 = Utf8               java/lang/Object
+#58 = Class              #74            // java/lang/Long
+#74 = Utf8               java/lang/Long
+#62 = Class              #77            // java/lang/Double
+#77 = Utf8               java/lang/Double
+#68 = Class              #79            // java/lang/Integer
+#79 = Utf8               java/lang/Integer
+```
+
+小结:
+
+- 对于一个类或者接口，jvm编译器会将其自身、父类和接口的信息都各自封装到`CONSTANT_Class_info`中，并存入`CONSTANT_POOl`常量池中
+- 只有真正使用到的类jvm编译器才会为其生成对应的`CONSTANT_Class_info`结构体，而对于未真正使用到的类则不会生成，比如只声明一个变量`StringBuffer sb2;`则不会生成对应结构体
+
+
+
+##### 字段的cp_info
+
+> 在定义一个类的时候以及在方法体内都会定义一些字段，这些字段在常量池中是如何存储的呢？
+>
+> 涉及到三个结构体，分别是：`CONSTANT_Fieldref_info`、`CONSTANT_Class_info`和`        CONSTANT_NameAndType_info`
+>
+> field字段描述信息 = field字段所属的类 .  field字段名称 : field字段描述;
+
+比如上面的name字段
+
+```bash
+// 类二进制全限定名称.字段名称:类型;
+#15 = Fieldref           #19.#62        // com/roily/booknode/javatogod/_13jvm/Person.name:Ljava/lang/String;
+#19 = Class              #67            // com/roily/booknode/javatogod/_13jvm/Person
+#67 = Utf8               com/roily/booknode/javatogod/_13jvm/Person
+#62 = NameAndType        #21:#22        // name:Ljava/lang/String;
+#21 = Utf8               name
+#22 = Utf8               Ljava/lang/String;
+```
+
+![image-20220807203919295](jvm.assets/image-20220807203919295.png)
+
+![image-20220807204503481](jvm.assets/image-20220807204503481.png)
+
+一个`CONSTANT_Fieldref_info`与其他结构体的关系可以表示为：
+
+<img src="class文件二进制组成形式.assets/image-20220807205719621.png" alt="image-20220807205719621" style="zoom:50%;" />
+
+###### NameAndType
+
+> `CONSTANT_NameAndType_info`结构体中关于字段的描述：
+
+- 对于基本数据类型
+
+| 类型    | 描述 | 说明             |
+| ------- | ---- | ---------------- |
+| byte    | B    | 表示一个字节整型 |
+| short   | S    | 短整型           |
+| int     | I    | 整型             |
+| long    | J    | 长整型           |
+| float   | F    | 单精度浮点数     |
+| double  | D    | 双精度浮点数     |
+| char    | C    | 字符             |
+| boolean | Z    | 布尔类型         |
+|         |      |                  |
+
+- 对于引用类型来说
+
+L<ClassName>。
+
+比如StringBuilder类型的描述信息为：`Ljava/lang/StringBuilder`
+
+
+
+- 对于数组类型来说
+
+[<descriptor>   一个左中括号加上数组元素类型。
+
+比如long[] ls = {1L,2L};对应描述信息为：`[J`
+
+
+
+###### 小结
+
+- jvm编译器会为每一个有效使用的字段生成一个对应的`CONSTANT_Field_info`结构体，该结构体内包含了一个`class_index`指向该字段所在类的结构体索引值，和一个`name_and_type_index`指向该字段名称和描述信息的结构体索引值
+- 如果一个字段没有被使用到，jvm不会将其放入常量池中
+
+
+
+
+
+##### 方法的cp_info
+
+> 和字段的cp_info相似，jvm编译时会将每一个方法(前提是使用到)包装成一个`CONSTANT_Methodref_ingo`结构体，放入常量池，该结构体内存在两个索引值分别是`Class_index`和`name_and_type_index`。
+
+![image-20220807215324127](jvm.assets/image-20220807215324127.png)
+
+
+
+###### 一个方法的结构体信息表示：
+
+方法结构体信息 = 方法所属的类 .   方法名称:(参数说明)返回值
+
+【(参数说明)返回值】就是方法的描述信息。
+
+比如我有一个方法：String getMsg();  那么描述信息就可以表示为：()Ljava/lang/String
+
+==如果返回值是Void的话，则表示为V==
+
+
+
+
+
 ### JVM类加载过程
 
 > 此处所说的类加载过程不单指类加载的某个阶段，而指类加载阶段到初始化阶段这个过程。
