@@ -1107,22 +1107,397 @@ brew services start nginx
 
 ![image-20230215000506916](redis基础.assets/image-20230215000506916.png)
 
+#### nginx部署前端项目
 
 
-### 问题记录
 
-- 使用Session进行短信登录
+##### 配置文件
 
-- 拦截器，拦截需要校验的请求，校验登录状态
+> nginx配置文件为nginx.conf，分别为**全局块、events块和http块**，在http块中，又包含http全局块、多个server块。每个server块中，可以包含server全局块和多个location块。在同一配置块中嵌套的配置块，各个之间不存在次序关系。
+>
+> 绝大多数指令不是特定属于某一个块的。同一个指令放在不同层级的块中，其作用域也不同，一般情况下，高层块中的指令可做用于低层级块。如果某个指令在两个不同层级的块中同时出现，则采用“就近原则”，即以较低层级块中的配置为准。
 
-- tomcat集群 session不共享
+```json
+ngnix.confg:{
+  xxxx
+	events:{
+	},
+  http:{
+    xxxx
+    location:{
+    }
+  }
+}
+```
 
-  - 使用配置同步tomcat session  存在问题：内存空间浪费，多态tomcat都有数据副本
-  - 拷贝也要时间，性能问题
+###### 全局块
 
-- 使用  redis 替代session
+- user
 
-  - 发送登录凭证 tocken + userInfo 到redis。每次请求都会携带tocken，并将信息存储在ThreadLocal中供线程内共享
+  ```bash
+  # 指定可以运行nginx服务的用户和用户组，只能在全局块配置
+  # user [user] [group]
+  # 将user指令注释掉，或者配置成nobody的话所有用户都可以运行
+  # user nobody nobody;
+  
+  # 指定工作线程数，可以制定具体的进程数，也可使用自动模式，这个指令只能在全局块配置
+  # worker_processes number | auto；
+  # 列子：指定4个工作线程，这种情况下会生成一个master进程和4个worker进程
+  # worker_processes 4;
+  
+  # 指定pid文件存放的路径，这个指令只能在全局块配置
+  # pid logs/nginx.pid;
+  
+  # 指定错误日志的路径和日志级别，此指令可以在全局块、http块、server块以及location块中配置。(在不同的块配置有啥区别？？)
+  # 其中debug级别的日志需要编译时使用--with-debug开启debug开关
+  # error_log [path] [debug | info | notice | warn | error | crit | alert | emerg] 
+  # error_log  logs/error.log  notice;
+  # error_log  logs/error.log  info;
+  ```
 
+###### events块
+
+```bash
+# 当某一时刻只有一个网络连接到来时，多个睡眠进程会被同时叫醒，但只有一个进程可获得连接。如果每次唤醒的进程数目太多，会影响一部分系统性能。在Nginx服务器的多进程下，就有可能出现这样的问题。
+# 开启的时候，将会对多个Nginx进程接收连接进行序列化，防止多个进程对连接的争抢
+# 默认是开启状态，只能在events块中进行配置
+# accept_mutex on | off;
+
+# 如果multi_accept被禁止了，nginx一个工作进程只能同时接受一个新的连接。否则，一个工作进程可以同时接受所有的新连接。 
+# 如果nginx使用kqueue连接方法，那么这条指令会被忽略，因为这个方法会报告在等待被接受的新连接的数量。
+# 默认是off状态，只能在event块配置
+# multi_accept on | off;
+
+# 指定使用哪种网络IO模型，method可选择的内容有：select、poll、kqueue、epoll、rtsig、/dev/poll以及eventport，一般操作系统不是支持上面所有模型的。
+# 只能在events块中进行配置
+# use method
+# use epoll
+
+# 设置允许每一个worker process同时开启的最大连接数，当每个工作进程接受的连接数超过这个值时将不再接收连接
+# 当所有的工作进程都接收满时，连接进入logback，logback满后连接被拒绝
+# 只能在events块中进行配置
+# 注意：这个值不能超过超过系统支持打开的最大文件数，也不能超过单个进程支持打开的最大文件数，具体可以参考这篇文章：https://cloud.tencent.com/developer/article/1114773
+# worker_connections  1024;
+```
+
+###### http块
+
+http块是Nginx服务器配置中的重要部分，代理、缓存和日志定义等绝大多数的功能和第三方模块的配置都可以放在这个模块中。
+
+前面已经提到，http块中可以包含自己的全局块，也可以包含server块，server块中又可以进一步包含location块，在本书中我们使用“http全局块”来表示http中自己的全局块，即http块中不包含在server块中的部分。
+
+可以在http全局块中配置的指令包括文件引入、MIME-Type定义、日志自定义、是否使用sendfile传输文件、连接超时时间、单连接请求数上限等。
+
+```bash
+# 常用的浏览器中，可以显示的内容有HTML、XML、GIF及Flash等种类繁多的文本、媒体等资源，浏览器为区分这些资源，需要使用MIME Type。换言之，MIME Type是网络资源的媒体类型。Nginx服务器作为Web服务器，必须能够识别前端请求的资源类型。
+
+# include指令，用于包含其他的配置文件，可以放在配置文件的任何地方，但是要注意你包含进来的配置文件一定符合配置规范，比如说你include进来的配置是worker_processes指令的配置，而你将这个指令包含到了http块中，着肯定是不行的，上面已经介绍过worker_processes指令只能在全局块中。
+# 下面的指令将mime.types包含进来，mime.types和ngin.cfg同级目录，不同级的话需要指定具体路径
+# include  mime.types;
+
+# 配置默认类型，如果不加此指令，默认值为text/plain。
+# 此指令还可以在http块、server块或者location块中进行配置。
+# default_type  application/octet-stream;
+
+# access_log配置，此指令可以在http块、server块或者location块中进行设置
+# 在全局块中，我们介绍过errer_log指令，其用于配置Nginx进程运行时的日志存放和级别，此处所指的日志与常规的不同，它是指记录Nginx服务器提供服务过程应答前端请求的日志
+# access_log path [format [buffer=size]]
+# 如果你要关闭access_log,你可以使用下面的命令
+# access_log off;
+
+# log_format指令，用于定义日志格式，此指令只能在http块中进行配置
+# log_format  main '$remote_addr - $remote_user [$time_local] "$request" '
+#                  '$status $body_bytes_sent "$http_referer" '
+#                  '"$http_user_agent" "$http_x_forwarded_for"';
+# 定义了上面的日志格式后，可以以下面的形式使用日志
+# access_log  logs/access.log  main;
+
+# 开启关闭sendfile方式传输文件，可以在http块、server块或者location块中进行配置
+# sendfile  on | off;
+
+# 设置sendfile最大数据量,此指令可以在http块、server块或location块中配置
+# sendfile_max_chunk size;
+# 其中，size值如果大于0，Nginx进程的每个worker process每次调用sendfile()传输的数据量最大不能超过这个值(这里是128k，所以每次不能超过128k)；如果设置为0，则无限制。默认值为0。
+# sendfile_max_chunk 128k;
+
+# 配置连接超时时间,此指令可以在http块、server块或location块中配置。
+# 与用户建立会话连接后，Nginx服务器可以保持这些连接打开一段时间
+# timeout，服务器端对连接的保持时间。默认值为75s;header_timeout，可选项，在应答报文头部的Keep-Alive域设置超时时间：“Keep-Alive:timeout= header_timeout”。报文中的这个指令可以被Mozilla或者Konqueror识别。
+# keepalive_timeout timeout [header_timeout]
+# 下面配置的含义是，在服务器端保持连接的时间设置为120 s，发给用户端的应答报文头部中Keep-Alive域的超时时间设置为100 s。
+# keepalive_timeout 120s 100s
+
+# 配置单连接请求数上限，此指令可以在http块、server块或location块中配置。
+# Nginx服务器端和用户端建立会话连接后，用户端通过此连接发送请求。指令keepalive_requests用于限制用户通过某一连接向Nginx服务器发送请求的次数。默认是100
+# keepalive_requests number;
+```
+
+###### http-server块
+
+server块和“虚拟主机”的概念有密切联系，一个server块就是一个虚拟主机，可充分利用服务器资源，避免为每一个网站提供单独的ngnix服务器，虚拟主机技术使得Nginx服务器可以在同一台服务器上只运行一组Nginx进程，就可以运行多个网站。
+
+server块包含自己的全局块，同时可以包含多个location块。在server全局块中，最常见的两个配置项是本虚拟主机的监听配置和本虚拟主机的名称或IP配置。
+
+- listen指令
+
+```bash
+//第一种
+listen address[:port] [default_server] [ssl] [http2 | spdy] [proxy_protocol] [setfib=number] [fastopen=number] [backlog=number] [rcvbuf=size] [sndbuf=size] [accept_filter=filter] [deferred] [bind] [ipv6only=on|off] [reuseport] [so_keepalive=on|off|[keepidle]:[keepintvl]:[keepcnt]];
+
+//第二种
+listen port [default_server] [ssl] [http2 | spdy] [proxy_protocol] [setfib=number] [fastopen=number] [backlog=number] [rcvbuf=size] [sndbuf=size] [accept_filter=filter] [deferred] [bind] [ipv6only=on|off] [reuseport] [so_keepalive=on|off|[keepidle]:[keepintvl]:[keepcnt]];
+
+//第三种（可以不用重点关注）
+listen unix:path [default_server] [ssl] [http2 | spdy] [proxy_protocol] [backlog=number] [rcvbuf=size] [sndbuf=size] [accept_filter=filter] [deferred] [bind] [so_keepalive=on|off|[keepidle]:[keepintvl]:[keepcnt]];
+
+```
+
+listen指令的配置非常灵活，可以单独制定ip，单独指定端口或者同时指定ip和端口。
+
+```bash
+listen 127.0.0.1:8000;  #只监听来自127.0.0.1这个IP，请求8000端口的请求
+listen 127.0.0.1; #只监听来自127.0.0.1这个IP，请求80端口的请求（不指定端口，默认80）
+listen 8000; #监听来自所有IP，请求8000端口的请求
+listen *:8000; #和上面效果一样
+listen localhost:8000; #和第一种效果一致
+```
+
+- Server_name指令
+
+  ```bash
+  server_name www.rolyfish.com;
+  ```
+
+###### http-location块
+
+每个server块中可以包含多个location块。在整个Nginx配置文档中起着重要的作用，而且Nginx服务器在许多功能上的灵活性往往在location指令的配置中体现出来。
+
+location块的主要作用是，基于Nginx服务器接收到的请求字符串（例如， server_name/uri-string），对除虚拟主机名称（也可以是IP别名，后文有详细阐述）之外的字符串（前例中“/uri-string”部分）进行匹配，对特定的请求进行处理。地址定向、数据缓存和应答控制等功能都是在这部分实现。许多第三方模块的配置也是在location块中提供功能。
+
+在Nginx的官方文档中定义的location的语法结构为：
+
+
+
+
+
+```bash
+worker_processes  1;
+events {
+    worker_connections  1024;
+}
+http {
+    include       mime.types;
+    default_type  application/json;
+    sendfile        on;
+    keepalive_timeout  65;
+    server {
+        listen       8080;
+        server_name  localhost;
+        # 指定前端项目所在的位置
+        location / {
+            root   html/hmdp;
+            index  index.html index.htm;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+        location /api {
+            default_type  application/json;
+            #internal;
+            keepalive_timeout   30s;
+            keepalive_requests  1000;
+        server_name  localhost;
+        # 指定前端项目所在的位置
+        location / {
+            root   html/hmdp;
+            index  index.html index.htm;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+        location /api {
+            default_type  application/json;
+            #internal;
+            keepalive_timeout   30s;
+            keepalive_requests  1000;
+            #支持keep-alive
+            proxy_http_version 1.1;
+            rewrite /api(/.*) $1 break;
+            proxy_pass_request_headers on;
+            #more_clear_input_headers Accept-Encoding;
+            proxy_next_upstream error timeout;
+            proxy_pass http://127.0.0.1:8081;
+            #proxy_pass http://backend;
+        }
+    }
     
+ 
+    upstream backend {
+        server 127.0.0.1:8081 max_fails=5 fail_timeout=10s weight=1;
+        #server 127.0.0.1:8082 max_fails=5 fail_timeout=10s weight=1;
+    }
+}
+```
+
+
+
+##### 放前端项目
+
+放在`/opt/homebrew/var/www`
+
+![image-20230222230727673](redis基础.assets/image-20230222230727673.png)
+
+
+
+nginx安装目录下有一个快捷键
+
+![image-20230222230924003](redis基础.assets/image-20230222230924003.png)
+
+##### 启动ngnix
+
+```bash
+brew services start ngnix
+```
+
+##### 访问
+
+
+
+
+
+### docker
+
+
+
+### 项目介绍
+
+
+
+#### 用户模块
+
+##### 发送手机验证码
+
+- 校验手机号
+- 使用hutool包下的RandomUtil工具生成手机验证码,
+- 将验证码缓存在Redis中，并设置其过期时间
+
+##### 登录
+
+- 获取前段发送的用户登录表单数据
+
+- 校验手机号
+- 校验验证码是否和缓存中一致
+- 通过手机号码判断用户是否存在
+  - 不存在则通过手机号创建默认用户
+  - 存在则查出对应用户并缓存在Redis中
+
+
+
+
+
+## Redis相关操作
+
+
+
+### Session共享
+
+> 我们一般会用Session存储一些基本用户信息，比如用户名称、手机号码等。并且可以基于Session判断用户登录状态。
+>
+> 但是使用Session的话会存在一些问题：就是Session共享的问题，如果我们的网站在多台服务器上集群部署的话，Session便不会在多个Tomcat上共享，导致Session不一致的情况。
+>
+> 这里即便可以通过Tomcat的配置实现多台Tomcat的Session一致的方式来实现，但是浪费内存。
+
+#### Redis&Token
+
+> 所以我们不能使用Session来存储用户凭证，这里便使用Redis来存储用户登录凭证，发送一串随机数字作为Token给到前端，这个Token作为Redis的key用户信息作为Value存在Redis上。在登录后前端每次请求都发送Token给后端，使用Token去Redis查询用户信息并放在ThreaLocal中，这样一次请求中都可以访问到用户信息。
+
+![image-20230226172011705](redis基础.assets/image-20230226172011705.png)
+
+### 缓存
+
+> 什么是缓存？
+
+缓存就是数据交换的缓冲区（称作Cache [ kæʃ ] ），是存贮数据的临时地方，一般读写性能较高。
+
+#### 缓存跟新策略
+
+对于低一致性需求：使用内存淘汰机制，适合不太频繁更新的数据。
+
+高一致性需求：主动更新，添加超时剔除作为兜底方案
+
+|          | 内存淘汰                                                     | 超时剔除                                             | 主动更新                                 |
+| -------- | :----------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------- |
+| 说明     | 通过配置缓存内存淘汰机制，内存不足淘汰部分数据，下次查询再更新数据，不用自己维护 | 给缓存添加过期时间，到期自动删除，下次查询再更新缓存 | 编写业务逻辑，在修改数据库的时候删除缓存 |
+| 一致性   | 差                                                           | 一般                                                 | 好                                       |
+| 维护成本 | 无                                                           | 底                                                   | 高                                       |
+
+##### 主动更新策略
+
+- Cache Aside Pattern 调用者更新，在更新数据库时删除缓存
+- Read/Write Through Pattern 调用外部服务，此服务将数据库和缓存整合为一个服务
+- Write Behind Caching Pattern 只操作缓存，由其他线程异步将换成持久化到数据库
+
+同时操作缓存和数据库问题：
+
+> 更新缓存还是删除缓存
+
+- 更新缓存：每次数据库更新缓存也要更新，缓存只关心最后的结果，可能会存在无效更新操作  ❎
+- 删除缓存：更新数据库时删除缓存，下次查询再添加缓存  √
+
+> 需要保证缓存和数据库更新操作的原子性
+
+- 单体系统：将操作数据库和缓存放在一个事务中管理，当出现异常就会回滚
+- 分布式系统：利用TCC等分布式方案
+
+> 先操作数据库还是先删除缓存：
+
+- 先删除缓存，再操作数据库   导致一致性问题几率较大。因为删除缓存后更新数据库耗时较长，期间如果有查询请求，则会将旧数据更新到缓存。
+- 先操作数据库，再删除缓存，导致一致性问题较小。需要满足几个条件 - 数据库更新前缓存刚好失效 - 写入缓存的动作在另一个线程删除缓存之后
+
+
+
+##### 小结
+
+缓存更新的最佳实践方案：
+
+- 低一致性需求：使用redis的内存淘汰机制
+- 高一致性需求：主动更新，并添加超时兜底方案
+  - 读操作
+    - 缓存命中直接返回
+    - 缓存未命中，查询数据库，写入缓存并设置超时时间，返回-
+  - 写操作
+    - 使用删除缓存的策略
+    - 先操作数据库，再删除缓存，下次查询更新缓存
+    - 确保操作数据库和删除缓存的原子性
+
+
+
+#### 缓存穿透
+
+> 缓存穿透是指客户端请求的数据缓存和数据库都没有命中，这样缓存失效，所有请求都打在数据上，导致数据库压力较大。
+>
+> 正常情况下没有问题，但是对于一些恶意穿透还是要避免的。
+
+##### 解决方案
+
+- 缓存空对象
+  - 优点：缓存生效，实现简单
+  - 缺点：①额外消耗Redis内存  ② 可能造成短期数据库不一致的情况
+- 布隆过滤器（是一种位统计算法，将数据转换成位信息，用于判断是否存在）
+  - 优点： 内存占用少
+  - 缺点：①实现复杂 ② 有误判的可能
+
+
+
+#### 缓存雪崩
+
+
+
+
+
+#### 缓存击穿
+
+
 
