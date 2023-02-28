@@ -1421,7 +1421,7 @@ brew services start ngnix
 
 缓存就是数据交换的缓冲区（称作Cache [ kæʃ ] ），是存贮数据的临时地方，一般读写性能较高。
 
-#### 缓存跟新策略
+#### 缓存更新策略
 
 对于低一致性需求：使用内存淘汰机制，适合不太频繁更新的数据。
 
@@ -1501,3 +1501,10 @@ brew services start ngnix
 
 
 
+
+
+## 问题记录
+
+- nginx    负载均衡策略  轮询、随机、哈希
+- 分布式锁， redis MySQL  zookeeper
+  - lua脚本保证原子性 
