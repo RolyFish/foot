@@ -8,7 +8,7 @@
 >
 > 我是使用的linux版本： Ubuntu 22.04 ARM64
 >
-> 虚拟机选择：Parallels Desktop 18    或租一个服务器
+> 虚拟机选择：Parallels Desktop 18    或   租一个服务器
 
 - 下载redis[官网下载](https://redis.io/download/)
 
@@ -23,8 +23,6 @@
   `make && make install`
 
 ### 启动redis方式
-
-
 
 #### 默认启动
 
