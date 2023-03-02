@@ -1409,17 +1409,11 @@ brew services start ngnix
 
 #### Redis&Token
 
-> 所以我们不能使用Session来存储用户凭证，这里便使用Redis来存储用户登录凭证，发送一串随机数字作为Token给到前端，这个Token作为Redis的key用户信息作为Value存在Redis上。在登录后前端每次请求都发送Token给后端，使用Token去Redis查询用户信息并放在ThreaLocal中，这样一次请求中都可以访问到用户信息。
+> 所以我们不能使用Session来存储用户凭证，这里便使用Redis来存储用户登录凭证，发送一串随机数字作为Token给到前端，这个Token作为Redis的key，用户信息作为Value，存在Redis上。在登录后前端每次请求都发送Token给后端，使用Token去Redis查询用户信息并放在ThreaLocal中，这样一次请求中都可以访问到用户信息。
 
 ![image-20230226172011705](redis基础.assets/image-20230226172011705.png)
 
-### 缓存
-
-> 什么是缓存？
-
-缓存就是数据交换的缓冲区（称作Cache [ kæʃ ] ），是存贮数据的临时地方，一般读写性能较高。
-
-#### 缓存更新策略
+### 缓存更新策略
 
 对于低一致性需求：使用内存淘汰机制，适合不太频繁更新的数据。
 
@@ -1431,7 +1425,7 @@ brew services start ngnix
 | 一致性   | 差                                                           | 一般                                                 | 好                                       |
 | 维护成本 | 无                                                           | 底                                                   | 高                                       |
 
-##### 主动更新策略
+#### 主动更新策略
 
 - Cache Aside Pattern 调用者更新，在更新数据库时删除缓存
 - Read/Write Through Pattern 调用外部服务，此服务将数据库和缓存整合为一个服务
@@ -1451,12 +1445,10 @@ brew services start ngnix
 
 > 先操作数据库还是先删除缓存：
 
-- 先删除缓存，再操作数据库   导致一致性问题几率较大。因为删除缓存后更新数据库耗时较长，期间如果有查询请求，则会将旧数据更新到缓存。
+- 先删除缓存，再操作数据库  ： 导致一致性问题几率较大。因为删除缓存后更新数据库耗时较长，期间如果有查询请求，则会将旧数据更新到缓存。
 - 先操作数据库，再删除缓存，导致一致性问题较小。需要满足几个条件 - 数据库更新前缓存刚好失效 - 写入缓存的动作在另一个线程删除缓存之后
 
-
-
-##### 小结
+#### 小结
 
 缓存更新的最佳实践方案：
 
@@ -1470,15 +1462,13 @@ brew services start ngnix
     - 先操作数据库，再删除缓存，下次查询更新缓存
     - 确保操作数据库和删除缓存的原子性
 
-
-
-#### 缓存穿透
+### 缓存穿透
 
 > 缓存穿透是指客户端请求的数据缓存和数据库都没有命中，这样缓存失效，所有请求都打在数据上，导致数据库压力较大。
 >
 > 正常情况下没有问题，但是对于一些恶意穿透还是要避免的。
 
-##### 解决方案
+#### 解决方案
 
 - 缓存空对象
   - 优点：缓存生效，实现简单
@@ -1486,16 +1476,113 @@ brew services start ngnix
 - 布隆过滤器（是一种位统计算法，将数据转换成位信息，用于判断是否存在）
   - 优点： 内存占用少
   - 缺点：①实现复杂 ② 有误判的可能
+  
+  
+
+缓存穿透产生的原因是什么？
+
+- 用户请求的数据在缓存中和数据库中都不存在，不断发起这样的请求，给数据库带来巨大压力
+
+缓存穿透的解决方案有哪些？
+
+- 缓存null值
+- 布隆过滤
+- 增强id的复杂度，避免被猜测id规律
+- 做好数据的基础格式校验
+- 加强用户权限校验
+- 做好热点参数的限流
+
+#### 以缓存空对象为例
+
+> 使用缓存空对象的方案会导致短期的数据不一致的问题，当接下来更新数据时，一定会对数据做同步，短期的数据不一致只在于更新数据库完成至删除缓存之间，是可以接受的。
+
+##### 前后方案做对比
+
+![image-20230302221602996](redis基础.assets/image-20230302221602996.png)
+
+##### 代码实现
+
+```java
+private Shop queryWithPassThrough(Long id) {
+    final String key = CACHE_SHOP_KEY + id;
+    // 1 通过id查询缓存
+    final String value = stringRedisTemplate.opsForValue().get(key);
+    // 2.1 缓存命中且不为 "NULL" 返回数据
+    if (StringUtils.isNotBlank(value) && !PASS_THROUGH_VALUE.equals(value)) {
+        return JSONUtil.toBean(value, Shop.class);
+    }
+    // 2.2 命中 为空"NULL" 返回null 不再查询数据库
+    if (PASS_THROUGH_VALUE.equals(value)) {
+        return null;
+    }
+    // 3 查询数据库
+    final Shop shop = this.getById(id);
+    // 3.1 数据库未命中，空值写入缓存 返回null
+    if (null == shop) {
+        stringRedisTemplate.opsForValue().set(key, PASS_THROUGH_VALUE, CACHE_NULL_TTL, TimeUnit.MINUTES);
+        return null;
+    }
+    // 3.2 数据库命中， 写入缓存 返回数据
+    stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(shop), CACHE_NULL_TTL, TimeUnit.MINUTES);
+    return shop;
+}
+```
+
+### 缓存雪崩
+
+> 缓存雪崩是指在同一时段大量的缓存key同时失效或者Redis服务宕机，导致大量请求到达数据库，带来巨大压力
+
+##### 解决方案
+
+- 给不同的Key的TTL添加随机值
+- 利用Redis集群提高服务的可用性
+- 给缓存业务添加降级限流策略给业务
+- 添加多级缓存
+
+### 缓存击穿
+
+> 缓存击穿问题也叫热点Key问题，就是一个被==高并发访问==并且==缓存重建业务较复杂==的key突然失效了，无数的请求访问会在瞬间给数据库带来巨大的冲击。
+
+#### 解决方案
+
+- 互斥锁
+- 逻辑过期
+
+##### 互斥锁
+
+> 我们希望首个到达缓存重建业务的线程进行缓存重建，其他线程等待并重试。
+
+==锁什么？==
+
+> - 一定得是所有线程可见的共享对象
+>
+> - 单机环境下String是个不错的选择
+>
+> - 集群环境下则不行
+>
+>   集群环境下使用Redis作为分布式锁，对所有JVM可见
+
+流程图：
+
+![image-20230302233223345](redis基础.assets/image-20230302233223345.png)
+
+时序图：
 
 
 
-#### 缓存雪崩
 
 
 
 
 
-#### 缓存击穿
+
+##### 逻辑过期
+
+
+
+
+
+
 
 
 
