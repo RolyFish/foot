@@ -1436,7 +1436,7 @@ brew services start ngnix
 > 更新缓存还是删除缓存
 
 - 更新缓存：每次数据库更新缓存也要更新，缓存只关心最后的结果，可能会存在无效更新操作  ❎
-- 删除缓存：更新数据库时删除缓存，下次查询再添加缓存  √
+- 删除缓存：更新数据库时删除缓存，下次查询再添加缓存  ✔
 
 > 需要保证缓存和数据库更新操作的原子性
 
@@ -1562,17 +1562,59 @@ private Shop queryWithPassThrough(Long id) {
 >
 >   集群环境下使用Redis作为分布式锁，对所有JVM可见
 
-流程图：
+###### 流程图：
 
 ![image-20230302233223345](redis基础.assets/image-20230302233223345.png)
 
-时序图：
+###### 时序图：
 
 
 
 
 
+###### 代码实现：
 
+```java
+private Shop queryWithMutex(Long id) {
+    final String key = CACHE_SHOP_KEY + id;
+    // 1 通过id查询缓存
+    final String value = stringRedisTemplate.opsForValue().get(key);
+    // 2.1 缓存命中且不为 "NULL" 返回数据
+    if (StringUtils.isNotBlank(value) && !PASS_THROUGH_VALUE.equals(value)) {
+        return JSONUtil.toBean(value, Shop.class);
+    }
+    // 2.2 命中 为空"NULL" 返回null 不再查询数据库
+    if (PASS_THROUGH_VALUE.equals(value)) {
+        return null;
+    }
+    // 3 获取互斥锁
+    final ILock redisLock = new MyDefinedSimpleRedisLock("shop:" + id, stringRedisTemplate);
+    try {
+        final boolean b = redisLock.tryLock(1800);
+        if (b) {
+            // 缓存重建
+            final Shop shop = this.getById(id);
+            // 3.1 数据库未命中，空值写入缓存 返回null
+            if (null == shop) {
+                stringRedisTemplate.opsForValue().set(key, PASS_THROUGH_VALUE, CACHE_NULL_TTL, TimeUnit.MINUTES);
+                return null;
+            }
+            stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(shop), CACHE_NULL_TTL, TimeUnit.MINUTES);
+            return shop;
+        } else {
+            // 自旋重试
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return queryWithMutex(id);
+        }
+    } finally {
+        redisLock.unlock();
+    }
+}
+```
 
 
 
