@@ -1562,9 +1562,19 @@ private Shop queryWithPassThrough(Long id) {
 >
 >   集群环境下使用Redis作为分布式锁，对所有JVM可见
 
+###### 全局唯一id
+
+> 对于并发请求，分布式锁的key的要求不仅要求可见，同时需要在不同机器上体现唯一性，这样防止误删。后面再说。。
+
+
+
+
+
+
+
 ###### 流程图：
 
-![image-20230302233223345](redis基础.assets/image-20230302233223345.png)
+![image-20230305161733197](redis基础.assets/image-20230305161733197.png)
 
 ###### 时序图：
 
@@ -1616,15 +1626,158 @@ private Shop queryWithMutex(Long id) {
 }
 ```
 
-
-
 ##### 逻辑过期
 
+> 逻辑过期解决缓存击穿问题:
+>
+> - 选择逻辑过期的方案，那么此数据在redis中不用设置过期时间
+>   - 热点数据一般提前加载过了，也就是默认存在
+> - 缓存未命中，直接返回数据不存在
+> - 缓存命中
+>   - 判断是否过期
+>     - 过期：获取锁，开启新线程返回旧数据
+>     - 未过期：直接返回旧数据
+
+###### 创建RedisData对象
+
+> 此对象存储Redisd的过期时间和value数据。
+
+```java
+public class RedisData {
+    private LocalDateTime expireTime;
+    private Object data;
+}
+```
+
+###### 流程图
+
+![image-20230305162041055](redis基础.assets/image-20230305162041055.png)
+
+###### 代码实现
+
+```java
+private Shop queryWithLogicalExpire(Long id) {
+    final String key = CACHE_SHOP_KEY + id;
+    // 1 通过id查询缓存
+    final String value = stringRedisTemplate.opsForValue().get(key);
+    // 2.1 缓存未命中
+    if (StringUtils.isBlank(value)) {
+        // 直接返回空
+        return null;
+    }
+    // 2.2 命中 解析数据
+    final RedisData redisData = JSONUtil.toBean(value, RedisData.class);
+    final LocalDateTime expireTime = redisData.getExpireTime();
+    final Shop shop = JSONUtil.toBean((JSONObject) redisData.getData(), Shop.class);
+    // 2.2.1 未过期
+    if (LocalDateTime.now().isBefore(expireTime)) {
+        return shop;
+    }
+    MyDefinedSimpleRedisLock redisLock = new MyDefinedSimpleRedisLock(LOCK_SHOP_KEY + id, stringRedisTemplate);
+    try {
+        final boolean b = redisLock.tryLock(LOCK_SHOP_TTL + 100000L);
+        // 2.2.2 过期  获取锁  开启新线程缓存重建
+        if (b) {
+            threadPoolExecutor.submit(() -> {
+                // 2.2.2.1 查询数据库
+                final Shop shop1 = getById(id);
+                // 2.2.2.2 构建RedisData
+                final RedisData redisData1 = new RedisData();
+                redisData1.setExpireTime(LocalDateTime.now().plusSeconds(CACHE_SHOP_TTL));
+                redisData1.setData(shop1);
+                stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, JSONUtil.toJsonStr(redisData1));
+            });
+        }
+    } finally {
+        redisLock.unlock();
+    }
+    return shop;
+}
+```
+
+### 全局唯一ID
+
+> 对于订单号，流水号这些唯一性标识需要满足：
+>
+> - 唯一性
+> - 递增性
+> - 安全性   不可用1、2、3.。。这样的容易被猜测的
+> - 高可用   不能随便出问题
+> - 高性能   性能要好
+
+全局ID的组成为64位：
+
+- 符号位：1bit，永远为0
+- 时间戳：31bit，以秒为单位，可以使用69年
+- 序列号：32bit，秒内的计数器，支持每秒产生2^32个不同ID
+
+![image-20230305174233920](redis基础.assets/image-20230305174233920.png)
+
+#### 全局唯一ID生成策略
+
+- UUID
+
+  > 唯一，与时间和机器有关，但是不满足自增
+
+- Redis自增
+
+  > 唯一、自增  但是需要包装一下，不然容易猜测
+
+- snowflake算法
+
+  > 0 + 41位时间戳 + 10位机器码 + 12位序列号。
+  >
+  > 唯一、自增 很好
+
+- 数据库自增
+
+  > 自增、唯一  但是容易被猜、性能不行
+
+##### Redis自增ID策略
+
+> key的选择：前缀（统一前缀+分类） + 时间
+>
+> 每天一个key，方便统计订单量
+>
+> ID构造是 时间戳 + 序列号
+
+redis自增命令：
+
+```bash
+127.0.0.1:6379> INCR icr
+(integer) 1
+127.0.0.1:6379> INCR icr
+(integer) 2
+```
+
+代码实现步骤：
+
+- 获取时间戳（定义起始时间戳，当前时间戳减去起始时间戳）
+- 格式化当日日期  作为前缀使用
+- 组装全局唯一ID，时间戳+序列号
+  - 左移32位  并和序列号按位或
+
+```java
+public long nextId(String keyPrefix) {
+    // 1.生成时间戳
+    LocalDateTime now = LocalDateTime.now();
+    long nowSecond = now.toEpochSecond(ZoneOffset.UTC);
+    long timestamp = nowSecond - BEGIN_TIMESTAMP;
+
+    // 2.生成序列号
+    // 2.1.获取当前日期，精确到天
+    String date = now.format(DateTimeFormatter.ofPattern("yyyy:MM:dd"));
+    // 2.2.自增长
+    long count = stringRedisTemplate.opsForValue().increment("icr:" + keyPrefix + ":" + date);
+
+    // 3.拼接并返回
+    return timestamp << COUNT_BITS | count;
+}
+```
 
 
 
-
-
+### 秒杀
 
 
 
