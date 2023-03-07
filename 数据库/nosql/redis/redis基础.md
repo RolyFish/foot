@@ -1779,6 +1779,335 @@ public long nextId(String keyPrefix) {
 
 ### 秒杀
 
+> hmdp秒杀优惠券为例
+
+#### 基本功能
+
+![image-20230307230718368](redis基础.assets/image-20230307230718368.png)
+
+#### 超卖问题
+
+> 并发环境下有可能产生超卖问题，也就是库存可能小于0。问题出现的原因就是有一部份线程判断库存充足，且还未完成减库存动作，这之间有很多其他线程已经判断了库存充足。
+
+##### 使用Jmeter测试
+
+准备200个请求,模拟200次并发。
+
+![image-20230307231337038](redis基础.assets/image-20230307231337038.png)
+
+库存100个
+
+![image-20230307231350816](redis基础.assets/image-20230307231350816.png)
+
+测试结果： 
+
+![image-20230307231514189](redis基础.assets/image-20230307231514189.png)
+
+###### 时序图解释
+
+![image-20230307232542172](redis基础.assets/image-20230307232542172.png)
+
+#### 超卖问题解决
+
+> 加锁
+
+- 乐观锁
+- 悲观锁
+
+##### 悲观锁解决
+
+> 悲观锁认为数据一定会发生线程安全问题,因此在操作数据之间会首先获取锁。
+>
+> 单机环境下可以锁，优惠券id。集群环境下得使用分布式锁
+
+```java
+synchronized ((voucherId + "").intern()) {
+    // 1.查询优惠券信息
+    // 2. 判断起始时间
+    // 3. 判断库存
+    // 4. 扣减库存
+    // 5.创建订单
+    // 保存订单
+    // 6.返回订单
+}
+```
+
+##### 乐观锁解决
+
+> 乐观锁用于更新情况,乐观锁认为线程安全问题不一定会发生,只会在修改数据的时候判断数据是否被修改了。
+>
+> - 如果数据被修改了,则重试或抛异常
+> - 如果数据未被修改过,则线程安,操作数据
+
+只需要修改sql即可
+
+```java
+// 4. 扣减库存， ==扣减库存时判断库存是否被修改过==
+final boolean success = seckillVoucherService.update()
+        .setSql("stock = stock-1")
+        .eq("voucher_id", seckillVoucher.getVoucherId())
+        .eq("stock", seckillVoucher.getStock())
+        .update();
+```
+
+> 上面方案存在过多重试的情况。特定需求情况下,可以借助Mysql的行锁来实现，只需要判断库存大于0即可。
+
+```java
+// 4. 扣减库存， ==扣减库存时判断库存是否被修改过==
+final boolean success = seckillVoucherService.update()
+        .setSql("stock = stock-1")
+        .eq("voucher_id", seckillVoucher.getVoucherId())
+        //.eq("stock", seckillVoucher.getStock())
+        .gt("stock", 0)
+        .update();
+```
+
+> 还有就是==分段锁==，我们可以将资源分配在不同的数据库或者表中,对于进来的请求进行哈希分配提高成功率。
+
+```java
+//对于进来的请求进行散列
+int flag = (Thread.currentThread().getId() + "").hashCode() & 1;
+return flag>0? optimisticLock(voucherId):optimisticLockAdd(voucherId);
+```
+
+##### 对比
+
+悲观锁,让线程串行执行
+
+- 简单
+- 性能差
+
+乐观锁,不加锁
+
+- 性能好
+- 存在成功率低的问题
+
+
+
+#### 一人一单问题
+
+> 一个人只能下一单,也就是扣减库存之前需要判断订单表里是否有该用户的订单，如果有才可以减库存生成订单。
+>
+> 虽然减库存这里使用乐观锁保证了并发安全。
+>
+> 但是在查询订单是否存在到更新库存这之间如果有多个线程已经判断订单不存在了则也会出现并发安全。
+>
+> 也就是判断订单是否存在到减库存这一段是需要加锁的,而这是个查询操作,放弃乐观锁,使用Synchronized。
+
+```java
+@Transactional
+Result createVoucherOrder(Long voucherId) {
+  synchronized (userId.toString().intern()) {
+        // 判断此用户是否已
+        // 经下过单
+        final Map<String, Object> map = new HashMap<>();
+        map.put("voucher_id",voucherId);
+        map.put("user_id",userId);
+        final Integer count = this.query().allEq(map).count();
+        if (count > 0) {
+            return Result.fail("该用户" + userId + "已经下过单");
+        }
+        //减库存
+        //生成订单。。。
+		}
+}
+```
+
+
+
+##### 事务问题
+
+> @Transactional事务生效是因为,Spring对当前对象进行代理,由代理对象进行事务处理。
+>
+> 问题：锁释放但是事务没有提交
+>
+> 解决：代理整个方法
+
+```java
+final UserDTO user = UserHolder.getUser();
+final Long userId = user.getId();
+synchronized (userId.toString().intern()) {
+    return this.createVoucherOrder(voucherId);
+}
+```
+
+> 这样会发生事务失效的问题,this.createVoucherOrder(voucherId);调用此方法的是当前对象不是代理对象,事务会失效。
+>
+> 解决:找到代理对象。
+
+```java
+synchronized (userId.toString().intern()) {
+    // 获取当前对象的代理对象,Spring会为我们生成代理对象来处理事务
+    final IVoucherOrderService voucherOrderService = (IVoucherOrderService) AopContext.currentProxy();
+    // this当前对象调用方法事务不会生效
+    //return this.createVoucherOrder(voucherId);
+    return voucherOrderService.createVoucherOrder(voucherId);
+}
+```
+
+==注意：==引入aspectj依赖，并添加暴露代理对象的注解`@EnableAspectJAutoProxy(exposeProxy = true)`
+
+
+
+#### 集群部署问题
+
+> 项目以集群部署的话会产生在单机项目下不会出现的并发问题。
+
+##### idea模拟集群
+
+- 右击复制配置
+
+![image-20230308015017732](redis基础.assets/image-20230308015017732.png)
+
+- 配置端口
+
+Add vmoption 添加`-Dserver.port=8082`
+
+![image-20230308015106208](redis基础.assets/image-20230308015106208.png)
+
+- 启动
+
+![image-20230308015238095](redis基础.assets/image-20230308015238095.png)
+
+##### nginx配置负载均衡
+
+> 默认采用轮询。
+>
+> 访问80端口就是访问http://backend;就是访问 8081和8082这两个服务。
+
+```bash
+ ## 修改 server location下的代理配置
+ proxy_pass http://backend;
+ 
+ ## 添加节点
+ upstream backend {
+   server 127.0.0.1:8081 max_fails=5 fail_timeout=10s weight=1;
+   server 127.0.0.1:8082 max_fails=5 fail_timeout=10s weight=1;
+ }
+```
+
+##### 时序图
+
+> 单机环境下多个线程共享JVM,得到的是同一个对象监视器,synchronized生效。
+>
+> 集群环境下多个线程不共享JVM,得到的不是同一个对象监视器,可能会造成线程安全问题。
+>
+> 所以得找到一块所有线程共享的空间,借助它来实现分布式锁,就是Redis。
+
+![image-20230308023232887](redis基础.assets/image-20230308023232887.png)
+
+##### 分布式锁
+
+> 分布式锁：满足分布式系统或集群模式下多进程可见并且互斥的锁。
+
+分布式锁满足的条件：
+
+- 多进程可见(需要一块多进程共享的数据区)
+- 互斥
+- 高可用
+- 高性能
+- 安全性
+
+###### 分布式锁实现方案
+
+> 以下方案都是多进程可见的。
+
+|        | **MySQL**              | **Redis**          | **Zookeeper**      |
+| ------ | ---------------------- | ------------------ | ------------------ |
+| 互斥   | mysql写操作有行锁      | setnx互斥命令      | 节点唯一性         |
+| 高可用 | 好 (主从)              | 好（主从、集群）   | 好                 |
+| 高性能 | 一般                   | 好                 | 一般               |
+| 安全性 | 链接断开，锁会自动释放 | 好（超时自动释放） | 节点断开，自动释放 |
+
+###### 使用Redis实现分布式锁
+
+**获取锁（tryLock()）**
+
+> 利用redis的setnx命令，如果key存在则返回1，不存在则返回二
+
+```bash
+127.0.0.1:6379> setnx lock thread0
+(integer) 1
+127.0.0.1:6379> setnx lock thread0
+(integer) 0
+```
+
+**释放锁(unLock())**
+
+> 删除key
+
+```bash
+127.0.0.1:6379> del lock
+(integer) 1
+```
+
+**添加超时时间**
+
+> 为redis锁的key设置过期时间，防止服务宕机使得锁得不到释放，所有进程都获取不到锁。
+>
+> 使用原子命令！
+
+```bash
+127.0.0.1:6379> help set
+  SET key value [EX seconds|PX milliseconds|EXAT timestamp|PXAT milliseconds-timestamp|KEEPTTL] [NX|XX] [GET]
+  summary: Set the string value of a key
+  since: 1.0.0
+  group: string
+127.0.0.1:6379> set lock thread0 nx ex 30
+OK
+127.0.0.1:6379> get lock
+"thread0"
+127.0.0.1:6379> ttl lock
+(integer) 17
+127.0.0.1:6379> ttl lock
+(integer) 15
+```
+
+**代码实现**
+
+> 这是一个非阻塞锁,获取锁失败就重试
+
+```java
+public class MyDefinedSimpleRedisLock implements ILock {
+
+    /**
+     * 分布式锁的key名称
+     */
+    private String key;
+
+    private StringRedisTemplate stringRedisTemplate;
+
+    public MyDefinedSimpleRedisLock(String key, StringRedisTemplate stringRedisTemplate) {
+        this.key = key;
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
+
+    public boolean tryLock(long timeoutSec, TimeUnit timeUnit) {
+        return Boolean.TRUE.equals(stringRedisTemplate.opsForValue().setIfAbsent(key, Thread.currentThread().getId() + "", timeoutSec, timeUnit));
+    }
+
+    @Override
+    public boolean tryLock(long timeoutSec) {
+        return tryLock(timeoutSec, TimeUnit.SECONDS);
+    }
+
+    /**
+     * 分布式锁id，这里简单固定，后面需要优化成唯一id
+     */
+    @Override
+    public void unlock() {
+        // 释放锁
+        stringRedisTemplate.delete(key);
+    }
+}
+```
+
+
+
+##### 分布式锁解决超卖
+
+
+
 
 
 
