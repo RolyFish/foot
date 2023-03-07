@@ -71,7 +71,7 @@ public static <T> Optional<T> ofNullable(T value) {
 
 - ofNullable
 
-  > 与of()方法相似，只不过==允许为null==创建optional
+  > 与of()方法相似，只不过optional内部元素==允许为null==
 
   ```java
   final Optional<String> optionalOfNullable = Optional.ofNullable(null);
@@ -89,7 +89,7 @@ public static <T> Optional<T> ofNullable(T value) {
 
   > 返回Optional容器中的值。
   >
-  > 存在则返回，不存在抛异常  NoSuchElementException。
+  > 元素对象不为null则返回，为null则抛异常：  NoSuchElementException。
   
   ```java
   final String s = optional.get();
@@ -97,7 +97,7 @@ public static <T> Optional<T> ofNullable(T value) {
 
 - ifPresent
 
-  > 如果存在则执行消费方法，如果不存在则跳过消费方法。
+  > 如果内部元素为null则执行消费方法，如果不为null则跳过消费方法。
   
   ```java
   optional.ifPresent(System.out::println);
@@ -105,7 +105,7 @@ public static <T> Optional<T> ofNullable(T value) {
 
 - orElse
 
-  > Optional容器中颗值不为null则返回对应值，如果为null则返回默认值(即orElse的参数)
+  > Optional容器中元素不为null则返回对应值，如果为null则返回默认值(即orElse指定的值)
   
   ```java
   optionalOfNullable.orElse("other");
@@ -121,7 +121,7 @@ public static <T> Optional<T> ofNullable(T value) {
 
 - orElseThrow
 
-  > 存在返回，不存在则抛出异常
+  > 内部元素不为null返回，为null则抛出异常
   
   ```java
   optionalOfNullable.orElseThrow(NullPointerException::new);
@@ -129,20 +129,20 @@ public static <T> Optional<T> ofNullable(T value) {
 
 - Map
 
-  > Optional容器中值为null则返回空Optional(即执行empty()方法，内部元素为null)，否则映射为一个==可存null值==的新的Optional，此Optional的值为`Function  mapper`接口实现类的返回结果。
+  > 映射为一个新的Optional。
   >
-  > 即执行Optional.ofNullable(mapper.apply(value));
-  
+  > Optional容器中值为null则返回空Optional(即执行empty()方法，内部元素为null)，否则映射为一个==可存null值==的新的Optional。即执行Optional.ofNullable(mapper.apply(value));
+
   ```java
   final Optional<String> optionalS = optional.map(ele -> "map");
   ```
 
 - FlatMap
 
-  > Optional容器中值为null则返回空Optional(即执行empty()方法，内部元素为null)，否则映射为一个==不可存null值==的新的Optional，此Optional的值为`Function  mapper`接口实现类的返回结果。
+  > 映射为一个新的Optional。
   >
-  > 即执行Objects.requireNonNull(mapper.apply(value));
-  
+  > Optional容器中值为null则返回空Optional(即执行empty()方法，内部元素为null)，否则映射为一个新的Optional。
+
   ```java
   final Optional<String> optionalFlatMap = optional.flatMap(ele -> Optional.of("map"));
   ```
@@ -225,8 +225,6 @@ OptionalUtil.resolve(() -> element1.getElement2().getElement3()).ifPresent(ele -
 
 > java接口中可定义默认方法。
 
-
-
 ##### 什么是默认方法 为何有默认方法
 
 > 接口中的默认方法指的是实现类无需强制实现的方法。
@@ -253,7 +251,7 @@ class IDemoImpl implements IDemo {
 
 ##### 多继承问题
 
-> 接口可以多实现，从不同接口中引入相同方法则会有冲突。且接口可以继承，那么调用规则是很么样的？
+> 可以实现多个接口，从不同接口中引入相同方法则会有冲突。且接口可以继承，那么调用规则是很么样的？
 
 - 实现类中的方法优先于任意默认方法
 - 否则优先选择唯一且路径最短的
@@ -364,9 +362,9 @@ class ICaseImpC1 implements ICaseC1{
 
 > 默认方法使得对接口进行修改，以兼容原有类实现提供便利。
 >
+> 接口默认方法调用规则：最短路径且唯一，如果不唯一则报错
+>
 > Java8中集合框架使用了大量默认方法对其进行改进。比如Iterable的foreach，迭代器的foreach方法是Java8引入的，而此接口是Java5引入的。
-
-
 
 ##### 类型注解
 
@@ -464,7 +462,7 @@ static <T> void m(T t, List<T> list) {
 
 
 
-#### 移出永久代
+#### 移除永久代
 
 - 永久代
 
