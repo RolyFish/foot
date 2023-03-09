@@ -2649,6 +2649,65 @@ MutiLock原理：
 
 ![image-20230310003832038](redis基础.assets/image-20230310003832038.png)
 
+
+
+###### 测试联锁
+
+```java
+@Bean
+public RedissonClient redissonClient() throws IOException {
+    final Config config = Config.fromYAML(new File(new ClassPathResource("redisson.yml").getAbsolutePath()));
+    return Redisson.create(config);
+}
+
+@Bean(name = "redissonClient1")
+public RedissonClient redissonClient1() throws IOException {
+    final Config config = Config.fromYAML(new File(new ClassPathResource("redisson2.yml").getAbsolutePath()));
+    return Redisson.create(config);
+}
+```
+
+```java
+@Slf4j
+@SpringBootTest
+public class MutliRedissonTest {
+    @Autowired
+    @Qualifier("redissonClient1")
+    RedissonClient redissonClient1;
+    @Autowired
+    @Qualifier("redissonClient")
+    RedissonClient redissonClient;
+    RLock redissonMultiLock = null;
+    @BeforeEach
+    void setUp() {
+        final RLock lock1 = redissonClient1.getLock("LOCK:TEST:");
+        final RLock lock2 = redissonClient.getLock("LOCK:TEST:");
+        redissonMultiLock = new RedissonMultiLock(lock1, lock2);
+    }
+    @Test
+    public void test() {
+        try {
+            final boolean b = redissonMultiLock.tryLock(10, 100, TimeUnit.SECONDS);
+            if (b) {
+                log.info("联锁获取成功");
+            }
+        } catch (InterruptedException e) {
+        } finally {
+            redissonMultiLock.unlock();
+            log.info("联锁释放");
+        }
+    }
+}
+```
+
+![image-20230310031741194](redis基础.assets/image-20230310031741194.png)
+
+
+
+![image-20230310031800028](redis基础.assets/image-20230310031800028.png)
+
+![image-20230310031813982](redis基础.assets/image-20230310031813982.png)
+
 ##### 总结
 
 1）不可重入Redis分布式锁：
