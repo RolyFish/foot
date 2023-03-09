@@ -163,6 +163,90 @@ redis-cli [options] [commonds]
 
 
 
+### Docker安装Redis
+
+#### docker拉取镜像
+
+```bash
+➜  ~ docker pull redis:latest
+```
+
+![image-20230310011219180](redis基础.assets/image-20230310011219180.png)
+
+#### redis配置
+
+> 创建redis的挂载目录,包括配置目录和数据目录。
+
+```bash
+➜  home cd ~
+➜  ~ mkdir -p ~/home/redis/conf  ## redis配置存放目录
+➜  ~ mkdir -p ~/home/redis/data  ## redis数据存放目录，挂载配置后，持久化文件会放在这里
+```
+
+> 配置redis
+>
+> [官网配置模版](https://redis.io/docs/management/config/),对应好版本,这里的redis版本为7.0。复制下来
+
+创建配置文件：
+
+```bash
+➜  ~ cd home/redis/conf
+➜  conf touch redis.conf
+```
+
+复制官网配置文件进去：
+
+修改几个配置
+
+```bash
+# bind 127.0.0.1 -::1   ## 这个配置注掉,表示只允许本机连接。或修改为 bind 0.0.0.0
+daemonize no ## 设置为守护进程
+requirepass 123123 ## 设置密码
+```
+
+#### 启动redis
+
+> -d --privileged=true 使得容器内root拥有真正的root权限
+>
+> --appendonly yes   开启持久化  或者在配置文件中修改为`appendonly yes`
+
+```shell
+docker run -d --privileged=true -p 6380:6379 
+-v /Users/rolyfish/home/redis/conf/redis.conf:/etc/redis/redis.conf 
+-v /Users/rolyfish/home/redis/data:/data 
+--name testredis redis redis-server /etc/redis/redis.conf 
+--appendonly yes
+```
+
+> docker ps 即可查看正在运行的redis容器
+
+![image-20230310025547149](redis基础.assets/image-20230310025547149.png)
+
+> 交互模式进入容器,并使用redis客户端redis-cli
+
+```shell
+➜  data docker exec -it testredis /bin/bash
+root@548bc86cb8cd:/data# redis-cli
+127.0.0.1:6379> info
+NOAUTH Authentication required.
+127.0.0.1:6379> auth 123123
+OK
+127.0.0.1:6379> set name yuyc
+OK
+127.0.0.1:6379> get name
+"yuyc"
+```
+
+#### 远程连接
+
+> 配置ip和端口即可链接成功。
+
+![image-20230310025633617](redis基础.assets/image-20230310025633617.png)
+
+![image-20230310025655894](redis基础.assets/image-20230310025655894.png)
+
+
+
 ## 常用命令
 
 
@@ -1777,19 +1861,23 @@ public long nextId(String keyPrefix) {
 
 
 
-### 秒杀
+### 分布式锁
+
+
+
+#### 秒杀场景
 
 > hmdp秒杀优惠券为例
 
-#### 基本功能
+##### 基本功能
 
 ![image-20230307230718368](redis基础.assets/image-20230307230718368.png)
 
-#### 超卖问题
+##### 超卖问题
 
 > 并发环境下有可能产生超卖问题，也就是库存可能小于0。问题出现的原因就是有一部份线程判断库存充足，且还未完成减库存动作，这之间有很多其他线程已经判断了库存充足。
 
-##### 使用Jmeter测试
+###### 使用Jmeter测试
 
 准备200个请求,模拟200次并发。
 
@@ -1807,14 +1895,14 @@ public long nextId(String keyPrefix) {
 
 ![image-20230307232542172](redis基础.assets/image-20230307232542172.png)
 
-#### 超卖问题解决
+###### 超卖问题解决
 
 > 加锁
 
 - 乐观锁
 - 悲观锁
 
-##### 悲观锁解决
+###### 悲观锁解决
 
 > 悲观锁认为数据一定会发生线程安全问题,因此在操作数据之间会首先获取锁。
 >
@@ -1832,7 +1920,7 @@ synchronized ((voucherId + "").intern()) {
 }
 ```
 
-##### 乐观锁解决
+###### 乐观锁解决
 
 > 乐观锁用于更新情况,乐观锁认为线程安全问题不一定会发生,只会在修改数据的时候判断数据是否被修改了。
 >
@@ -1870,7 +1958,7 @@ int flag = (Thread.currentThread().getId() + "").hashCode() & 1;
 return flag>0? optimisticLock(voucherId):optimisticLockAdd(voucherId);
 ```
 
-##### 对比
+###### 互斥锁乐观锁对比
 
 悲观锁,让线程串行执行
 
@@ -1882,9 +1970,7 @@ return flag>0? optimisticLock(voucherId):optimisticLockAdd(voucherId);
 - 性能好
 - 存在成功率低的问题
 
-
-
-#### 一人一单问题
+##### 一人一单问题
 
 > 一个人只能下一单,也就是扣减库存之前需要判断订单表里是否有该用户的订单，如果有才可以减库存生成订单。
 >
@@ -1915,7 +2001,7 @@ Result createVoucherOrder(Long voucherId) {
 
 
 
-##### 事务问题
+##### 事务失效问题
 
 > @Transactional事务生效是因为,Spring对当前对象进行代理,由代理对象进行事务处理。
 >
@@ -1996,7 +2082,7 @@ Add vmoption 添加`-Dserver.port=8082`
 
 ![image-20230308023232887](redis基础.assets/image-20230308023232887.png)
 
-##### 分布式锁
+#### 简介
 
 > 分布式锁：满足分布式系统或集群模式下多进程可见并且互斥的锁。
 
@@ -2008,7 +2094,7 @@ Add vmoption 添加`-Dserver.port=8082`
 - 高性能
 - 安全性
 
-###### 分布式锁实现方案
+#### 分布式锁实现方案
 
 > 以下方案都是多进程可见的。
 
@@ -2019,7 +2105,7 @@ Add vmoption 添加`-Dserver.port=8082`
 | 高性能 | 一般                   | 好                 | 一般               |
 | 安全性 | 链接断开，锁会自动释放 | 好（超时自动释放） | 节点断开，自动释放 |
 
-###### 使用Redis实现分布式锁
+#### 使用Redis实现分布式锁
 
 **获取锁（tryLock()）**
 
@@ -2102,18 +2188,480 @@ public class MyDefinedSimpleRedisLock implements ILock {
 }
 ```
 
-
-
 ##### 分布式锁解决超卖
 
+```java
+// 分布式锁  使用用户id作为key
+final ILock redisLock = new MyDefinedSimpleRedisLock(LOCK_USER_KEY + userId, redisTemplate);
+final boolean b = redisLock.tryLock(LOCK_USER_TTL);
+if (!b) {
+    // 重试或者失败
+    //return optimisticLock(voucherId);
+    // 重复下单是不允许的可以返回失败
+    return Result.fail("不要重复下单!!");
+}
+try {
+  // 获取当前对象的代理对象,Spring会为我们生成代理对象来处理事务
+  final IVoucherOrderService voucherOrderService = (IVoucherOrderService) AopContext.currentProxy();
+    // this当前对象调用方法事务不会生效
+    //return this.createVoucherOrder(voucherId);
+    return voucherOrderService.createVoucherOrder(voucherId);
+  } finally {
+    redisLock.unlock();
+}
+```
+
+##### 分布式锁-误删问题
+
+> 如图：使用超时删除来防止锁无法被释放,这样也会导致锁误删的问题。
+
+![image-20230308231930569](redis基础.assets/image-20230308231930569.png)
+
+> 解决方式:线程获取锁的时候存入线程唯一标识,在释放锁的时候判断是否是当前线程的锁。
+>
+> UUID+线程ID,UUID分辨及其,线程ID分辨虚拟机线程,组合起来可作为线程唯一标识。
+
+```java
+// 线程标识
+private static final String ID_PREFIX = UUID.randomUUID().toString(true);
+
+// 获取锁
+public boolean tryLock(long timeoutSec, TimeUnit timeUnit) {
+	return Boolean.TRUE.equals(stringRedisTemplate.opsForValue().setIfAbsent(key, ID_PREFIX + Thread.currentThread().getId(), timeoutSec, timeUnit));
+}
+
+// 释放锁
+public void unlock() {
+    final String lockValueExpect = ID_PREFIX + Thread.currentThread().getId();
+    final String lockValue = stringRedisTemplate.opsForValue().get(key);
+    // 当前线程锁，才释放
+    if (lockValueExpect.equals(lockValue)) {
+      // 释放锁
+      stringRedisTemplate.delete(key);
+    }
+}
+```
 
 
 
+##### 分布式锁-释放锁原子性
+
+> 上面我们解决分布式锁误删问题的方案是:存入线程标识,释放锁的时首先判断是否是当前线程的锁,然后再释放锁。
+>
+> 而判断是否是当前线程的锁和释放锁是两个操作,不是原子操作,若在这两个操作之间我们线程阻塞了(Full GC会导致所有线程阻塞),直到分布式锁超时释放,那么其他线程就可以获取锁,后面线程被唤醒后就又会导致误删的问题。
+>
+> 解决方案:lua脚本保证,判断锁和释放锁是原子操作
+
+###### LUA脚本
+
+> LUA脚本中可以包含多条Redis命令,Redis执行LUA脚本是原子操作。
+
+**Redis调用函数**
+
+语法：
+
+```shell
+redis.call('命令','key'，'参数',....)
+```
+
+执行set命令:
+
+```shell
+set name yuyc
+## 等价于
+redis.call('set','name','yuyc')
+```
+
+执行get命令:
+
+```shell
+get name
+## 等价于
+redis.call('get','name')
+```
+
+**Redis执行LUA脚本**
+
+![image-20230309000106134](redis基础.assets/image-20230309000106134.png)
+
+```shell
+127.0.0.1:6379> help @scripting
+  EVAL script numkeys key [key ...] arg [arg ...]
+  summary: Execute a Lua script server side
+  since: 2.6.0
+```
+
+**执行无参数的LUA脚本**
+
+```shell
+127.0.0.1:6379> eval "return redis.call('set','name','yuyc')" 0
+OK
+127.0.0.1:6379> eval "return redis.call('get','name')" 0
+"yuyc"
+127.0.0.1:6379> eval "return redis.call('del','name')" 0
+(integer) 1
+```
+
+**执行有参数的LUA脚本**
+
+> 如果脚本中的key、value不想写死,可以作为参数传递。key类型参数会放入KEYS数组,其它参数会放入ARGV数组,在脚本中可以从KEYS和ARGV数组获取这些参数,数组下标从1开始。
+
+```shell
+127.0.0.1:6379> eval "return redis.call('set',KEYS[1],ARGV[1])" 1 age 23
+OK
+127.0.0.1:6379> eval "return redis.call('get',KEYS[1])" 1 age
+"23"
+```
+
+###### 释放锁的LUA脚本
+
+```lua
+-- 待释放锁的key
+local key = KEYS[1]
+-- 传入的线程标识
+local value = ARGV[1]
+-- 获取锁
+local threadID = redis.call('get',key)
+-- 判断是否相等
+if (value == threadID) then
+    return redis.call('del',key)
+end
+return 0
+```
+
+优化：
+
+```lua
+if (redis.call('get', KEYS[1]) == ARGV[1]) then
+    return redis.call('del', KEYS[1])
+end
+return 0
+```
+
+###### 调用LUA脚本
+
+```java
+private final static DefaultRedisScript<Long> UNLOCK_SCRIP = new DefaultRedisScript<>();
+static {
+    UNLOCK_SCRIP.setLocation(new ClassPathResource("lua/unlock.lua"));
+    UNLOCK_SCRIP.setResultType(Long.class);
+}
+/**
+ * lua脚本释放锁，保证判断是否是当前线程锁的操作和删除锁的操作原子性
+ */
+@Override
+public void unlock() {
+    stringRedisTemplate.execute(UNLOCK_SCRIP, Arrays.asList(key), ID_PREFIX + Thread.currentThread().getId());
+}
+```
+
+##### 小结
+
+基于Redis的分布式锁实现思路：
+
+- 利用set nx ex获取锁，并设置过期时间
+- 保存线程标示释放锁时先判断线程标示是否与自己一致，一致则删除锁
+
+特性：
+
+- 利用set nx满足互斥性
+- 利用set ex保证故障时锁依然能释放，避免死锁，提高安全性
+- 利用Redis集群保证高可用和高并发特性
 
 
 
-## 问题记录
+#### Redission
 
-- nginx    负载均衡策略  轮询、随机、哈希
-- 分布式锁， redis MySQL  zookeeper
-  - lua脚本保证原子性 
+[GITHUP地址](https://github.com/redisson/redisson/wiki/%E7%9B%AE%E5%BD%95)
+
+> Redisson提供了丰富分布式锁类型
+
+![image-20230309105344480](redis基础.assets/image-20230309105344480.png)
+
+> 上面基于setnx命令我们自己封装的分布式锁存在哪些缺点？
+
+- 不可重入
+
+  > 锁不可重入可能会导致死锁的问题。
+  >
+  > Java为我们提供的Synchronized和ReentrantLock都是可重入的。
+
+- 不可重试
+
+  > 不可重试重新获取锁,导致频繁比例过大。
+
+- 超时释放
+
+  > 添加超时释放可以防止死锁,但是这个超时时间很难把控,可能在业务未完全完成时,锁就被超时释放了,虽然我们使用LUA脚本来防止误删的情况出现,但锁还是提前释放了,存在安全隐患。
+
+- 主从一致性
+
+  > 主节点的锁未同步给从节点就宕机了,其他线程就可以拿到锁。存在并发安全问题。
+
+##### 简介
+
+> Redisson是一个在Redis的基础上实现的Java驻内存数据网格（In-Memory Data Grid）。它不仅提供了一系列的分布式的Java常用对象，还提供了许多分布式服务。其中包括(`BitSet`, `Set`, `Multimap`, `SortedSet`, `Map`, `List`, `Queue`, `BlockingQueue`, `Deque`, `BlockingDeque`, `Semaphore`, `Lock`, `AtomicLong`, `CountDownLatch`, `Publish / Subscribe`, `Bloom filter`, `Remote service`, `Spring cache`, `Executor service`, `Live Object service`, `Scheduler service`) Redisson提供了使用Redis的最简单和最便捷的方法。Redisson的宗旨是促进使用者对Redis的关注分离（Separation of Concern），从而让使用者能够将精力更集中地放在处理业务逻辑上。
+
+> 人话: 一个基于Redis实现的分布式工具的集合。 
+
+##### 配置
+
+###### 引入依赖
+
+```XML
+<dependency>
+    <groupId>org.redisson</groupId>
+    <artifactId>redisson</artifactId>
+    <version>3.13.6</version>
+</dependency>
+```
+
+###### 程序化配置
+
+```java
+@Configuration
+public class RedissonConfig {
+    @Bean
+    public RedissonClient redissonClient() {
+        // 配置
+        Config config = new Config();
+  		  config.useSingleServer().setAddress("redis://10.211.55.4:6379")
+                                .setPassword("123123");
+        // 创建RedissonClient对象
+        return Redisson.create(config);
+    }
+}
+```
+
+###### yml配置
+
+> 创建redisson.yml配置文件：([官网有配置模板](https://github.com/redisson/redisson/wiki/2.-%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95#22-%E6%96%87%E4%BB%B6%E6%96%B9%E5%BC%8F%E9%85%8D%E7%BD%AE))
+
+```yml
+singleServerConfig:
+  idleConnectionTimeout: 10000
+  connectTimeout: 10000
+  timeout: 3000
+  retryAttempts: 3
+  retryInterval: 1500
+  password: 123123
+  subscriptionsPerConnection: 5
+  clientName: null
+  address: "redis://10.211.55.4:6379"
+  subscriptionConnectionMinimumIdleSize: 1
+  subscriptionConnectionPoolSize: 50
+  connectionMinimumIdleSize: 32
+  connectionPoolSize: 64
+  database: 0
+  dnsMonitoringInterval: 5000
+threads: 0
+nettyThreads: 0
+codec: !<org.redisson.codec.JsonJacksonCodec> { }
+"transportMode": "NIO"
+```
+
+> 配置即可
+
+```java
+@Bean(name = "redissonClient2")
+public RedissonClient redissonClient2() throws IOException {
+    final Config config = Config.fromYAML(new File(new ClassPathResource("redisson.yml").getAbsolutePath()));
+    return Redisson.create(config);
+}
+```
+
+
+
+##### 使用
+
+```java
+// 注入并创建锁
+@Autowired
+RedissonClient redisson;
+final RLock redisLock = redisson.getLock(LOCK_USER_KEY + userId);
+final boolean b = redisLock.tryLock(LOCK_USER_TIMEOUT, LOCK_USER_TTL, TimeUnit.SECONDS);
+redisLock.unLock();
+```
+
+> tryLock方法参数说明：
+>
+> - waitTime 超时等待时间。获取不到锁会等待,直到超过超时时间
+> - leaseTime 自动释放时间  (ttl)    默认-1
+> - unit时间单位
+
+```java
+boolean tryLock(long waitTime, long leaseTime, TimeUnit unit) throws InterruptedException;
+```
+
+
+
+##### 原理
+
+###### 可重入原理
+
+> 重入锁指的是当前线程可多次获取锁,重入加锁则重入次数加一,释放锁的时候重入次数减一,直到重入次数为0,则释放锁。
+>
+> 自定义实现的锁,我们使用的是`opsForValue的set nx命令`也就是不可重入。参照`JDK`的可重入锁`ReentrantLock`的原理,它会有一个重入次数,所以需要实现`Redis`实现锁重入,必须存入锁被重入次数,那么必须使用哈希结构。
+
+> Hset命令,没有类似于set nx ex 2的命令,所以得分步骤实现,分步实现又有线程安全问题,所以得借助Lua脚本实现。
+
+```shell
+127.0.0.1:6379> help hset
+
+  HSET key field value [field value ...]
+  summary: Set the string value of a hash field
+  since: 2.0.0
+  group: hash
+```
+
+步骤：
+
+![image-20230309215651836](redis基础.assets/image-20230309215651836.png)
+
+lua脚本实现：
+
+获取锁：
+
+```lua
+
+local hkey = KEYS[1]
+local threadID = ARGV[1]
+local releaseTime = ARGV[2]
+---- KEY不存在
+if (redis.call('exists', hkey) == 0) then
+    -- 设置重入次数为1,并设置过期时间
+    redis.call('hset', hkey, threadID, '1');
+    redis.call('expire', hkey, releaseTime);
+    return 1;
+end
+---- key存在且是当前线程   hexists key field 判断哈希结构属性是否存在
+if (redis.call('hexists', hkey, threadID) == 1) then
+    redis.call('hincrby', hkey, threadID, '1');
+    redis.call('pexpire', hkey, releaseTime);
+end
+return redis.call('pttl', hkey);
+```
+
+释放锁：
+
+```lua
+local hkey = KEYS[1]
+local threadID = ARGV[1]
+local releaseTime = ARGV[2]
+-- KEY不存在
+if (redis.call('hexists', hkey, threadID) == 0) then
+    return nil;
+end
+-- key存在且是当前线程
+local counter = redis.call('hincrby', hkey, threadID, -1);
+if (counter > 0) then
+    -- 重置有效期
+    redis.call('pexpire', hkey, releaseTime)
+    return 0;
+else
+    -- 释放锁
+    redis.call('del', hkey)
+    return 1;
+end
+return nil;
+```
+
+测试：
+
+```java
+@Test
+public void test() {
+    final MyReentrantRedisLock myReentrantRedisLock = new MyReentrantRedisLock("LOCK:TEST", redisTemplate);
+    method1(myReentrantRedisLock);
+}
+private void method1(MyReentrantRedisLock myReentrantRedisLock) {
+    try {
+        final boolean b = myReentrantRedisLock.tryLock(30L);
+        if (b) {
+            log.info(Thread.currentThread().getName() + "method1" + "获取锁");
+            method2(myReentrantRedisLock);
+        }
+    } finally {
+        myReentrantRedisLock.unlock();
+        log.info(Thread.currentThread().getName() + "method1" + "释放锁");
+    }
+
+}
+
+private void method2(MyReentrantRedisLock myReentrantRedisLock) {
+    try {
+        final boolean b = myReentrantRedisLock.tryLock(30L);
+        if (b) {
+            log.info(Thread.currentThread().getName() + "method2" + "获取锁");
+        }
+    } finally {
+        myReentrantRedisLock.unlock();
+        log.info(Thread.currentThread().getName() + "method2" + "释放锁");
+    }
+}
+```
+
+![image-20230309230940055](redis基础.assets/image-20230309230940055.png)
+
+###### 可重试
+
+> 上面我们实现的redis可重入锁,Redisson也是这样实现的。
+>
+> 那么Redisson是如何实现重试的呢？
+>
+> 几个参数：
+>
+> - long waitTime   重试时间,获取失败不会立刻返回,会不断重试
+> - long leaseTime  自动释放时间,过期时间
+> -  TimeUnit unit  时间单位
+>
+> 如果不设置超时释放时间则默认为-1,并开启看门狗机制,不断刷新锁的有效时长,在锁被释放的时候才会取消看门狗机制。看门狗默认为30s。看门狗机制防止业务执行过程中锁自动释放。
+>
+> Redisson获取锁失败不会立刻进行重试,它会订阅并等待释放锁的信号,通过发布订阅和信号量机制防止频繁重试。
+>
+> Redisson释放锁操作会发布一个通知,通知等待线程开始重试获取锁,并取消看门狗机制。
+
+![image-20230309232858219](redis基础.assets/image-20230309232858219.png)
+
+###### 小结
+
+Redisson分布式锁原理：
+
+- 可重入：利用hash结构记录线程id和重入次数
+- 可重试：利用信号量和PubSub功能实现等待、唤醒，获取锁失败的重试机制
+- 超时续约：利用watchDog，每隔一段时间（releaseTime / 3），重置超时时间
+
+##### Redisson分布式锁主从一致性问题
+
+> 当我们搭建主从Redis服务的时候,主节点用于写,从节点用于读,以提高Redis的性能。但是也会出现主从一致性问题,也就是主节点宕机的时候,数据未同步到从节点。
+>
+> 如果设置了一个锁在主节点,主节点未来得及同步到从节点,此刻选举从节点作为主节点,新的主节点没有锁信息,导致锁失效问题。
+
+![image-20230310003621911](redis基础.assets/image-20230310003621911.png)
+
+> 为了解决这样的问题Redisson提出了MutiLock(联锁),使用这把锁咱们就不使用主从了，每个节点的地位都是一样的， 这把锁加锁的逻辑需要写入到每一个主丛节点上，只有所有的服务器都写入成功，此时才是加锁成功，假设现在某个节点挂了，那么他去获得锁的时候，只要有一个节点拿不到，都不能算是加锁成功，就保证了加锁的可靠性。
+
+![image-20230310003752113](redis基础.assets/image-20230310003752113.png)
+
+MutiLock原理：
+
+当我们去设置了多个锁时，redission会将多个锁添加到一个集合中，然后用while循环去不停去尝试拿锁，但是会有一个总共的加锁时间，这个时间是用需要加锁的个数 * 1500ms ，假设有3个锁，那么时间就是4500ms，假设在这4500ms内，所有的锁都加锁成功， 那么此时才算是加锁成功，如果在4500ms有线程加锁失败，则会再次去进行重试。
+
+![image-20230310003832038](redis基础.assets/image-20230310003832038.png)
+
+##### 总结
+
+1）不可重入Redis分布式锁：
+
+- 原理：利用setnx的互斥性；利用ex避免死锁；释放锁时判断线程标示
+- 缺陷：不可重入、无法重试、锁超时失效
+
+2）可重入的Redis分布式锁：
+
+- 原理：利用hash结构，记录线程标示和重入次数；利用watchDog延续锁时间；利用信号量控制锁重试等待
+- 缺陷：redis宕机引起锁失效问题
+
+3）Redisson的multiLock：
+
+- 原理：多个独立的Redis节点，必须在所有节点都获取重入锁，才算获取锁成功
+- 缺陷：运维成本高、实现复杂
