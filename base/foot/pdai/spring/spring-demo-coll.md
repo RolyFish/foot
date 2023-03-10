@@ -985,11 +985,86 @@ public class StudentController {
 
 
 
+## Mybatis-plus-MultiDataSource
+
+> Mybatis-plus配置多数据源。[Mybatis-plus官网](https://baomidou.com/pages/a61e1b/#dynamic-datasource)
+
+### 引入依赖
+
+```xml
+<dependency>
+    <groupId>com.baomidou</groupId>
+    <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+    <version>${mp.dynamic-datasource.version}</version>
+</dependency>
+```
+
+### 配置
+
+```yml
+spring:
+  datasource:
+    dynamic:
+      primary: master #设置默认的数据源或者数据源组,默认值即为master
+      strict: false #严格匹配数据源,默认false. true未匹配到指定数据源时抛异常,false使用默认数据源
+      datasource:
+        master:
+          type: com.alibaba.druid.pool.DruidDataSource
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://localhost:3306/springall?useUnicode=true&characterEncoding=UTF-8&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false&zeroDateTimeBehavior=convertToNull
+          username: root
+          password: 123456
+
+        slave_1:
+          url: jdbc:postgresql://127.0.0.1:5432/springall?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&characterSetResults=utf8&useSSL=false&allowMultiQueries=true
+          username: rolyfish
+          password: Xiaochuang6
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource # 3.2.0开始支持SPI可省略此配置
+          
+## druid 配置。。。。
+mybatis-plus:
+  type-aliases-package: com.roily.demo.multidatasource.multidatasource.entity
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+```
+
+### 编码
+
+> 和普通mp没有太大区别,只在调用时添加注解即可。
+
+> 如果不指定@DS,默认主节点。、
+>
+> @DS可以放在类和方法上,采用就近原则,方法上的配置可以覆盖类上的配置。
+
+```java
+@Service
+// 默认主节点
+@DS("master")
+public class StudentServiceImp extends ServiceImpl<StudentMapper, Student> implements StudentService {
+    @DS("master")
+    @Override
+    public List<Student> getAllMaster() {
+        return list();
+    }
+    @DS("slave_1")
+    @Override
+    public List<Student> getAllSlave() {
+        return list();
+    }
+}
+```
+
+
+
+
+
+
+
 
 
 ## Spring-Boot-AOP
-
-
 
 
 

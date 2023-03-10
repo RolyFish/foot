@@ -29,7 +29,7 @@ private static final int DEFAULT_CAPACITY = 10;
 private static final Object[] EMPTY_ELEMENTDATA = {};
 //默认空对象数组，ArrayList无参构造初锁始化的空数组
 private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
-//对象数组，数组所存放的数组
+//对象数组,集合元素存储在此数组中  此字段不参与序列化
 transient Object[] elementData; // non-private to simplify nested class access
 //元素个数、注意不是数组长度
 private int size;
