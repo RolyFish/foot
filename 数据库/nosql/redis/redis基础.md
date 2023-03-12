@@ -1,7 +1,5 @@
 # redis
 
-
-
 ## 安装
 
 > redis只有linux版本的，平常在windows下使用的是微软转译过的。
@@ -200,7 +198,7 @@ redis-cli [options] [commonds]
 
 ```bash
 # bind 127.0.0.1 -::1   ## 这个配置注掉,表示只允许本机连接。或修改为 bind 0.0.0.0
-daemonize no ## 设置为守护进程
+daemonize no
 requirepass 123123 ## 设置密码
 ```
 
@@ -1859,17 +1857,11 @@ public long nextId(String keyPrefix) {
 }
 ```
 
-
-
-### 分布式锁
-
-
-
-#### 秒杀场景
+### 秒杀场景
 
 > hmdp秒杀优惠券为例
 
-##### 基本功能
+#### 基本功能
 
 ![image-20230307230718368](redis基础.assets/image-20230307230718368.png)
 
@@ -2082,7 +2074,7 @@ Add vmoption 添加`-Dserver.port=8082`
 
 ![image-20230308023232887](redis基础.assets/image-20230308023232887.png)
 
-#### 简介
+#### 分布式锁简介
 
 > 分布式锁：满足分布式系统或集群模式下多进程可见并且互斥的锁。
 
@@ -2106,6 +2098,8 @@ Add vmoption 添加`-Dserver.port=8082`
 | 安全性 | 链接断开，锁会自动释放 | 好（超时自动释放） | 节点断开，自动释放 |
 
 #### 使用Redis实现分布式锁
+
+##### 基本步骤
 
 **获取锁（tryLock()）**
 
@@ -2219,10 +2213,10 @@ try {
 
 > 解决方式:线程获取锁的时候存入线程唯一标识,在释放锁的时候判断是否是当前线程的锁。
 >
-> UUID+线程ID,UUID分辨及其,线程ID分辨虚拟机线程,组合起来可作为线程唯一标识。
+> UUID+线程ID,UUID分辨机器,线程ID分辨虚拟机线程,组合起来可作为线程唯一标识。
 
 ```java
-// 线程标识
+// 机器标识
 private static final String ID_PREFIX = UUID.randomUUID().toString(true);
 
 // 获取锁
@@ -2341,6 +2335,7 @@ return 0
 ###### 调用LUA脚本
 
 ```java
+// 提前加载 lua脚本
 private final static DefaultRedisScript<Long> UNLOCK_SCRIP = new DefaultRedisScript<>();
 static {
     UNLOCK_SCRIP.setLocation(new ClassPathResource("lua/unlock.lua"));
@@ -2485,7 +2480,7 @@ redisLock.unLock();
 
 > tryLock方法参数说明：
 >
-> - waitTime 超时等待时间。获取不到锁会等待,直到超过超时时间
+> - waitTime 重试时间。获取不到锁会重试,直到超过重试时间
 > - leaseTime 自动释放时间  (ttl)    默认-1
 > - unit时间单位
 
@@ -2523,7 +2518,6 @@ lua脚本实现：
 获取锁：
 
 ```lua
-
 local hkey = KEYS[1]
 local threadID = ARGV[1]
 local releaseTime = ARGV[2]
@@ -2649,7 +2643,12 @@ MutiLock原理：
 
 ![image-20230310003832038](redis基础.assets/image-20230310003832038.png)
 
+联锁的实现细节和是否设置重试时间和过期时间有关：
 
+- 如果没有设置重试时间,那么默认负一,其中有一把锁获取失败,就会返回false(即获取锁失败)
+- 如果设置了重试时间,则联锁获取失败会进行重试(重试之前会把所有已经获取的锁)
+- 如果没有设置超时释放时间,则会开启看门狗机制,进行锁自动续期
+- 如果设置了超时释放时间,则会在获取所有锁之后做一个刷新锁的过期时间(避免联锁超时时间不一致问题)。如果超时释放时间和重试时间,那么超时释放时间会调整为重试时间*2,避免已经获取的锁提前过期释放。
 
 ###### 测试联锁
 
@@ -2724,3 +2723,215 @@ public class MutliRedissonTest {
 
 - 原理：多个独立的Redis节点，必须在所有节点都获取重入锁，才算获取锁成功
 - 缺陷：运维成本高、实现复杂
+
+
+
+#### 性能优化
+
+> 对优惠券秒杀功能做性能优化。
+
+##### 测试
+
+> 对当前业务做性能测试。
+
+第一步准备用户数据
+
+```java
+@Override
+public Result createSecKillUserDate(Long num, String basephone) {
+  String phone = "";
+  final List<String> tockens = new ArrayList<>();
+  final Integer nums = Integer.valueOf(num + "");
+
+  for (int i = 0; i < nums; i++) {
+    int l = String.valueOf(i).length();
+    phone = basephone.substring(0, basephone.length() - l) + i;
+
+    // 发送验证码
+    final Result result = sendCode(phone, null);
+    // 验证码
+    final String code = (String) result.getData();
+    final LoginFormDTO loginFormDTO = new LoginFormDTO();
+    loginFormDTO.setCode(code);
+    loginFormDTO.setPhone(phone);
+    loginFormDTO.setPassword("defaultpassword");
+    final Result login = login(loginFormDTO, null);
+    tockens.add((String) login.getData());
+  }
+  // 写入文件
+  String filePath = "/Users/rolyfish/Desktop/software/apache-jmeter-5.5/jmetertestfile/tockens.txt";
+  try (FileWriter fileWriter = new FileWriter(filePath, true)) {
+
+    IOUtils.writeLines(tockens, System.lineSeparator(), fileWriter);
+  } catch (IOException e) {
+    throw new RuntimeException(e);
+  }
+  return null;
+}
+```
+
+第二部测试：
+
+200并发平均耗时1s多,QBS只有75每秒,性能低下。
+
+![image-20230312041355144](redis基础.assets/image-20230312041355144.png)
+
+##### 分析
+
+> 秒杀业务流程：查询优惠券->判断库存->查询订单->判断一人一单->扣减库存->创建订单。
+>
+> 这些所有步骤的耗时是呈现给用户的耗时,其中有很大部分是和数据库打交道,优化思路就是将这些与数据库打交道的操作,做出异步处理的逻辑。
+
+![image-20230312043421082](redis基础.assets/image-20230312043421082.png)
+
+##### 优化
+
+> 判断库存和一人一单在Redis里进行判断,下单操作异步执行,这样呈现给用户的响应时间段只有在Redis里的判断操作。
+
+- 添加优惠券时,将库存放入Redis,活动起止日期通过设置过期时间或定时脚本实现。Key为seckill:stock:voucherid,类型为String
+- 库存是否充足通过判断Redis里的库存信息
+- 一人一单:用户购买过就将用户ID存在Redis中。Key为seckill:order:voucherid,类型为set。
+
+库存是否充足和一人一单的判断,为了防止并发问题,得保证原子性执行,需要使用Lua脚本：
+
+###### 编写Lua脚本
+
+```lua
+-- 用户ID
+local userId = ARGV[1]
+-- 库存key
+local stockKey = ARGV[2]
+-- 订单key
+local orderKey = ARGV[3]
+-- 1.1 判断库存是否充足
+if (redis.call("exists", stockKey) == 0 or tonumber(redis.call("get", stockKey)) <= 0) then
+    -- 不充足返回1
+    return 1
+end
+-- 订单充足 判断一人一单
+if (redis.call("sismember", orderKey, userId) == 1) then
+    -- 已经下过单了 返回2
+    return 2
+end
+-- 定单充足，且没有下过单 返回0
+-- 3.1 库存减一
+-- 3.2 加入订单set
+redis.call("incrby", stockKey, -1)
+redis.call("sadd", orderKey, userId)
+return 0
+```
+
+###### 调用
+
+```java
+private static final DefaultRedisScript<Long> SECKILL_SCRIPT = new DefaultRedisScript<>();
+
+static {
+    SECKILL_SCRIPT.setLocation(new ClassPathResource("lua/seckill.lua"));
+    SECKILL_SCRIPT.setResultType(Long.class);
+}
+
+/**
+ * lua脚本实现秒杀,redis单线程
+ * - 初始化 lua脚本
+ * - 执行lua脚本
+ *
+ * @param voucherId
+ * @return
+ */
+private Result luaSeckillOrder(Long voucherId) {
+    UserDTO user = UserHolder.getUser();
+    final Long result = redisTemplate.execute(SECKILL_SCRIPT,
+            Collections.emptyList(),
+            user.getId().toString(),
+            SECKILL_STOCK_KEY + voucherId,
+            SECKILL_ORDER_KEY + voucherId);
+    final int resultI = result.intValue();
+    if (resultI != 0) {
+        return Result.fail(resultI == 1 ? "库存不足x" : "您已经下过单了x");
+    }
+    return Result.ok("用户:" + user.getId() + "购买订单:" + voucherId + "成功");
+}
+```
+
+###### 测试
+
+> 性能有了较大提升,本机电脑开的东西多占cpu性能,服务也会按集群部署,性能只会更好
+
+![image-20230313024026684](redis基础.assets/image-20230313024026684.png)
+
+###### 异步下单
+
+> 接下来就是将已经通过校验的订单以异步的形式存储在数据库。
+
+创建阻塞队列和异步处理线程池,`voucherOrderServiceProxy`这个代理对象还是为了防止事务失效,在子线程中是拿不到代理对象的(基于ThreadLocal)。
+
+```java
+private IVoucherOrderService voucherOrderServiceProxy = null;
+// 设置容量防止溢出
+private final static BlockingQueue<VoucherOrder> ORDER_TASKS = new ArrayBlockingQueue<>(1024 * 1024);
+// 线程池
+private static final ExecutorService SECKILL_EXECUTOR_SERVICE = new ThreadPoolExecutor(10, 10, 60L, TimeUnit.SECONDS, new LinkedBlockingDeque<>(), new ThreadFactory() {
+    @Override
+    public Thread newThread(Runnable r) {
+        return new Thread(r);
+    }
+});
+```
+
+在这之前lua脚本做资格的判断,判断成功则放入阻塞队列,并且在这里初始化代理对象
+
+```java
+// 创建订单信息放入阻塞队列
+// 1.1 全军唯一订单ID
+long orderID = redisIdWorker.nextId(UNIQUE_ID_KEY_ORDER);
+// 1.2 用户ID
+long userID = user.getId();
+final VoucherOrder voucherOrder = new VoucherOrder();
+voucherOrder.setId(orderID);
+voucherOrder.setUserId(userID);
+voucherOrder.setVoucherId(voucherId);
+try {
+    ORDER_TASKS.put(voucherOrder);
+} catch (InterruptedException e) {
+    log.info("线程终端异常");
+}
+voucherOrderServiceProxy = (IVoucherOrderService) AopContext.currentProxy();
+```
+
+> 在我们项目启动就会注入这个组件到Spring容器中,会触发类的初始化,@PostConstruct这个注解的作用就是当类初始化完成后,就执行这个方法。
+>
+> 这个方法不停的从阻塞队列中拿取订单,并执行创建订单的业务
+
+```java
+// 当类初始化之后执行此方法
+@PostConstruct
+private void init() {
+    SECKILL_EXECUTOR_SERVICE.submit(() -> {
+        // 从阻塞对列拿订单信息,并创建
+        while (true) {
+            final VoucherOrder voucherOrder = ORDER_TASKS.take();
+            handleVoucherOrder(voucherOrder);
+        }
+    });
+}
+```
+
+
+
+###### 缺点
+
+秒杀业务的优化思路是什么？
+
+- 先利用Redis完成库存余量、一人一单判断，完成抢单业务
+- 再将下单业务放入阻塞队列，利用独立线程异步下单
+
+基于阻塞队列的异步秒杀存在哪些问题？
+
+- 内存限制问题（阻塞队列有大小限制{JVM内存限制}）
+- 数据安全问题(服务突然挂掉,异步下单业务还没有执行完,会导致数据不一致=
+
+
+
+##### 消息队列优化异步下单
+
