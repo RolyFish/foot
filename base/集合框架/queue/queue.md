@@ -34,7 +34,7 @@ Java 集合，分为两大类，对应两个接口：一个是 `Collection`接�
 > 实现了Deque接口 
 
 - 这是一个双向队列
-- 不允许添加null元素（元素数组内初始化的null不算）
+- 不允许添加null元素（原素数组内初始化的null不算）
 - 不允许添加非Comparable对象
 
 #### 属性
@@ -75,7 +75,7 @@ public ArrayDeque(Collection<? extends E> c) {
 }
 ```
 
-构造器有一个方法`allocateElements(int size)`调用的**calculateSize()**和Has和Map的**tableSizeFor()**方法原理相似。
+构造器有一个方法`allocateElements(int size)`调用的**calculateSize()**和HashMap的**tableSizeFor()**方法原理相似。
 
 其目的是为了调整数组容量为大于自定义容量的最近的2的幂次方数。
 
