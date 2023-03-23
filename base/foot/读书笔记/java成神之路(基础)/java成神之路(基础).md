@@ -4361,7 +4361,7 @@ $$
 float ft = ((float)s / loadFactor) + 1.0F;
 ```
 
-在guaua包下也有类型实现：
+在guaua包下也有类似实现：
 
 ```java
 public static <K extends @Nullable Object, V extends @Nullable Object>
