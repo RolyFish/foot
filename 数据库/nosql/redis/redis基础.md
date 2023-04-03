@@ -721,6 +721,8 @@ SortedSet的常见命令有：
 ### 特殊类型
 
 
+
+
 ## redis客户端
 
 ### jedis
@@ -844,7 +846,6 @@ SpringDataRedis中提供了RedisTemplate工具类，其中封装了各种对Redi
 
 <!--  不设置则使用默认连接池配置  -->
 <bean id="jedisPoolConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
-       <bean id="jedisPoolConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
         <!--    最大连接数    -->
         <property name="maxTotal" value="10"/>
         <!--    最大空闲连接    -->
@@ -979,7 +980,7 @@ public void test3() {
 
 依赖：
 
-```java
+```xml
 <!--redis依赖-->
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -997,7 +998,7 @@ spring:
     host: 127.0.0.1
     port: 6379
 #    password: 123123
-#    SpringBoot默认使用lettuce实现,必须配置否则连接池不就生效
+#    SpringBoot默认使用lettuce实现,必须配置否则连接池不生效
     lettuce:
       pool:
         max-active: 8  #最大连接
@@ -1445,9 +1446,150 @@ brew services start ngnix
 
 
 
-
-
 ### docker
+
+> 使用docker安装ngnix部署前端项目。
+
+#### 安装nginx
+
+```bash
+➜  nginx git:(stable) docker search nginx
+## 不指定版本默认 latest
+➜  nginx git:(stable) docker pull nginx 
+## 查看安装的nginx镜像
+➜  nginx git:(stable) docker images -a
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+redis        latest    edf4b3932692   4 weeks ago   111MB
+```
+
+#### 配置
+
+> 启动ngnix容器
+
+```bash
+➜  docker run --name -d nginx:latest
+```
+
+> 拷贝nginx配置到本地，路径为你需要挂载的路径
+
+```bash
+➜  nginx docker cp nginxtest:/etc/nginx ~/home/nginx/nginx2
+
+## 挂载日志
+➜  nginx2 docker cp nginxtest:/var/log/nginx ~/home/nginx/nginx2/log
+
+## nginx pid文件
+➜  nginx2 docker cp nginxtest:/var/run/nginx.pid ~/home/nginx/nginx2/log/nginx.pid
+```
+
+> 放前端项目
+
+```bash
+## 拷贝静态资源路径
+➜  html docker cp nginxtest:/usr/share/nginx/html  ~/home/nginx/nginx2/html
+
+## 拷贝黑马点评项目到 ngnix挂载目录
+➜  html cp -rf ~/home/nginx/docker-nginx/html/hmdp ~/home/nginx/nginx2/html/hmdp
+```
+
+> 修改配置
+
+主要修改`/Users/rolyfish/home/nginx/nginx2/conf.d/default.conf`这个文件
+
+```bash
+server {
+    listen       80;
+    listen  [::]:80;
+    server_name  rolyfish;
+
+    access_log  /var/log/nginx/host.access.log  main;
+
+    location / {
+        root   /usr/share/nginx/html/hmdp;
+        index  index.html index.htm;
+    }
+
+    #error_page  404              /404.html;
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    location /api {
+        default_type  application/json;
+        #internal;
+        keepalive_timeout   30s;
+        keepalive_requests  1000;
+        #支持keep-alive
+        proxy_http_version 1.1;
+        rewrite /api(/.*) $1 break;
+        proxy_pass_request_headers on;
+        #more_clear_input_headers Accept-Encoding;
+        proxy_next_upstream error timeout;
+        ## 宿主机上启动后台项目的话 ip地址使用宿主机分配的网桥地址
+        ## proxy_pass http://10.211.55.2:8081;
+        ## 开启负载均衡
+        proxy_pass http://backend;
+    }
+}
+```
+
+`ngnix.conf`添加负载均衡配置“
+
+```bash
+upstream backend {
+   server 10.211.55.2:8081 max_fails=5 fail_timeout=10s weight=1;
+ # server 127.0.0.1:8082 max_fails=5 fail_timeout=10s weight=1;
+} 
+```
+
+#### IP地址
+
+> `10.211.55.2:8081`。
+>
+> 如果是在docker宿主机上启动的项目，需要访问宿主分配的网桥地址。
+
+```bash
+## 查看容器的网络信息
+➜  ~ docker inspect nginxhmdp
+```
+
+```bash
+## 查看宿主机网络状况
+➜  ~ ifconfig
+
+## 找到bridge相关信息 ·10.211.55.2·
+bridge100: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	options=3<RXCSUM,TXCSUM>
+	ether a2:78:17:f5:5f:64
+	inet 10.211.55.2 netmask 0xffffff00 broadcast 10.211.55.255
+	inet6 fe80::a078:17ff:fef5:5f64%bridge100 prefixlen 64 scopeid 0x18
+	inet6 fdb2:2c26:f4e4::1 prefixlen 64
+	Configuration:
+		id 0:0:0:0:0:0 priority 0 hellotime 0 fwddelay 0
+		maxage 0 holdcnt 0 proto stp maxaddr 100 timeout 1200
+		root id 0:0:0:0:0:0 priority 0 ifcost 0 port 0
+		ipfilter disabled flags 0x0
+	member: vmenet0 flags=3<LEARNING,DISCOVER>
+	        ifmaxaddr 0 port 23 priority 0 path cost 0
+	member: vmenet2 flags=3<LEARNING,DISCOVER>
+	        ifmaxaddr 0 port 27 priority 0 path cost 0
+	nd6 options=201<PERFORMNUD,DAD>
+	media: autoselect
+	status: active
+```
+
+#### 启动
+
+```bash
+➜  docker run --name nginxhmdp -p 80:80 \
+        -v /Users/rolyfish/home/nginx/nginx2/nginx.conf:/etc/nginx/nginx.conf \
+        -v /Users/rolyfish/home/nginx/nginx2/html/:/usr/share/nginx/html/ \
+        -v /Users/rolyfish/home/nginx/nginx2/logs/:/var/log/nginx/ \
+        -v /Users/rolyfish/home/nginx/nginx2/conf.d/:/etc/nginx/conf.d/ \
+        --privileged=true -d nginx:latest
+```
 
 
 

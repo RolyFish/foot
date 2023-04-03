@@ -338,9 +338,53 @@ set GLOBAL binnodb_flush_log_at_trx_commit = 1;
 
 
 
+# mysql安装
 
 
 
+## docker安装Mysql
+
+> 拉取镜像
+
+```bash
+➜  ~ docker search mysql
+➜  ~ docker pull mysql
+➜  ~ docker images
+```
+
+> 启动mysql
+
+```bash
+➜  ~ docker images
+REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
+mysql        latest    fcf06b16ec81   37 hours ago   544MB
+➜  ~ docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql
+➜  ~ docker ps -a
+```
+
+> 创建本地挂载目录
+
+```bash
+mkdir -pv  /Users/rolyfish/home/mysql/mysqltest/data  /Users/rolyfish/home/mysql/mysqltest/conf.d  /Users/rolyfish/home/mysql/mysqltest/logs
+```
+
+> 停止并删除之前的容器，重新启动容器
+
+```bash
+➜  mysqltest docker container stop mysql-test
+➜  mysqltest docker container rm mysql-test
+```
+
+> 启动容器
+
+```bash
+docker run  -p 3317:3306 --name mysqltest2 --privileged=true \
+  -v /Users/rolyfish/home/mysql/mysqltest/conf.d:/etc/mysql/conf.d \
+  -v /Users/rolyfish/home/mysql/mysqltest/data:/var/lib/mysql \
+  -v /Users/rolyfish/home/mysql/mysqltest/logs:/var/log/mysql \
+  -e MYSQL_ROOT_PASSWORD=123456 \
+  -d mysql:latest
+```
 
 
 
