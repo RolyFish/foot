@@ -567,7 +567,7 @@ Redis中的List类型与Java中的LinkedList类似，可以看做是一个双向
 - RPUSH key element ... ：向列表右侧插入一个或多个元素
 - RPOP key：移除并返回列表右侧的第一个元素
 - LRANGE key star end：返回一段角标范围内的所有元素 (end 为 -1 代表返回start之后所有元素) 
-- BLPOP和BRPOP：与LPOP和RPOP类似，只不过在没有元素时等待指定时间，而不是直接返回nil
+- BLPOP和BRPOP(阻塞效果)：与LPOP和RPOP类似，只不过在没有元素时等待指定时间，而不是直接返回nil
 
 ```bash
 127.0.0.1:6379> lpush ids 1 2 3
@@ -2644,7 +2644,6 @@ boolean tryLock(long waitTime, long leaseTime, TimeUnit unit) throws Interrupted
 
 ```shell
 127.0.0.1:6379> help hset
-
   HSET key field value [field value ...]
   summary: Set the string value of a hash field
   since: 2.0.0
@@ -2943,7 +2942,7 @@ public Result createSecKillUserDate(Long num, String basephone) {
 local userId = ARGV[1]
 -- 库存key
 local stockKey = ARGV[2]
--- 订单key
+-- 优惠券key
 local orderKey = ARGV[3]
 -- 1.1 判断库存是否充足
 if (redis.call("exists", stockKey) == 0 or tonumber(redis.call("get", stockKey)) <= 0) then
@@ -2951,7 +2950,7 @@ if (redis.call("exists", stockKey) == 0 or tonumber(redis.call("get", stockKey))
     return 1
 end
 -- 订单充足 判断一人一单
-if (redis.call("sismember", orderKey, userId) == 1) then
+if (redis.call("sismember", voucherKey, userId) == 1) then
     -- 已经下过单了 返回2
     return 2
 end
@@ -2959,7 +2958,7 @@ end
 -- 3.1 库存减一
 -- 3.2 加入订单set
 redis.call("incrby", stockKey, -1)
-redis.call("sadd", orderKey, userId)
+redis.call("sadd", voucherKey, userId)
 return 0
 ```
 
@@ -2984,10 +2983,9 @@ static {
 private Result luaSeckillOrder(Long voucherId) {
     UserDTO user = UserHolder.getUser();
     final Long result = redisTemplate.execute(SECKILL_SCRIPT,
-            Collections.emptyList(),
-            user.getId().toString(),
-            SECKILL_STOCK_KEY + voucherId,
-            SECKILL_ORDER_KEY + voucherId);
+                Collections.emptyList(),
+                user.getId().toString(),
+                voucherId.toString());
     final int resultI = result.intValue();
     if (resultI != 0) {
         return Result.fail(resultI == 1 ? "库存不足x" : "您已经下过单了x");
@@ -3006,7 +3004,7 @@ private Result luaSeckillOrder(Long voucherId) {
 
 > 接下来就是将已经通过校验的订单以异步的形式存储在数据库。
 
-创建阻塞队列和异步处理线程池,`voucherOrderServiceProxy`这个代理对象还是为了防止事务失效,在子线程中是拿不到代理对象的(基于ThreadLocal)。
+创建阻塞队列和异步处理线程池,`voucherOrderServiceProxy`这个代理对象还是为了防止事务失效,在子线程中是拿不到代理对象的(AopContext.*currentProxy*()获取代理对象是基于ThreadLocal实现的)。
 
 ```java
 private IVoucherOrderService voucherOrderServiceProxy = null;
@@ -3076,4 +3074,421 @@ private void init() {
 
 
 ##### 消息队列优化异步下单
+
+> 基于Java阻塞队列实现的异步任务,存在内存和不可持久化(后期重试)的问题,所以得基于中间件来实现异步任务。
+
+> 消息队列(**M**essage **Q**ueue)。
+>
+> 最简单的消息队列模型存在三个角色：
+>
+> - 生产者
+> - 队列
+> - 消费者
+
+###### Redis-List实现消息队列
+
+> Redis-List是一个双向链表, 借助以下两组命令可模拟单项队列：
+>
+> - LPUSH 和 RPOP
+> - RPUSH 和 LPOP
+>
+> 当链表为空时POP命令会返回null,借助BRPOP和BLPOP可实现阻塞效果。
+
+基于List的消息队列有哪些优缺点？
+
+优点：
+
+- 利用Redis存储，不受限于JVM内存上限
+- 基于Redis的持久化机制，数据安全性有保证
+- 可以满足消息有序性
+
+缺点：
+
+- 无法避免消息丢失
+
+  > POP命令是 remove  and  get  消息。移出队列消息->消费者挂了->消息未处理，则会造成消息丢失。
+
+- 只支持单消费者
+
+
+
+###### 基于PubSub
+
+> PubSub(发布订阅)是Redis2.0引入的消息传递模型。消费者可以订阅一个或多个channel,生产者发送消息后,订阅者可以收到消息。
+
+> PubSub相关命令如下：
+
+- PUBLISH channel message 向指定频道发送消息  ，返回订阅此消息的消费者个数
+- SUBSCRIBE channel [channel ...]  订阅渠道
+- UNSUBSCRIBE [channel [channel ...]] 取消订阅渠道
+- PSUBSCRIBE pattern [pattern ...]
+- PUNSUBSCRIBE [pattern [pattern ...]]
+
+PubSub天然阻塞。
+
+优缺点
+
+优点：
+
+- 支持多生产多消费  （广播）
+
+缺点：
+
+- 不可持久化 （消息发送后没有消费者接收,消息就会消失）
+- 无法避免消息丢失
+- 消息堆积有上限
+
+
+
+###### 基于Stream
+
+> Stream是Redis5.0引入的一种新的数据类型,可借助它实现一个完善的消息队列。
+
+
+
+**单消费模式**
+
+> 发送消息命令
+
+![image-20230405122409388](redis基础.assets/image-20230405122409388.png)
+
+例子：
+
+队列users不存在则创建一个名为users的队列,长度上限为100左右,id自动生成,并且向队列发送一个消息`{name=yuyc,age=24}`
+
+```bash
+127.0.0.1:6379> xadd users maxlen ~ 100 * name yuyc age 24
+"1680669340282-0"
+127.0.0.1:6379> xlen users
+(integer) 1
+```
+
+
+
+> 读取消息命令。可阻塞,多个队列
+
+![image-20230405125412971](redis基础.assets/image-20230405125412971.png)
+
+例子:
+
+```bash
+127.0.0.1:6379> xadd users * name lizicheng age 100
+"1680670543704-0"
+127.0.0.1:6379> xlen users
+(integer) 2
+127.0.0.1:6379> xadd goods maxlen ~ 100 * name foot price 100
+"1680670617264-0"
+127.0.0.1:6379> xadd goods maxlen ~ 100 * name warter price 200
+"1680670631851-0"
+
+## 从users goods队列中读取消息，每个队列读取1个，从队列头部开始
+127.0.0.1:6379> xread count 1 block 2000 streams users goods 0 0
+1) 1) "users"
+   2) 1) 1) "1680669340282-0"
+         2) 1) "name"
+            2) "yuyc"
+            3) "age"
+            4) "24"
+2) 1) "goods"
+   2) 1) 1) "1680670617264-0"
+         2) 1) "name"
+            2) "foot"
+            3) "price"
+            4) "100"
+```
+
+
+
+> 单消费模式优缺点
+
+优点：
+
+- 消息可回溯
+- 一个消息可以被多个消费者读取
+- 可以阻塞读取 (xread命令存在block可填选项,指定超时时间)
+
+缺点：
+
+- 有消息漏读的风险
+
+  > 当我们指定起始ID为$时，代表读取最新的消息，如果我们处理一条消息的过程中，又有超过1条以上的消息到达队列，则下次获取时也只能获取到最新的一条，会出现漏读消息的问题。
+
+​	
+
+**消费组模式**
+
+> Consumer Group：将多个消费者划分到一个组中，监听同一个队列。具备下列特点
+
+- 消息分流 - Stream队列中的消息会分给组内不同的消费者(不会重复消费),提升消费速度
+- 消息提示 - 消费者会维护一个标识,记录最后一个被处理的消息,消费者宕机重启会保证此消息可以被消费
+- 消息确认 - 消费者获取消息后,消息处于pending状态,进入pending-list中。当消息处理完成后需要通过XACK命令确认,确认之后消息才会从pending-list 中移除
+
+> 消费者组管理命令
+
+![image-20230407000018574](redis基础.assets/image-20230407000018574.png)
+
+```bash
+## 创建消费者
+XGROUP [CREATE key groupname ID|$ [MKSTREAM]]
+# key  队列名称
+# groupname 消费者名称
+# id|$ 起始id标识
+# mkstream 队列不存在自动创建队列
+```
+
+```bash
+## 删除消费者组
+XGROUP [DESTROY key groupname] 
+```
+
+```bash
+## 给指定消费者组添加消费者
+XGROUP [CREATECONSUMER key groupname consumername] 
+```
+
+```bash
+## 删除指定消费者组中的消费者
+XGROUP [DELCONSUMER key groupname consumername]
+```
+
+例子：
+
+```bash
+127.0.0.1:6379> xadd users maxlen 100 * name yuyc1 age 22 
+"1680797294977-0"
+127.0.0.1:6379> xadd users maxlen 100 * name yuyc2 age 22 
+"1680797298488-0"
+127.0.0.1:6379> xadd users maxlen 100 * name yuyc3 age 22 
+"1680797300855-0"
+127.0.0.1:6379> xlen users
+(integer) 3
+127.0.0.1:6379> xgroup create users g1 $ mkstream 
+OK
+127.0.0.1:6379> xgroup createconsumer users g1 c1
+(integer) 1
+127.0.0.1:6379> xgroup createconsumer users g1 c2
+(integer) 1
+```
+
+
+
+**从消费者组读取消息**
+
+```bash
+XREADGROUP GROUP group consumer [COUNT count] [BLOCK milliseconds] [NOACK] STREAMS key [key ...] ID [ID ...]
+```
+
+- group - 消费者组名称
+- consumer - 消费者名称，如果消费者不存在则自动创建一个消费者
+- count - 本次查询的最大数量
+- milliseconds - 最大等待时间
+- NOACK - 自动确认,无需手动确认(确认pending-list中的消息，一般需要手动确认)
+- STREAMS key [key ...] - 指定队列名称
+- ID [ID ...] - 获取消息的起始ID
+  - `>`： 从下一个未消费的消息开始
+  - 其他:一般是0，指的是从pending-list中获取已消费但未确认的消息
+
+例子：
+
+```bash
+# pnding-list中没有待确认消息
+127.0.0.1:6379> xreadgroup group g1 c1 count 1 block 200000 streams users  0
+1) 1) "users"
+   2) (empty array)
+# 读取队列中最新的元素 （会阻塞一会,待生产者放入消息）
+127.0.0.1:6379> xreadgroup group g1 c1 count 1 block 200000 streams users  >
+1) 1) "users"
+   2) 1) 1) "1680797912168-0"
+         2) 1) "name"
+            2) "yuyc9"
+            3) "age"
+            4) "22"
+(23.25s)
+# 读取已消费但未确认消息
+127.0.0.1:6379> xreadgroup group g1 c1 count 1 block 200000 streams users  0
+1) 1) "users"
+   2) 1) 1) "1680797912168-0"
+         2) 1) "name"
+            2) "yuyc9"
+            3) "age"
+            4) "22"
+# 确认消息
+127.0.0.1:6379> xack users g1 1680797912168-0
+(integer) 1
+```
+
+> 消费组模式优缺点
+
+STREAM类型消息队列的XREADGROUP命令特点：
+
+- 消息可回溯
+- 可以多消费者争抢消息，加快消费速度
+- 可以阻塞读取
+- 没有消息漏读的风险
+- 有消息确认机制，保证消息至少被消费一次
+
+
+
+**对比**
+
+|                  | **List**                                 | **PubSub**         | **Stream**                                             |
+| ---------------- | ---------------------------------------- | ------------------ | ------------------------------------------------------ |
+| **消息持久化**   | 支持                                     | 不支持             | 支持                                                   |
+| **阻塞读取**     | 支持                                     | 支持               | 支持                                                   |
+| **消息堆积处理** | 受限于内存空间，可以利用多消费者加快处理 | 受限于消费者缓冲区 | 受限于队列长度，可以利用消费者组提高消费速度，减少堆积 |
+| **消息确认机制** | 不支持                                   | 不支持             | 支持                                                   |
+| **消息回溯**     | 不支持                                   | 不支持             | 支持                                                   |
+
+
+
+###### 基于Steam消费者组模式优化
+
+> 创建Stream类型的消息队列 ，key为`stream.orders`
+
+```bash
+127.0.0.1:6379> xgroup create stream.orders g1 0 mkstream 
+OK
+127.0.0.1:6379> xgroup createconsumer stream.orders g1 c1 
+(integer) 1
+127.0.0.1:6379> keys stream.*
+1) "stream.orders"
+```
+
+> 修改秒杀Lua脚本`skill.lua`。
+>
+> `skill.lua`秒杀脚本中除了做库存判断、一人一单判断之外，添加一个加入消息队列的操作，这样可以减少与redis的IO次数。
+>
+> lua脚本添加一个订单id参数
+
+```lua
+-- 用户ID
+local userId = ARGV[1]
+-- 优惠券id
+local voucherId = ARGV[2]
+-- 订单key
+local orderKey = ARGV[3]
+-- stream队列key
+local streamQueueKey = ARGV[4]
+
+-- 库存 key
+local stockKey = "seckill:stock:" .. voucherId
+-- 优惠券 key
+local voucherKey = "seckill:order:" .. voucherId
+
+
+-- 1.1 判断库存是否充足
+if (redis.call("exists", stockKey) == 0 or tonumber(redis.call("get", stockKey)) <= 0) then
+    -- 不充足返回1
+    return 1
+end
+-- 订单充足 判断一人一单
+if (redis.call("sismember", voucherKey, userId) == 1) then
+    -- 已经下过单了 返回2
+    return 2
+end
+-- 定单充足，且没有下过单 返回0
+-- 3.1 库存减一
+-- 3.2 加入订单set
+redis.call("incrby", stockKey, -1)
+redis.call("sadd", voucherKey, userId)
+-- 3.3 订单信息加入消息队列
+--   XADD key [NOMKSTREAM] [MAXLEN|MINID [=|~] threshold [LIMIT count]] *|ID field value [field value ...]
+redis.call("xadd", streamQueueKey, "*", "userId", userId, "voucherId", voucherId, "id", orderKey)
+return 0
+```
+
+> 修改java代码。
+>
+> 修改调用秒杀lua脚本和订单入库异步任务
+
+调用lua脚本添加一个参数，并去除加入阻塞队列的操作
+
+```java
+private Result luaSeckillOrder(Long voucherId) {
+        UserDTO user = UserHolder.getUser();
+        long orderId = redisIdWorker.nextId(UNIQUE_ID_KEY_ORDER);
+        final Long result = redisTemplate.execute(SECKILL_SCRIPT,
+                Collections.emptyList(),
+                user.getId().toString(),
+                voucherId.toString(), String.valueOf(orderId),
+                SECKILL_STREAMQUEUEORDER_KEY);
+        assert result != null;
+        final int resultI = result.intValue();
+        if (resultI != 0) {
+            return Result.fail(resultI == 1 ? "库存不足x" : "您已经下过单了" + user.getId());
+        }
+        voucherOrderServiceProxy = (IVoucherOrderService) AopContext.currentProxy();
+        return Result.ok("用户:" + user.getId() + "购买订单:" + voucherId + "成功");
+}
+```
+
+异步下单
+
+```java
+@PostConstruct
+private void init() {
+  SECKILL_EXECUTOR_SERVICE.submit(() -> {
+    while (true) {
+      try {
+        // 读取Stream消息队列中的值 XREADGROUP GROUP group consumer [COUNT count] [BLOCK milliseconds] [NOACK] STREAMS key [key ...] ID [ID ...]
+        final List<MapRecord<String, Object, Object>> orderList = redisTemplate.opsForStream().read(
+          Consumer.from("g1", "c1"),
+          StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
+          StreamOffset.create(SECKILL_STREAMQUEUEORDER_KEY, ReadOffset.lastConsumed())
+        );
+        // 判断是否获取成功
+
+        if (null == orderList || orderList.size() == 0) {
+          // 获取失败或者没有值继续循环
+          continue;
+        }
+        // 有值  解析成 VoucherOrder 并存储
+        handleRecordList(orderList);
+      } catch (Exception e) {
+        log.info("处理订单异常:{}", e.getMessage());
+        handlePendingList();
+      }
+    }
+  });
+}
+
+private void handlePendingList() {
+  while (true) {
+    try {
+      // 读取pending-list已消费未确认的消息   XREADGROUP GROUP group consumer [COUNT count] [BLOCK milliseconds] [NOACK] STREAMS key [key ...] ID [ID ...]
+      final List<MapRecord<String, Object, Object>> orderList = redisTemplate.opsForStream().read(
+        Consumer.from("g1", "c1"),
+        StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
+        StreamOffset.create(SECKILL_STREAMQUEUEORDER_KEY, ReadOffset.from("0"))
+      );
+      // 判断是否获取成功
+      if (null == orderList || orderList.size() == 0) {
+        // 获取失败,没有待确认消息,跳出循环
+        break;
+      }
+      // 有值  解析成 VoucherOrder 并存储
+      handleRecordList(orderList);
+    } catch (Exception e) {
+      log.info("处理pending-list订单异常:{}", e.getMessage());
+      try {
+        Thread.sleep(20);
+      } catch (InterruptedException ex) {
+        log.info("异常");
+      }
+    }
+  }
+}
+
+private void handleRecordList(List<MapRecord<String, Object, Object>> orderList) {
+  final MapRecord<String, Object, Object> order = orderList.get(0);
+  final Map<Object, Object> orderMap = order.getValue();
+  final VoucherOrder voucherOrder = BeanUtil.fillBeanWithMap(orderMap, new VoucherOrder(), CopyOptions.create().ignoreError());
+  // 下单
+  handleVoucherOrder(voucherOrder);
+  // 确认  XACK key group ID [ID ...]
+  redisTemplate.opsForStream().acknowledge(SECKILL_STREAMQUEUEORDER_KEY, "g1", order.getId());
+}
+```
+
+
 
