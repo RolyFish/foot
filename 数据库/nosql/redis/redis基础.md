@@ -2040,7 +2040,7 @@ public long nextId(String keyPrefix) {
 
 > 悲观锁认为数据一定会发生线程安全问题,因此在操作数据之间会首先获取锁。
 >
-> 单机环境下可以锁，优惠券id。集群环境下得使用分布式锁
+> 单机环境下可以锁优惠券id。集群环境下得使用分布式锁
 
 ```java
 synchronized ((voucherId + "").intern()) {
@@ -2056,10 +2056,10 @@ synchronized ((voucherId + "").intern()) {
 
 ###### 乐观锁解决
 
-> 乐观锁用于更新情况,乐观锁认为线程安全问题不一定会发生,只会在修改数据的时候判断数据是否被修改了。
+> 乐观锁用于更新情况,乐观锁认为线程安全问题不一定会发生,只会在修改数据的时候判断数据是否被修改。
 >
 > - 如果数据被修改了,则重试或抛异常
-> - 如果数据未被修改过,则线程安,操作数据
+> - 如果数据未被修改过,则线程安全,操作数据
 
 只需要修改sql即可
 
@@ -2072,7 +2072,7 @@ final boolean success = seckillVoucherService.update()
         .update();
 ```
 
-> 上面方案存在过多重试的情况。特定需求情况下,可以借助Mysql的行锁来实现，只需要判断库存大于0即可。
+> 上面方案存在过多重试的情况。特定需求情况下,可以借助innodb的行锁来实现，只需要判断库存大于0即可。
 
 ```java
 // 4. 扣减库存， ==扣减库存时判断库存是否被修改过==
@@ -3489,6 +3489,18 @@ private void handleRecordList(List<MapRecord<String, Object, Object>> orderList)
   redisTemplate.opsForStream().acknowledge(SECKILL_STREAMQUEUEORDER_KEY, "g1", order.getId());
 }
 ```
+
+### 达人探店
+
+
+
+#### 探店笔记
+
+##### 发布
+
+> 探店笔记分为 图片 + 主体内容,上传图片是单独的请求,保存探店信息是另一个请求(上传图片的保存路径返回作为保存探店日记的请求参数)
+
+##### 查看
 
 
 

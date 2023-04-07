@@ -223,7 +223,7 @@ public class GlobalCustomException extends RuntimeException {
 
 > 第二步：在该目录下，创建一个异常处理器。
 
-一般来说会有一个`最后的屏障`来处理未知异常RuntimeException，以便友好显示。<br>
+一般来说会有一个`最后的屏障`来处理未知异常RuntimeException，以便友好显示。
 
 parse()方法是对BindResult的解析，显示具体哪个参数不符合校验规则，其实大可不必，上线了一般不会出现参数问题，主要方便联调。
 
