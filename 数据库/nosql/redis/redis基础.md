@@ -34,7 +34,7 @@
 cd /usr/local/bin
 ```
 
-![image-20221229185053900](redis基础.assets/image-20221229185053900.png) 		
+![image-20221229185053900](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20221229185053900.png) 		
 
 #### 自定义配置文件
 
@@ -147,7 +147,7 @@ redis-cli [options] [commonds]
 
 不指定commond时,会进入`redis-cli`的交互控制台：
 
-![image-20221229190450851](redis基础.assets/image-20221229190450851.png)
+![image-20221229190450851](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20221229190450851.png)
 
 
 
@@ -157,7 +157,7 @@ redis-cli [options] [commonds]
 
 [下载地址](https://github.com/quick123official/quick_redis_blog/releases/)
 
-![image-20221229190531580](redis基础.assets/image-20221229190531580.png)
+![image-20221229190531580](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20221229190531580.png)
 
 
 
@@ -165,7 +165,7 @@ redis-cli [options] [commonds]
 
 [下载地址](https://redis.com/redis-enterprise/redis-insight/)
 
-![image-20230415055752849](redis基础.assets/image-20230415055752849.png)
+![image-20230415055752849](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230415055752849.png)
 
 
 
@@ -177,7 +177,7 @@ redis-cli [options] [commonds]
 ➜  ~ docker pull redis:latest
 ```
 
-![image-20230310011219180](redis基础.assets/image-20230310011219180.png)
+![image-20230310011219180](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310011219180.png)
 
 #### redis配置
 
@@ -226,7 +226,7 @@ docker run -d --privileged=true -p 6380:6379
 
 > docker ps 即可查看正在运行的redis容器
 
-![image-20230310025547149](redis基础.assets/image-20230310025547149.png)
+![image-20230310025547149](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310025547149.png)
 
 > 交互模式进入容器,并使用redis客户端redis-cli
 
@@ -247,9 +247,9 @@ OK
 
 > 配置ip和端口即可链接成功。
 
-![image-20230310025633617](redis基础.assets/image-20230310025633617.png)
+![image-20230310025633617](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310025633617.png)
 
-![image-20230310025655894](redis基础.assets/image-20230310025655894.png)
+![image-20230310025655894](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310025655894.png)
 
 
 
@@ -266,7 +266,7 @@ OK
 
 [官网](https://redis.io/commands/)
 
-![image-20221229191126885](redis基础.assets/image-20221229191126885.png)
+![image-20221229191126885](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20221229191126885.png)
 
 > 官网给出的命令详情非常详细,命令行也可以给出命令简单信息：
 
@@ -503,7 +503,7 @@ OK
 
 但是在quickredis中可分层次更容易看：
 
-![image-20221230002854599](redis基础.assets/image-20221230002854599.png)
+![image-20221230002854599](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20221230002854599.png)
 
 #### hash
 
@@ -1100,7 +1100,7 @@ public static void main(String[] args) {
 }
 ```
 
-![image-20230214220158257](redis基础.assets/image-20230214220158257.png)
+![image-20230214220158257](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230214220158257.png)
 
 ##### 序列化
 
@@ -1127,7 +1127,7 @@ public void testRedisTemplateSerializer() {
 
 通过redis-cli查看对应值：
 
-![image-20230214223322988](redis基础.assets/image-20230214223322988.png)
+![image-20230214223322988](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230214223322988.png)
 
 > 通过查看`redisTemplate`的源码发现如果`redisTemplate`的默认序列化工具为空,则默认使用JDK序列化工具。
 >
@@ -1177,9 +1177,9 @@ public @Bean RedisTemplate<String, Object> redisTemplate(@Autowired RedisConnect
 
 这样对于key和value,就不会使用JDK序列化工具了
 
-![image-20230214224728314](redis基础.assets/image-20230214224728314.png)
+![image-20230214224728314](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230214224728314.png)
 
-![image-20230214230139886](redis基础.assets/image-20230214230139886.png)
+![image-20230214230139886](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230214230139886.png)
 
 > 优点就是可读性强。缺点就是自动序列化时会夹带类信息,浪费存储空间。
 
@@ -1204,7 +1204,7 @@ public void testStringRedisTemplate() {
 }
 ```
 
-![image-20230214231322083](redis基础.assets/image-20230214231322083.png)
+![image-20230214231322083](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230214231322083.png)
 
 测试opsForHash,HashOptions的api和HashMap的api相似,而不是以命令命名。
 
@@ -1219,7 +1219,7 @@ void testHash() {
 }
 ```
 
-![image-20230214231608007](redis基础.assets/image-20230214231608007.png)
+![image-20230214231608007](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230214231608007.png)
 
 
 
@@ -1246,7 +1246,7 @@ brew install nginx
 brew info nginx
 ```
 
-![image-20230214234910957](redis基础.assets/image-20230214234910957.png)
+![image-20230214234910957](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230214234910957.png)
 
 #### 启动nginx
 
@@ -1256,7 +1256,7 @@ brew info nginx
 brew services start nginx
 ```
 
-![image-20230215000506916](redis基础.assets/image-20230215000506916.png)
+![image-20230215000506916](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230215000506916.png)
 
 #### nginx部署前端项目
 
@@ -1492,13 +1492,13 @@ http {
 
 放在`/opt/homebrew/var/www`
 
-![image-20230222230727673](redis基础.assets/image-20230222230727673.png)
+![image-20230222230727673](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230222230727673.png)
 
 
 
 nginx安装目录下有一个快捷键
 
-![image-20230222230924003](redis基础.assets/image-20230222230924003.png)
+![image-20230222230924003](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230222230924003.png)
 
 ##### 启动nginx
 
@@ -1668,7 +1668,7 @@ bridge100: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 
 > 不能用Session来存储用户凭证,这里便使用Redis来存储用户登录凭证,发送一串随机数字作为Token给到前端,并且这个Token作为Redis的key,用户信息作为Value,存在Redis上。在登录后前端每次请求都发送Token给后端,使用Token去Redis查询用户信息并放在ThreaLocal中,这样在一个线程内都可以访问用户信息。
 
-![image-20230226172011705](redis基础.assets/image-20230226172011705.png)
+![image-20230226172011705](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230226172011705.png)
 
 ### 缓存
 
@@ -1747,7 +1747,7 @@ bridge100: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 
 ###### 前后方案做对比
 
-![image-20230302221602996](redis基础.assets/image-20230302221602996.png)
+![image-20230302221602996](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230302221602996.png)
 
 ###### 代码实现
 
@@ -1801,7 +1801,7 @@ private Shop queryWithPassThrough(Long id) {
 
 > 我们希望首个到达缓存重建业务的线程进行缓存重建,其他线程等待并重试。
 
-![image-20230305161733197](redis基础.assets/image-20230305161733197.png)
+![image-20230305161733197](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230305161733197.png)
 
 ###### ==锁什么？==
 
@@ -1866,7 +1866,7 @@ private Shop queryWithMutex(Long id) {
 >     - 过期：获取锁,开启新线程返回旧数据
 >     - 未过期：直接返回旧数据
 
-![image-20230305162041055](redis基础.assets/image-20230305162041055.png)
+![image-20230305162041055](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230305162041055.png)
 
 ###### 创建RedisData对象
 
@@ -1937,7 +1937,7 @@ private Shop queryWithLogicalExpire(Long id) {
 - 时间戳：31bit,以秒为单位,可以使用69年
 - 序列号：32bit,1秒内的计数器,支持每秒产生2^32个不同ID
 
-![image-20230305174233920](redis基础.assets/image-20230305174233920.png)
+![image-20230305174233920](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230305174233920.png)
 
 #### 全局唯一ID生成策略
 
@@ -2007,7 +2007,7 @@ public long nextId(String keyPrefix) {
 
 #### 基本功能
 
-![image-20230307230718368](redis基础.assets/image-20230307230718368.png)
+![image-20230307230718368](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230307230718368.png)
 
 #### 超卖问题
 
@@ -2019,19 +2019,19 @@ public long nextId(String keyPrefix) {
 
 准备200个请求,模拟200次并发。
 
-![image-20230307231337038](redis基础.assets/image-20230307231337038.png)
+![image-20230307231337038](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230307231337038.png)
 
 库存100个
 
-![image-20230307231350816](redis基础.assets/image-20230307231350816.png)
+![image-20230307231350816](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230307231350816.png)
 
 测试结果： 
 
-![image-20230307231514189](redis基础.assets/image-20230307231514189.png)
+![image-20230307231514189](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230307231514189.png)
 
 ##### 时序图解释
 
-![image-20230307232542172](redis基础.assets/image-20230307232542172.png)
+![image-20230307232542172](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230307232542172.png)
 
 #####  悲观锁解决超卖
 
@@ -2174,17 +2174,17 @@ synchronized (userId.toString().intern()) {
 
 - 右击复制配置
 
-![image-20230308015017732](redis基础.assets/image-20230308015017732.png)
+![image-20230308015017732](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230308015017732.png)
 
 - 配置端口
 
 Add vmoption 添加`-Dserver.port=8082`
 
-![image-20230308015106208](redis基础.assets/image-20230308015106208.png)
+![image-20230308015106208](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230308015106208.png)
 
 - 启动
 
-![image-20230308015238095](redis基础.assets/image-20230308015238095.png)
+![image-20230308015238095](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230308015238095.png)
 
 ##### nginx配置负载均衡
 
@@ -2208,7 +2208,7 @@ Add vmoption 添加`-Dserver.port=8082`
 >
 > 所以得找到一块所有线程共享的空间,借助它来实现分布式锁,就是Redis。
 
-![image-20230308023232887](redis基础.assets/image-20230308023232887.png)
+![image-20230308023232887](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230308023232887.png)
 
 #### 分布式锁简介
 
@@ -2342,7 +2342,7 @@ try {
 
 > 如图：使用超时删除来防止锁无法被释放,这样也会导致锁误删的问题。
 
-![image-20230308231930569](redis基础.assets/image-20230308231930569.png)
+![image-20230308231930569](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230308231930569.png)
 
 > 解决方式:线程获取锁的时候存入线程唯一标识,在释放锁的时候判断是否是当前线程的锁。
 >
@@ -2409,7 +2409,7 @@ redis.call('get','name')
 
 **Redis执行LUA脚本**
 
-![image-20230309000106134](redis基础.assets/image-20230309000106134.png)
+![image-20230309000106134](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230309000106134.png)
 
 ```shell
 127.0.0.1:6379> help @scripting
@@ -2504,7 +2504,7 @@ public void unlock() {
 
 > Redisson提供了丰富分布式锁类型
 
-![image-20230309105344480](redis基础.assets/image-20230309105344480.png)
+![image-20230309105344480](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230309105344480.png)
 
 > 上面基于setnx命令我们自己封装的分布式锁存在哪些缺点？
 
@@ -2643,7 +2643,7 @@ boolean tryLock(long waitTime, long leaseTime, TimeUnit unit) throws Interrupted
 
 步骤：
 
-![image-20230309215651836](redis基础.assets/image-20230309215651836.png)
+![image-20230309215651836](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230309215651836.png)
 
 lua脚本实现：
 
@@ -2727,7 +2727,7 @@ private void method2(MyReentrantRedisLock myReentrantRedisLock) {
 }
 ```
 
-![image-20230309230940055](redis基础.assets/image-20230309230940055.png)
+![image-20230309230940055](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230309230940055.png)
 
 ###### 可重试
 
@@ -2745,7 +2745,7 @@ private void method2(MyReentrantRedisLock myReentrantRedisLock) {
 >
 > Redisson释放锁操作会发布一个通知,通知等待线程开始重试获取锁,并取消看门狗机制。
 
-![image-20230309232858219](redis基础.assets/image-20230309232858219.png)
+![image-20230309232858219](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230309232858219.png)
 
 ###### 小结
 
@@ -2761,17 +2761,17 @@ Redisson分布式锁原理：
 >
 > 如果设置了一个锁在主节点,主节点未来得及同步到从节点,此刻选举从节点作为主节点,新的主节点没有锁信息,导致锁失效问题。
 
-![image-20230310003621911](redis基础.assets/image-20230310003621911.png)
+![image-20230310003621911](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310003621911.png)
 
 > 为了解决这样的问题Redisson提出了MutiLock(联锁),使用这把锁咱们就不使用主从了,每个节点的地位都是一样的, 这把锁加锁的逻辑需要写入到每一个主丛节点上,只有所有的服务器都写入成功,此时才是加锁成功,假设现在某个节点挂了,那么他去获得锁的时候,只要有一个节点拿不到,都不能算是加锁成功,就保证了加锁的可靠性。
 
-![image-20230310003752113](redis基础.assets/image-20230310003752113.png)
+![image-20230310003752113](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310003752113.png)
 
 MutiLock原理：
 
 当我们去设置了多个锁时,redission会将多个锁添加到一个集合中,然后用while循环去不停去尝试拿锁,但是会有一个总共的加锁时间,这个时间是用需要加锁的个数 * 1500ms ,假设有3个锁,那么时间就是4500ms,假设在这4500ms内,所有的锁都加锁成功, 那么此时才算是加锁成功,如果在4500ms有线程加锁失败,则会再次去进行重试。
 
-![image-20230310003832038](redis基础.assets/image-20230310003832038.png)
+![image-20230310003832038](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310003832038.png)
 
 联锁的实现细节和是否设置重试时间和过期时间有关：
 
@@ -2829,11 +2829,11 @@ public class MutliRedissonTest {
 }
 ```
 
-![image-20230310031741194](redis基础.assets/image-20230310031741194.png)
+![image-20230310031741194](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310031741194.png)
 
-![image-20230310031800028](redis基础.assets/image-20230310031800028.png)
+![image-20230310031800028](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310031800028.png)
 
-![image-20230310031813982](redis基础.assets/image-20230310031813982.png)
+![image-20230310031813982](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230310031813982.png)
 
 ##### 总结
 
@@ -2906,7 +2906,7 @@ public Result createSecKillUserDate(Long num, String basephone) {
 
 200并发平均耗时1s多,QBS只有75每秒,性能低下。
 
-![image-20230312041355144](redis基础.assets/image-20230312041355144.png)
+![image-20230312041355144](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230312041355144.png)
 
 ##### 分析
 
@@ -2914,7 +2914,7 @@ public Result createSecKillUserDate(Long num, String basephone) {
 >
 > 这些所有步骤的耗时是呈现给用户的耗时,其中有很大部分是和数据库打交道,优化思路就是将这些与数据库打交道的操作,做出异步处理的逻辑。
 
-![image-20230312043421082](redis基础.assets/image-20230312043421082.png)
+![image-20230312043421082](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230312043421082.png)
 
 ##### 优化
 
@@ -2990,7 +2990,7 @@ private Result luaSeckillOrder(Long voucherId) {
 
 > 性能有了较大提升,本机电脑开的东西多占cpu性能,服务也会按集群部署,性能只会更好
 
-![image-20230313024026684](redis基础.assets/image-20230313024026684.png)
+![image-20230313024026684](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230313024026684.png)
 
 ###### 异步下单
 
@@ -3140,7 +3140,7 @@ PubSub天然阻塞。
 
 > 发送消息命令
 
-![image-20230405122409388](redis基础.assets/image-20230405122409388.png)
+![image-20230405122409388](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230405122409388.png)
 
 例子：
 
@@ -3155,7 +3155,7 @@ PubSub天然阻塞。
 
 > 读取消息命令。可阻塞,多个队列
 
-![image-20230405125412971](redis基础.assets/image-20230405125412971.png)
+![image-20230405125412971](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230405125412971.png)
 
 例子:
 
@@ -3213,7 +3213,7 @@ PubSub天然阻塞。
 
 > 消费者组管理命令
 
-![image-20230407000018574](redis基础.assets/image-20230407000018574.png)
+![image-20230407000018574](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230407000018574.png)
 
 ```bash
 ## 创建消费者
@@ -3737,7 +3737,7 @@ Set<String> intersect = stringRedisTemplate.opsForSet().intersect(key, key2);
 >
 > 关注推送也叫做Feed流,直译为投喂。为用户持续的提供“沉浸式”的体验,通过无限下拉刷新获取新的信息。
 
-![image-20230414180752022](redis基础.assets/image-20230414180752022.png)
+![image-20230414180752022](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230414180752022.png)
 
 ##### feed流模式
 
@@ -3766,7 +3766,7 @@ Feed流产品有两种常见模式：
 
 缺点：读延时过高
 
-![image-20230414181308276](redis基础.assets/image-20230414181308276.png)
+![image-20230414181308276](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230414181308276.png)
 
 
 
@@ -3780,7 +3780,7 @@ Feed流产品有两种常见模式：
 
 缺点：每个消息拷贝n次,浪费内存,如果关注过多
 
-![image-20230414182428858](redis基础.assets/image-20230414182428858.png)
+![image-20230414182428858](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230414182428858.png)
 
 ###### 推拉结合
 
@@ -3794,7 +3794,7 @@ Feed流产品有两种常见模式：
 
 对于大V来说,关注他的人很多,活跃粉采用推模式、普通粉丝采用拉模式、僵尸粉忽略。
 
-![image-20230414182800249](redis基础.assets/image-20230414182800249.png)
+![image-20230414182800249](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230414182800249.png)
 
 ###### 对比
 
@@ -3843,7 +3843,7 @@ redis命令：
 
 > 借助redis SortedSet丰富的范围查询命令。
 
-![image-20230414211216856](redis基础.assets/image-20230414211216856.png)
+![image-20230414211216856](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230414211216856.png)
 
 例子：
 
@@ -3978,7 +3978,7 @@ public void testGroup() {
 }
 ```
 
-![image-20230414235958148](redis基础.assets/image-20230414235958148.png)
+![image-20230414235958148](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_hmdp/image-20230414235958148.png)
 
 #### 查询例子
 
