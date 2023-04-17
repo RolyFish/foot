@@ -4038,7 +4038,7 @@ public void testGeoSearch() {
 
 #### BitMap
 
-> `BitMap`-位图,Redis中使用String类型来实现BitMap,String的value最大为512M(2^32^bit),使用位来存储一些状态信息,不仅节约空间而且还有统计功能。
+> `BitMap`-位图,Redis中使用String类型来实现BitMap,String的value最大为512M(2^32^bit),使用位来存储一些状态信息,不仅节约空间而且还可以实现统计功能。
 >
 > 在Java中也有相似的实现,`BitSet`-位集。
 >
@@ -4079,7 +4079,7 @@ setbit sign:10:2023:04 14 1
 
 java实现：
 
-bitmap下标从1开始,获取日期需要减一。
+bitmap下标从0开始,当前dayofmouth需要减一。
 
 ```java
 public Result sign() {
