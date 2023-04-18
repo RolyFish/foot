@@ -757,3 +757,5 @@ public LettuceClientConfigurationBuilderCustomizer clientConfigurationBuilderCus
 - REPLICA：从slave（replica）节点读取
 - REPLICA _PREFERRED：优先从slave（replica）节点读取，所有的slave都不可用才读取master
 
+
+
