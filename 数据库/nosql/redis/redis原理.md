@@ -759,3 +759,494 @@ public LettuceClientConfigurationBuilderCustomizer clientConfigurationBuilderCus
 
 
 
+### redis分片集群
+
+> 主从集群使得Redis高并发读、读写分离,哨兵使得Redis高可用。
+
+但是依然存在以下问题：
+
+- 海量数据存储问题
+- 高并发写问题
+
+Redis分配集群即可剞劂以上问题,Redis分片集群的特征:
+
+- 集群中存在多个master节点,每个master保存不同数据
+- 每个master节点可以存在多个slave节点
+- master节点之间通过ping检测彼此健康状态
+- 客户端请求可以访问集群中任意节点,最终都会转发到正确的节点
+
+#### Redis分片集群搭建
+
+> 集群结构为：三主三从,共6个Redis实例：
+
+|     IP      | PORT |  角色  |
+| :---------: | :--: | :----: |
+| 10.211.55.4 | 7001 | master |
+| 10.211.55.4 | 7002 | master |
+| 10.211.55.4 | 7003 | master |
+| 10.211.55.4 | 8001 | slave  |
+| 10.211.55.4 | 8002 | slave  |
+| 10.211.55.4 | 8003 | slave  |
+
+##### 创建文件夹
+
+> 创建文件夹
+
+```shell
+# pwd
+/usr/local/src/tmp
+# mkdir 7001 7002 7003 8001 8002 8003
+```
+
+> 创建配置
+
+1、复制一份配置文件
+
+```shell
+cp /usr/local/src/redis-7.0.10/redis.conf ./redis.conf
+```
+
+2、修改配置
+
+```properties
+port 6379
+# 开启集群功能
+cluster-enabled yes
+# 集群的配置文件名称，不需要我们创建，由redis自己维护
+cluster-config-file /usr/local/src/tmp/nodes-6379.conf
+# 节点心跳失败的超时时间
+cluster-node-timeout 5000
+# 持久化文件存放目录
+dir /usr/local/src/tmp/6379
+# 绑定地址
+bind 0.0.0.0
+# 让redis后台运行
+daemonize yes
+# 注册的实例ip
+replica-announce-ip 10.211.55.4
+# 保护模式,访问不要密码
+protected-mode no
+# 数据库数量
+databases 1
+# 日志 非守护进程开启redis实例,日志输出到此文件
+logfile /usr/local/src/tmp/run.log
+```
+
+3、将此上面的配置文件拷贝到7001到8003下
+
+```shell
+echo 7001 7002 7003 8001 8002 8003 | xargs -t -n 1 cp redis.conf
+```
+
+4、修改每一个配置
+
+```shell
+printf '%s\n' 7001 7002 7003 8001 8002 8003 | xargs -I{} -t sed -i 's/6379/{}/g' {}/redis.conf
+sed -i s/6379/7001/g 7001/redis.conf
+sed -i s/6379/7002/g 7002/redis.conf
+sed -i s/6379/7003/g 7003/redis.conf
+sed -i s/6379/8001/g 8001/redis.conf
+sed -i s/6379/8002/g 8002/redis.conf
+sed -i s/6379/8003/g 8003/redis.conf
+```
+
+
+
+##### 启动
+
+```shell
+printf '%s\n'  7001 7002 7003 8001 8002 8003 | xargs -I{} -t redis-server {}/redis.conf
+redis-server 7001/redis.conf
+redis-server 7002/redis.conf
+redis-server 7003/redis.conf
+redis-server 8001/redis.conf
+redis-server 8002/redis.conf
+redis-server 8003/redis.conf
+```
+
+查看服务信息：
+
+![image-20230419042231766](redis原理.assets/image-20230419042231766-1849355.png)
+
+如果要关闭所有进程，可以执行命令：
+
+```sh
+ps -ef | grep redis | awk '{print $2}' | xargs kill
+```
+
+或者（推荐这种方式）：
+
+```sh
+printf '%s\n' 7001 7002 7003 8001 8002 8003 | xargs -I{} -t redis-cli -p {} shutdown
+```
+
+
+
+##### 创建集群
+
+> redis实例启动好了,但是实例之间没有任何联系。
+>
+> 需要执行命令来创建集群，在Redis5.0之前创建集群比较麻烦，5.0之后集群管理命令都集成到了redis-cli中。
+
+1）Redis5.0之前
+
+Redis5.0之前集群命令都是用redis安装包下的src/redis-trib.rb来实现的。因为redis-trib.rb是有ruby语言编写的所以需要安装ruby环境。
+
+```shell
+# 安装依赖
+yum -y install zlib ruby rubygems
+gem install redis
+```
+
+然后通过命令来管理集群：
+
+```shell
+# 进入redis的src目录
+cd /tmp/redis-6.2.4/src
+# 创建集群
+./redis-trib.rb create --replicas 1 10.211.55.4:7001 10.211.55.4:7002 10.211.55.4:7003 10.211.55.4:8001 10.211.55.4:8002 10.211.55.4:8003
+```
+
+2）Redis5.0以后
+
+我们使用的是Redis6.2.4版本，集群管理以及集成到了redis-cli中，格式如下：
+
+```shell
+redis-cli --cluster create --cluster-replicas 1 10.211.55.4:7001 10.211.55.4:7002 10.211.55.4:7003 10.211.55.4:8001 10.211.55.4:8002 10.211.55.4:8003
+```
+
+命令说明：
+
+集群相关命令可通过`redis-cli --cluster help`查看
+
+- `redis-cli --cluster`或者`./redis-trib.rb`：代表集群操作命令
+- `create`：代表是创建集群
+- `--replicas 1`或者`--cluster-replicas 1` ：指定集群中每个master的副本个数为1，此时`节点总数 ÷ (replicas + 1)` 得到的就是master的数量。因此节点列表中的前n个就是master，其它节点都是slave节点，随机分配到不同master
+
+![image-20230419044527830](redis原理.assets/image-20230419044527830.png)
+
+##### 插看集群状态
+
+```shell
+redis-cli -p 7001 cluster nodes
+```
+
+![image-20230419044614724](redis原理.assets/image-20230419044614724.png)
+
+##### 测试
+
+> 通过`redis-cli -p 7001 -h 10.211.55.4`命令连接redis客户端
+
+set值时出错,提示信息为:重定向到5798这个插槽失败
+
+```shell
+redis-cli -p 7001 -h 10.211.55.4
+10.211.55.4:7001> keys *
+(empty array)
+10.211.55.4:7001> set name yuyc
+(error) MOVED 5798 10.211.55.4:7002
+10.211.55.4:7001> 
+```
+
+> 需要通过`redis-cli -c -p 7001 -h 10.211.55.4`命令以分片集群的方式连接redis客户端：
+
+![image-20230419052711173](redis原理.assets/image-20230419052711173.png)
+
+#### 散列插槽
+
+##### 散列插槽原理
+
+
+
+> Redis会把每一个master节点映射到`0 ~ 16383`共16384个插槽(hash slot)上。
+
+![image-20230419053136652](redis原理.assets/image-20230419053136652.png)
+
+> Redis中的数据不与实例绑定而是与插槽绑定。redis会计算key的有效部分的插槽值来决定在哪个节点上执行命令：
+
+- key中包含`{}`,且`{}`中存在字符,则`{}`中的是key计算插槽值的有效部分
+- key中不包含`{}`,则整个key是计算插槽值的有效部分
+
+例如：key为name,则key的插槽值有效部分为key。key为`{goods}food:1`则计算插槽值的有效部分为``goods`。
+
+插槽值计算逻辑: 利用CRC16算法得到一个hash值，然后对16384取余，得到的结果就是slot值。
+
+![image-20230419054113577](redis原理.assets/image-20230419054113577.png)
+
+##### 小结
+
+Redis如何判断某个key应该在哪个实例？
+
+- 将16384个插槽分配到不同的实例
+- 根据key的有效部分计算哈希值，对16384取余
+- 余数作为插槽，寻找插槽所在实例即可
+
+如何将同一类数据固定的保存在同一个Redis实例？
+
+- 这一类数据使用相同的有效部分，例如key都以{typeId}为前缀
+
+> 最佳实践：
+
+插槽的存在可能使得我们的请求延时变高,因为存在`重定向`。所以我们可以合理使用`{}`来避免同一类数据存在同一个redis实例上,避免频繁的重定向。
+
+
+
+#### Redis集群伸缩
+
+> Redis分片集群如何添加和删除节点。
+
+可通过`redis-cli --cluster`查看集群管理命令:
+
+```shell
+# redis-cli -p 7001 -p 10.211.55.4 --cluster help
+Cluster Manager Commands:
+  create         host1:port1 ... hostN:portN
+                 --cluster-replicas <arg>
+  check          <host:port> or <host> <port>
+                 --cluster-search-multiple-owners
+  info           <host:port> or <host> <port> 
+  fix            <host:port> or <host> <port> 
+                 --cluster-search-multiple-owners
+                 --cluster-fix-with-unreachable-masters
+  reshard        <host:port> or <host> <port>
+                 --cluster-from <arg>
+                 --cluster-to <arg>
+                 --cluster-slots <arg>
+                 --cluster-yes
+                 --cluster-timeout <arg>
+                 --cluster-pipeline <arg>
+                 --cluster-replace
+  rebalance      <host:port> or <host> <port> 
+                 --cluster-weight <node1=w1...nodeN=wN>
+                 --cluster-use-empty-masters
+                 --cluster-timeout <arg>
+                 --cluster-simulate
+                 --cluster-pipeline <arg>
+                 --cluster-threshold <arg>
+                 --cluster-replace
+  add-node       new_host:new_port existing_host:existing_port
+                 --cluster-slave
+                 --cluster-master-id <arg>
+  del-node       host:port node_id
+  call           host:port command arg arg .. arg
+                 --cluster-only-masters
+                 --cluster-only-replicas
+  set-timeout    host:port milliseconds
+  import         host:port
+                 --cluster-from <arg>
+                 --cluster-from-user <arg>
+                 --cluster-from-pass <arg>
+                 --cluster-from-askpass
+                 --cluster-copy
+                 --cluster-replace
+  backup         host:port backup_directory
+  help           
+```
+
+##### 往集群添加节点
+
+> 0、创建一个新的redis实例,并启动
+
+```shell
+# 创建文件夹
+mkdir 7004
+
+#拷贝7001 配置文件
+cp 7001/redis.conf 7004
+
+# 修改端口和目录 
+printf '%s\n'  7004 | xargs -t -I{}  sed -i s/7001/{}/g {}/redis.conf
+sed -i s/7001/7004/g 7004/redis.conf
+```
+
+![image-20230419061220868](redis原理.assets/image-20230419061220868.png)
+
+> 1、添加集群命令
+
+```shell
+add-node       new_host:new_port existing_host:existing_port
+             --cluster-slave
+             --cluster-master-id <arg>
+```
+
+通过日志可以发现7004已经成功加入集群:
+
+![image-20230419062114004](redis原理.assets/image-20230419062114004.png)
+
+查看集群节点情况`redis-cli -h 10.211.55.4 -p 7001 cluster nodes`
+
+![image-20230419062358052](redis原理.assets/image-20230419062358052.png)
+
+> 2、转移插槽
+>
+> 虽然节点添加到集群上了,但是没有分配任何插槽,所以我们得开始分配插槽给7004.
+>
+> 因此刚添加的7004节点上没有任何数据,也没有任何数据可以存在70014节点上,因为数据和插槽绑定。
+
+我们将7001的`0~1000`个插槽转移到7004
+
+```shell
+10.211.55.4:7003> get age
+-> Redirected to slot [741] located at 10.211.55.4:7001
+"22"
+```
+
+转移插槽的命令为：
+
+```shell
+reshard        <host:port> or <host> <port>
+             --cluster-from <arg>
+             --cluster-to <arg>
+             --cluster-slots <arg>
+             --cluster-yes
+             --cluster-timeout <arg>
+             --cluster-pipeline <arg>
+             --cluster-replace
+```
+
+![image-20230419080148406](redis原理.assets/image-20230419080148406.png)
+
+输入`done`,输入`yes`确认即可完成插槽转移
+
+![image-20230419080203143](redis原理.assets/image-20230419080203143.png)
+
+> 3、查看转以后的集群信息
+
+7001少了1000插槽，7004多了1000插槽
+
+![image-20230419080409191](redis原理.assets/image-20230419080409191.png)
+
+查看key 为  age  的数据
+
+![image-20230419080628490](redis原理.assets/image-20230419080628490.png)
+
+> 这个添加的是主节点,再添加一个以7004为主节点的从节点
+
+0、以集群模式启动一个redis实例
+
+![image-20230419081303235](redis原理.assets/image-20230419081303235.png)
+
+1、添加8004为7004的从节点
+
+```shell
+redis-cli  --cluster add-node 10.211.55.4:8004 10.211.55.4:8001 --cluster-slave --cluster-master-id 781380417d52103ff04cad46e5042cc2838c40b4
+```
+
+![image-20230419082049171](redis原理.assets/image-20230419082049171.png)
+
+最后查看主从状态：
+
+![image-20230419082207896](redis原理.assets/image-20230419082207896.png)
+
+##### 集群删除节点
+
+> 删除7004的从节点8004
+
+![image-20230419083729618](redis原理.assets/image-20230419083729618.png)
+
+> 删除7004节点
+
+7004节点存在数据,删除失败
+
+![image-20230419083849147](redis原理.assets/image-20230419083849147.png)
+
+删除步骤
+
+- 将7004节点的插槽还集群(这里还给7001,数据跟随插槽,7004的数据保留在7001上)
+
+  `redis-cli --cluster reshard 10.211.55.4:7004`
+
+- 删除7004节点
+
+![image-20230419084443538](redis原理.assets/image-20230419084443538.png)
+
+#### redis分片故障转移
+
+> 集群中主节点宕机后,他的从节点可以取代他成为新的主节点。
+>
+> 
+
+##### 自动故障转移
+
+> 停止一个主节点(7002)：查看集群状况
+
+7002的从节点是8001
+
+① 7002失去连接
+
+②7002疑似宕机 
+
+③ 7002确定宕机,从他的从节点中选举一个新的作为主节点
+
+![image-20230419092246078](redis原理.assets/image-20230419092246078.png)
+
+> 即便7001重新启动,也只能作为8001的从节点
+
+![image-20230419092541323](redis原理.assets/image-20230419092541323.png)
+
+
+
+##### 主动故障转移
+
+> 利用cluster failover命令可以手动让集群中的某个master宕机，切换到执行cluster failover命令的这个slave节点，实现无感知的数据迁移。
+
+![image-20210725162441407](redis原理.assets/image-20210725162441407.png)
+
+
+
+这种failover命令可以指定三种模式：
+
+- 缺省：默认的流程，如图1~6歩
+- force：省略了对offset的一致性校验
+- takeover：直接执行第5歩，忽略数据一致性、忽略master状态和其它master的意见
+
+
+
+> 让7002从新成为主节点
+
+```shell
+root@ubuntu-linux-22-04-desktop:/# redis-cli -p 7002
+127.0.0.1:7002> cluster failover
+OK
+```
+
+![image-20230419092936500](redis原理.assets/image-20230419092936500.png)
+
+
+
+#### RedisTemplate
+
+> RedisTemplate底层同样基于lettuce实现了分片集群的支持，而使用的步骤与哨兵模式基本一致：
+
+1）引入redis的starter依赖
+
+2）配置分片集群地址
+
+3）配置读写分离
+
+与哨兵模式相比，其中只有分片集群的配置方式略有差异，如下：
+
+```yml
+application:
+  yml:
+logging:
+  level:
+    io.lettuce.core: debug
+  pattern:
+    dateformat: MM-dd HH:mm:ss:SSS
+spring:
+  redis:
+    cluster:
+      nodes:
+        - 10.211.55.4:7001
+        - 10.211.55.4:7002
+        - 10.211.55.4:7003
+        - 10.211.55.4:8001
+        - 10.211.55.4:8002
+        - 10.211.55.4:8003
+```
+
+
+
+
+
