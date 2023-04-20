@@ -1527,13 +1527,13 @@ redis        latest    edf4b3932692   4 weeks ago   111MB
 > 启动nginx容器
 
 ```bash
-➜  docker run --name -d nginx:latest
+➜  docker run --name nginx -d nginx:latest
 ```
 
 > 拷贝nginx配置到本地,路径为你需要挂载的路径
 
 ```bash
-➜  nginx docker cp nginxtest:/etc/nginx ~/home/nginx/nginx2
+➜  nginx2 docker cp nginxtest:/etc/nginx ~/home/nginx/nginx2
 ## 挂载日志
 ➜  nginx2 docker cp nginxtest:/var/log/nginx ~/home/nginx/nginx2/log
 ## nginx pid文件

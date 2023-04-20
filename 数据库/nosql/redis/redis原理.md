@@ -866,7 +866,7 @@ redis-server 8003/redis.conf
 
 查看服务信息：
 
-![image-20230419042231766](redis原理.assets/image-20230419042231766-1849355.png)
+![image-20230419042231766](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419042231766-1849355.png)
 
 如果要关闭所有进程，可以执行命令：
 
@@ -923,7 +923,7 @@ redis-cli --cluster create --cluster-replicas 1 10.211.55.4:7001 10.211.55.4:700
 - `create`：代表是创建集群
 - `--replicas 1`或者`--cluster-replicas 1` ：指定集群中每个master的副本个数为1，此时`节点总数 ÷ (replicas + 1)` 得到的就是master的数量。因此节点列表中的前n个就是master，其它节点都是slave节点，随机分配到不同master
 
-![image-20230419044527830](redis原理.assets/image-20230419044527830.png)
+![image-20230419044527830](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419044527830.png)
 
 ##### 插看集群状态
 
@@ -931,7 +931,7 @@ redis-cli --cluster create --cluster-replicas 1 10.211.55.4:7001 10.211.55.4:700
 redis-cli -p 7001 cluster nodes
 ```
 
-![image-20230419044614724](redis原理.assets/image-20230419044614724.png)
+![image-20230419044614724](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419044614724.png)
 
 ##### 测试
 
@@ -950,7 +950,7 @@ redis-cli -p 7001 -h 10.211.55.4
 
 > 需要通过`redis-cli -c -p 7001 -h 10.211.55.4`命令以分片集群的方式连接redis客户端：
 
-![image-20230419052711173](redis原理.assets/image-20230419052711173.png)
+![image-20230419052711173](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419052711173.png)
 
 #### 散列插槽
 
@@ -960,7 +960,7 @@ redis-cli -p 7001 -h 10.211.55.4
 
 > Redis会把每一个master节点映射到`0 ~ 16383`共16384个插槽(hash slot)上。
 
-![image-20230419053136652](redis原理.assets/image-20230419053136652.png)
+![image-20230419053136652](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419053136652.png)
 
 > Redis中的数据不与实例绑定而是与插槽绑定。redis会计算key的有效部分的插槽值来决定在哪个节点上执行命令：
 
@@ -971,7 +971,7 @@ redis-cli -p 7001 -h 10.211.55.4
 
 插槽值计算逻辑: 利用CRC16算法得到一个hash值，然后对16384取余，得到的结果就是slot值。
 
-![image-20230419054113577](redis原理.assets/image-20230419054113577.png)
+![image-20230419054113577](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419054113577.png)
 
 ##### 小结
 
@@ -1059,7 +1059,7 @@ printf '%s\n'  7004 | xargs -t -I{}  sed -i s/7001/{}/g {}/redis.conf
 sed -i s/7001/7004/g 7004/redis.conf
 ```
 
-![image-20230419061220868](redis原理.assets/image-20230419061220868.png)
+![image-20230419061220868](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419061220868.png)
 
 > 1、添加集群命令
 
@@ -1071,11 +1071,11 @@ add-node       new_host:new_port existing_host:existing_port
 
 通过日志可以发现7004已经成功加入集群:
 
-![image-20230419062114004](redis原理.assets/image-20230419062114004.png)
+![image-20230419062114004](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419062114004.png)
 
 查看集群节点情况`redis-cli -h 10.211.55.4 -p 7001 cluster nodes`
 
-![image-20230419062358052](redis原理.assets/image-20230419062358052.png)
+![image-20230419062358052](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419062358052.png)
 
 > 2、转移插槽
 >
@@ -1104,27 +1104,27 @@ reshard        <host:port> or <host> <port>
              --cluster-replace
 ```
 
-![image-20230419080148406](redis原理.assets/image-20230419080148406.png)
+![image-20230419080148406](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419080148406.png)
 
 输入`done`,输入`yes`确认即可完成插槽转移
 
-![image-20230419080203143](redis原理.assets/image-20230419080203143.png)
+![image-20230419080203143](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419080203143.png)
 
 > 3、查看转以后的集群信息
 
 7001少了1000插槽，7004多了1000插槽
 
-![image-20230419080409191](redis原理.assets/image-20230419080409191.png)
+![image-20230419080409191](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419080409191.png)
 
 查看key 为  age  的数据
 
-![image-20230419080628490](redis原理.assets/image-20230419080628490.png)
+![image-20230419080628490](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419080628490.png)
 
 > 这个添加的是主节点,再添加一个以7004为主节点的从节点
 
 0、以集群模式启动一个redis实例
 
-![image-20230419081303235](redis原理.assets/image-20230419081303235.png)
+![image-20230419081303235](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419081303235.png)
 
 1、添加8004为7004的从节点
 
@@ -1132,23 +1132,23 @@ reshard        <host:port> or <host> <port>
 redis-cli  --cluster add-node 10.211.55.4:8004 10.211.55.4:8001 --cluster-slave --cluster-master-id 781380417d52103ff04cad46e5042cc2838c40b4
 ```
 
-![image-20230419082049171](redis原理.assets/image-20230419082049171.png)
+![image-20230419082049171](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419082049171.png)
 
 最后查看主从状态：
 
-![image-20230419082207896](redis原理.assets/image-20230419082207896.png)
+![image-20230419082207896](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419082207896.png)
 
 ##### 集群删除节点
 
 > 删除7004的从节点8004
 
-![image-20230419083729618](redis原理.assets/image-20230419083729618.png)
+![image-20230419083729618](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419083729618.png)
 
 > 删除7004节点
 
 7004节点存在数据,删除失败
 
-![image-20230419083849147](redis原理.assets/image-20230419083849147.png)
+![image-20230419083849147](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419083849147.png)
 
 删除步骤
 
@@ -1158,7 +1158,7 @@ redis-cli  --cluster add-node 10.211.55.4:8004 10.211.55.4:8001 --cluster-slave 
 
 - 删除7004节点
 
-![image-20230419084443538](redis原理.assets/image-20230419084443538.png)
+![image-20230419084443538](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419084443538.png)
 
 #### redis分片故障转移
 
@@ -1178,11 +1178,11 @@ redis-cli  --cluster add-node 10.211.55.4:8004 10.211.55.4:8001 --cluster-slave 
 
 ③ 7002确定宕机,从他的从节点中选举一个新的作为主节点
 
-![image-20230419092246078](redis原理.assets/image-20230419092246078.png)
+![image-20230419092246078](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419092246078.png)
 
 > 即便7001重新启动,也只能作为8001的从节点
 
-![image-20230419092541323](redis原理.assets/image-20230419092541323.png)
+![image-20230419092541323](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419092541323.png)
 
 
 
@@ -1190,7 +1190,7 @@ redis-cli  --cluster add-node 10.211.55.4:8004 10.211.55.4:8001 --cluster-slave 
 
 > 利用cluster failover命令可以手动让集群中的某个master宕机，切换到执行cluster failover命令的这个slave节点，实现无感知的数据迁移。
 
-![image-20210725162441407](redis原理.assets/image-20210725162441407.png)
+![image-20210725162441407](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20210725162441407.png)
 
 
 
@@ -1210,7 +1210,7 @@ root@ubuntu-linux-22-04-desktop:/# redis-cli -p 7002
 OK
 ```
 
-![image-20230419092936500](redis原理.assets/image-20230419092936500.png)
+![image-20230419092936500](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/redis_high/image-20230419092936500.png)
 
 
 
