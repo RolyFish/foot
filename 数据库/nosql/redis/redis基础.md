@@ -18,7 +18,7 @@
 
 - 进入解压后的文件夹执行编译命令
 
-  `make && make install`
+  `mnstall`
 
 ### 启动redis方式
 
@@ -217,10 +217,10 @@ requirepass 123123 ## 设置密码
 > --appendonly yes   开启持久化  或者在配置文件中修改为`appendonly yes`
 
 ```shell
-docker run -d --privileged=true -p 6380:6379 
--v /Users/rolyfish/home/redis/conf/redis.conf:/etc/redis/redis.conf 
--v /Users/rolyfish/home/redis/data:/data 
---name testredis redis redis-server /etc/redis/redis.conf 
+docker run -d --privileged=true -p 6380:6379 \
+-v /Users/rolyfish/home/redis/conf/redis.conf:/etc/redis/redis.conf \
+-v /Users/rolyfish/home/redis/data:/data \
+--name testredis redis redis-server /etc/redis/redis.conf \
 --appendonly yes
 ```
 

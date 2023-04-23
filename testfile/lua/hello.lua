@@ -60,19 +60,3 @@ function pairsArr(arr)
     return arr
 end
 print(pairsArr(arr))
-
-
-
-
-docker cp nginx:/etc/nginx ./conf
-docker cp nginx:/var/log/nginx ./logs
-docker cp nginx:/var/run/nginx.pid ./logs/nginx.pid
-docker cp nginx:/usr/share/nginx/html ./html
-
-
-docker run --name nginx -p 80:80 \
--v /home/tmp/docker/nginx/conf:/etc/nginx \
--v /home/tmp/docker/nginx/logs:/var/log/nginx \
--v /home/tmp/docker/nginx/logs/nginx.pid:/var/run/nginx.pid \
--v /home/tmp/docker/nginx/html:/usr/share/nginx/html \
---privileged=true -d nginx:latest
