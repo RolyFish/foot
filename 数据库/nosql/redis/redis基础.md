@@ -18,7 +18,7 @@
 
 - 进入解压后的文件夹执行编译命令
 
-  `mnstall`
+  `make && make install`
 
 ### 启动redis方式
 
@@ -218,7 +218,7 @@ requirepass 123123 ## 设置密码
 
 ```shell
 docker run -d --privileged=true -p 6380:6379 \
--v /Users/rolyfish/home/redis/conf/redis.conf:/etc/redis/redis.conf \
+-v /Users/rolyfish/home/redis/conf/redis.conf:/etc/redis/redis.conf  \
 -v /Users/rolyfish/home/redis/data:/data \
 --name testredis redis redis-server /etc/redis/redis.conf \
 --appendonly yes
