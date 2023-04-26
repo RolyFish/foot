@@ -14,7 +14,7 @@
 
 Redis底层使用C语言实现,但是Redis并没有直接使用C语言的字符串结构,因为C语言的字符串存在以下问题：
 
-![image-20230425225812773](redis原理篇.assets/image-20230425225812773.png)
+![image-20230425225812773](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230425225812773.png)
 
 - 获取字符串长度需要运算
 
@@ -72,7 +72,7 @@ struct __attribute__ ((__packed__)) sdshdr64 {
 
 redis会创建两个结构体分别存储`name`和`yuyc`
 
-![image-20230425232759936](redis原理篇.assets/image-20230425232759936.png)
+![image-20230425232759936](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230425232759936.png)
 
 
 
@@ -103,7 +103,7 @@ OK
 "HELLO"
 ```
 
-![image-20230425234349869](redis原理篇.assets/image-20230425234349869.png)
+![image-20230425234349869](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230425234349869.png)
 
 
 
@@ -134,7 +134,7 @@ typedef struct intset {
 
 为了方便查找，Redis会将intset中所有的整数按照升序依次保存在contents数组中，结构如图：
 
-![image-20230426105928963](redis原理篇.assets/image-20230426105928963.png)
+![image-20230426105928963](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426105928963.png)
 
 #### inset插入元素
 
@@ -183,7 +183,7 @@ dictEntry：
 - union： value
 - next   下一个entry指针
 
-![1653985570612](redis原理篇.assets/1653985570612.png)
+![1653985570612](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653985570612.png)
 
 #### 添加元素
 
@@ -204,11 +204,11 @@ dictEntry：
 
 例子说明：k1 v1出现哈希冲突,拉链法头插法解决冲突
 
-![image-20230426123215928](redis原理篇.assets/image-20230426123215928.png)
+![image-20230426123215928](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426123215928.png)
 
 dict,包含两个dictht,一个平常用,一个rehash用：
 
-![image-20230426123126773](redis原理篇.assets/image-20230426123126773.png)
+![image-20230426123126773](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426123126773.png)
 
 #### dict扩容
 
@@ -274,9 +274,9 @@ ZipList 是一种特殊的“双端链表” ，由一系列特殊编码的连�
 
 #### ziplist结构
 
-![1653985987327](redis原理篇.assets/1653985987327.png)
+![1653985987327](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653985987327.png)
 
-![1653986020491](redis原理篇.assets/1653986020491.png)
+![1653986020491](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653986020491.png)
 
 | **属性** | **类型** | **长度** | **用途**                                                     |
 | -------- | -------- | -------- | ------------------------------------------------------------ |
@@ -292,7 +292,7 @@ ZipList 是一种特殊的“双端链表” ，由一系列特殊编码的连�
 
 ZipList 中的Entry并不像普通链表那样记录前后节点的指针，因为记录两个指针要占用16个字节，浪费内存。而是采用了下面的结构：
 
-![image-20230426143320790](redis原理篇.assets/image-20230426143320790.png)
+![image-20230426143320790](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426143320790.png)
 
 * previous_entry_length：前一节点的长度，占1个或5个字节。
   * 如果前一节点的长度小于254字节，则采用1个字节来保存这个长度值
@@ -325,7 +325,7 @@ ZipList中所有存储长度的数值均采用小端字节序，即低位字节�
 
 转化为16进制就是：0x00 0x02 0x62 0x62。previous_entry_length和encoding小端存储,但只有一个字节不用动。
 
-![1653986172002](redis原理篇.assets/1653986172002.png)
+![1653986172002](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653986172002.png)
 
 2. 整数
 
@@ -344,7 +344,7 @@ ZipList中所有存储长度的数值均采用小端字节序，即低位字节�
 
 2和5在0 -12之间采用最后一种编码方式,即没有content,数据保存在encoding中。
 
-![image-20230426144814215](redis原理篇.assets/image-20230426144814215.png)
+![image-20230426144814215](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426144814215.png)
 
 #### ziplist连锁更新问题
 
@@ -355,7 +355,7 @@ ZipList的每个Entry都包含previous_entry_length来记录上一个节点的�
 
 现在，假设我们有N个连续的、长度为250~253字节之间的entry，因此entry的previous_entry_length属性用1个字节即可表示，如图所示：
 
-![1653986328124](redis原理篇.assets/1653986328124.png)
+![1653986328124](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653986328124.png)
 
 但是此刻执行一个`lpush`添加一个长度大于254的节点到ziplist中,那么就需要5个字节数来保存新加入节点的长度,导致之后的所有节点都需要更新。
 
@@ -384,7 +384,7 @@ ZipList这种特殊情况下产生的连续多次空间扩展操作称之为连�
 
 ​	答：Redis在3.2版本引入了新的数据结构QuickList，它是一个双端链表，只不过链表中的每个节点都是一个ZipList。
 
-![image-20230426161019489](redis原理篇.assets/image-20230426161019489.png)
+![image-20230426161019489](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426161019489.png)
 
 为了避免QuickList中的每个ZipList中entry过多，Redis提供了一个配置项：list-max-ziplist-size来限制。
 如果值为正，则代表ZipList的允许的entry个数的最大值
@@ -398,17 +398,17 @@ ZipList这种特殊情况下产生的连续多次空间扩展操作称之为连�
 
 其默认值为 -2：
 
-![image-20230426161133171](redis原理篇.assets/image-20230426161133171.png)
+![image-20230426161133171](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426161133171.png)
 
 quicklist源码：
 
-![image-20230426161158060](redis原理篇.assets/image-20230426161158060.png)
+![image-20230426161158060](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426161158060.png)
 
 
 
 我们接下来用一段流程图来描述当前的这个结构
 
-![1653986718554](redis原理篇.assets/1653986718554.png)
+![1653986718554](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653986718554.png)
 
 总结：
 
@@ -434,11 +434,11 @@ SkipList（跳表）首先是链表，但与传统链表相比有几点差异：
 - 元素按照升序排列存储
 - 节点可能包含多个指针，指针跨度不同。
 
-![1653986771309](redis原理篇.assets/1653986771309.png)
+![1653986771309](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653986771309.png)
 
 
 
-![1653986813240](redis原理篇.assets/1653986813240.png)
+![1653986813240](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653986813240.png)
 
 #### 查询原理
 
@@ -446,7 +446,7 @@ SkipList（跳表）首先是链表，但与传统链表相比有几点差异：
 >
 > 查询性能和红黑树相当
 
-![image-20230426162942173](redis原理篇.assets/image-20230426162942173.png)
+![image-20230426162942173](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426162942173.png)
 
 #### 总结
 
@@ -464,7 +464,7 @@ SkipList的特点：
 
 Redis中的任意数据类型的键和值都会被封装为一个RedisObject，也叫做Redis对象，源码如下：
 
-![1653986956618](redis原理篇.assets/1653986956618.png)
+![1653986956618](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653986956618.png)
 
 1、什么是redisObject：
 从Redis的使用者的角度来看，⼀个Redis节点包含多个database（非cluster模式下默认是16个，cluster模式下只能是1个），而一个database维护了从key space到object space的映射关系。这个映射关系的key是string类型，⽽value可以是多种数据类型，比如：
@@ -510,33 +510,33 @@ String是Redis中最常见的数据存储类型：
 - 如果存储的字符串是整数值，并且大小在LONG_MAX范围内，则会采用INT编码：直接将数据保存在RedisObject的ptr指针位置（刚好8字节），不再需要SDS了。
 
 1. RAW编码方式底层实现⽅式：动态字符串sds
-   RAW编码方式,String的内部存储结构是sds(Simple Dynamic String,可以动态扩展内存),RedisObject的指针`ptr`指向一个`SDS`结构体。![1653987103450](redis原理篇.assets/1653987103450.png)
+   RAW编码方式,String的内部存储结构是sds(Simple Dynamic String,可以动态扩展内存),RedisObject的指针`ptr`指向一个`SDS`结构体。![1653987103450](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653987103450.png)
 
 2. EMBSTR编码方式,如果存储的SDS长度小于44字节则会采用此编码方式。此时redisobject和SDS一起分配内存,效率更高
 
-   ![image-20230426183636926](redis原理篇.assets/image-20230426183636926.png)
+   ![image-20230426183636926](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426183636926.png)
 
 3. Int编码方式,如果存储的字符串是整数值采用此编码方式。
 
-   ![image-20230426183822400](redis原理篇.assets/image-20230426183822400.png)
+   ![image-20230426183822400](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426183822400.png)
 
 ##### 例子
 
 - int、embstr、raw编码例子：
 
-![image-20230426212601295](redis原理篇.assets/image-20230426212601295.png)
+![image-20230426212601295](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426212601295.png)
 
 - 浮点数会以字符串的形式处理：
 
-![image-20230426212712334](redis原理篇.assets/image-20230426212712334.png)
+![image-20230426212712334](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426212712334.png)
 
 - 当我们对int类型编码的字符串,执行incr、decr操作时,redis会尝试将string转化成log类型,并直接进行加减操作,结果任然是,int类型编码。如果转换失败将会报错
 
-![image-20230426212843997](redis原理篇.assets/image-20230426212843997.png)
+![image-20230426212843997](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426212843997.png)
 
 - 但是对int类型编码的字符串,做incrbyfloat、append、setbit时,redis会直接将他们当做字符串处理,输出结果将是raw会embstr类型
 
-  ![image-20230426215059818](redis原理篇.assets/image-20230426215059818.png)
+  ![image-20230426215059818](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426215059818.png)
 
 #### Redis数据类型-list
 
@@ -548,11 +548,11 @@ String是Redis中最常见的数据存储类型：
 
 在3.2版本之后，Redis统一采用QuickList来实现List：
 
-![1653987313461](redis原理篇.assets/1653987313461.png)
+![1653987313461](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653987313461.png)
 
 ##### 例子
 
-![image-20230427010231851](redis原理篇.assets/image-20230427010231851.png)
+![image-20230427010231851](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230427010231851.png)
 
 
 
@@ -586,13 +586,13 @@ String是Redis中最常见的数据存储类型：
 
 当SET中的成员其中有一个不是整数类型,那么SET就会使用DICT结构体,采用HT编码
 
-![image-20230426225934589](redis原理篇.assets/image-20230426225934589.png)
+![image-20230426225934589](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426225934589.png)
 
-![image-20230426230032335](redis原理篇.assets/image-20230426230032335.png)
+![image-20230426230032335](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426230032335.png)
 
 ##### 例子
 
-![image-20230427010102194](redis原理篇.assets/image-20230427010102194.png)
+![image-20230427010102194](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230427010102194.png)
 
 
 
@@ -618,9 +618,9 @@ ZSet也就是SortedSet，其中每一个元素都需要指定一个score值和me
 > - 当我们做通过Key(member)查询score(value)时,走的是DICT这个结构体
 > - 当我们做按分数排序和范围查找时,走的是SkipList结构体
 
-![image-20230426235509928](redis原理篇.assets/image-20230426235509928.png)
+![image-20230426235509928](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426235509928.png)
 
-![image-20230426235525211](redis原理篇.assets/image-20230426235525211.png)
+![image-20230426235525211](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230426235525211.png)
 
 
 
@@ -631,24 +631,24 @@ ZSet也就是SortedSet，其中每一个元素都需要指定一个score值和me
 - zset中元素个数小于zset_max_ziplist_entries,默认128
 - 每个元素都小于zset_max_ziplist_value字节,默认64
 
-![image-20230427000515376](redis原理篇.assets/image-20230427000515376.png)
+![image-20230427000515376](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230427000515376.png)
 
 但是ZipList它既没有键值对概念,也没有排序功能,所以redis是基于ziplist通过业务逻辑的方式使得ziplist具有键值对概念、并且可以排序、并且可以基于member查询score。
 
 - 键值对的概念是这样的,ziplist中所有的entry都是连续存储的,socre和member是挨在一起的两个entry,顺序遍历即可。score小的entry放在头部、大的放在尾部
 - 基于member查询score,就是变量,查询到member,根据member的entry的前一个entry的长度,找到score
 
-![1653992299740](redis原理篇.assets/1653992299740-2527236.png)
+![1653992299740](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653992299740-2527236.png)
 
 ##### 例子
 
 > listpack主要用于解决ziplist它连锁更新问题,实现原理差不多。
 
-![image-20230427004829770](redis原理篇.assets/image-20230427004829770.png)
+![image-20230427004829770](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230427004829770.png)
 
 > 此刻若设置`zset-max-ziplist-entries = 5`,并且再插入两个score-member,那么zset就会进行数据类型转换
 
-![image-20230427005422522](redis原理篇.assets/image-20230427005422522.png)
+![image-20230427005422522](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230427005422522.png)
 
 #### Redis数据类型-hash
 
@@ -683,8 +683,8 @@ Redis的hash之所以这样设计，是因为当ziplist变得很⼤的时候，�
 
 Hash结构默认采用ZipList编码，用以节省内存。 ZipList中相邻的两个entry 分别保存field和value
 
-![1653992413406](redis原理篇.assets/1653992413406.png)
+![1653992413406](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/1653992413406.png)
 
 ##### 例子
 
-![image-20230427005706541](redis原理篇.assets/image-20230427005706541.png)
+![image-20230427005706541](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/nosql/redis/reids_yuanli/image-20230427005706541.png)
