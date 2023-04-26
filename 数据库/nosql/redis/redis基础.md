@@ -636,7 +636,7 @@ OK
 
 > Redis的Set结构与Java中的HashSet类似,可以看做是一个value为null的HashMap。因为也是一个hash表,因此具备与HashSet类似的特征：
 
-* 无序
+* 无序(intset是有序的,底层需要使用二分查找,定位元素插入位置)
 * 元素不可重复
 * 查找快
 * 支持交集.并集.差集等功能
