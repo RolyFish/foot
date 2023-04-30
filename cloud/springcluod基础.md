@@ -851,3 +851,838 @@ public PatternPropGETies patternProperties() {
 
 ​	
 
+## nacos集群搭建
+
+[nacos官方集群部署手册](https://nacos.io/zh-cn/docs/cluster-mode-quick-start.html)
+
+### 集群结构
+
+![image-20230430130256760](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430130256760.png)
+
+> SLB负载均衡器使用nginx
+>
+> 三个nacos地址：
+>
+> | 节点   | ip            | port |
+> | ------ | ------------- | ---- |
+> | nacos1 | 192.168.0.105 | 8840 |
+> | nacos2 | 192.168.0.105 | 8843 |
+> | nacos3 | 192.168.0.105 | 8846 |
+
+
+
+### 搭建集群
+
+
+
+#### 配置数据源
+
+> 使用内置数据源,无需任何配置。
+>
+> 一般会使用外置数据源,配置Mysql。[官方githupsql脚本](https://github.com/alibaba/nacos/blob/master/distribution/conf/mysql-schema.sql)
+
+
+
+#### 配置nacos
+
+`nacos conf`目录下拷贝配置模板：
+
+```shell
+cp cluster.conf.example cluster.conf
+```
+
+添加集群配置：
+
+> 我mac启动,连续端口就会报错,所以设置+3
+
+```properties
+192.168.0.105:8840
+192.168.0.105:8843
+192.168.0.105:8846
+```
+
+修改`conf 下 application.properties`配置：[官方模板](https://github.com/alibaba/nacos/blob/master/distribution/conf/application.properties)
+
+```properties
+spring.datasource.platform=mysql
+
+db.num=1
+
+db.url.0=jdbc:mysql://127.0.0.1:3306/nacos?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC
+db.user.0=root
+db.password.0=123456
+```
+
+
+
+#### 启动
+
+1. 复制三份`nacos`。
+
+   ```shell
+   ➜  nacos cp -r nacos nacos1
+   ➜  nacos cp -r nacos nacos2
+   ➜  nacos cp -r nacos nacos3
+   ```
+
+2. 修改端口为8840、8843、8846
+
+3. 启动
+
+   ```shell
+   nacos1/bin/startup.sh
+   nacos2/bin/startup.sh
+   nacos3/bin/startup.sh
+   ```
+
+#### 配置反向代理
+
+> 使用docker安装nginx。
+
+1. 挂载目录
+
+   ```shell
+   ➜  nginx mkdir nacos-nginx
+   ➜  nginx pwd
+   /Users/rolyfish/home/nginx
+   ```
+
+2. 拉取镜像
+
+   ![image-20230430133443446](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430133443446.png)
+
+3. 启动
+
+   ```shell
+   docker run --name nacos-nginx -p 80:80 \
+       -v /Users/rolyfish/home/nginx/nacos-nginx/logs/:/var/log/nginx/ \
+       -v /Users/rolyfish/home/nginx/nacos-nginx/conf.d/:/etc/nginx/conf.d/ \
+       --privileged=true -d nginx:latest
+   ```
+
+   > 拷贝配置文件。ps：只会挂载文件夹不会挂载文件。。。,或者在conf.d下创建XXX.conf也可以。
+
+   ```shell
+   docker cp nacos-nginx:/etc/nginx/nginx.conf nginx.conf
+   ```
+
+   > 配置负载均衡,在http块下添加如下配置
+
+   ```properties
+   upstream nacos-cluster {
+       server 192.168.0.105:8840;
+   	server 192.168.0.105:8843;
+   	server 192.168.0.105:8846;
+   }
+   
+   server {
+       listen       80;
+       server_name  localhost;
+   
+       location /nacos {
+           proxy_pass http://nacos-cluster;
+       }
+   }
+   ```
+
+4. 重启nacos-docker
+
+   ```shell
+   docker run --name nacos-nginx -p 80:80 \
+       -v /Users/rolyfish/home/nginx/nacos-nginx/nginx.conf:/etc/nginx/nginx.conf \
+       -v /Users/rolyfish/home/nginx/nacos-nginx/logs/:/var/log/nginx/ \
+       -v /Users/rolyfish/home/nginx/nacos-nginx/conf.d/:/etc/nginx/conf.d/ \
+       --privileged=true -d nginx:latest
+   ```
+
+5. 访问测试,`http://localhost/nacos`
+
+   > 如果`127.0.0.1`502错误,则ip修改成启动日志的ip`http://192.168.0.105:8840/nacos/index.html`。使用docker就访问不了
+
+   ![image-20230430142121570](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430142121570.png)
+
+6. 在nacos总添加配置会持久化到数据库
+
+
+
+#### 客户端配置
+
+> 由于nacos是集群部署,不可以指定Ip端口注册,而是通过nginx负载均衡到nacos集群。
+
+```yaml
+spring:
+  application:
+    name: user-service
+  cloud:
+    nacos:
+      #      server-addr: 127.0.0.1:8848 # nacos地址
+      server-addr: 192.168.0.105:80 # nacos地址
+      discovery:
+        cluster-name: HZ
+      config:
+        file-extension: yaml # 默认是properties
+  #        namespace: 9f698efc-3d3b-422e-907f-781cdcc60e71 # 配置命名空间
+  profiles:
+    active: dev
+```
+
+
+
+
+
+## Feign远程调用
+
+使用RestTemplate实现远程调用的缺点：
+
+- 可读性差,不统一
+- 代码嵌套url,不好看
+
+
+
+### 简介
+
+> Feign是一个声明式的http客户端，[官方地址](https://github.com/OpenFeign/feign)
+>
+> 其作用就是帮助我们优雅的实现http请求的发送,提供一种简单的方式实现JavaHttp客户端,解决上面提到的问题。
+
+Feign工作原理就是将注解处理成模板化的请求,请求参数可以通过方法参数传递,并且基于Feign可以很容易实现单元测试。Feign内部集成了Ribbon,自动实现负载均衡。
+
+
+
+### 使用Feign实现远程调用
+
+1. 引入OpenFeign依赖
+
+   ```xml
+   <!--  openfeign -->
+   <dependency>
+       <groupId>org.springframework.cloud</groupId>
+       <artifactId>spring-cloud-starter-openfeign</artifactId>
+   </dependency>
+   ```
+
+2. 开启Feign客户端
+
+   > 启动类添加`@EnableFeignClient`
+
+   ```java
+   @MapperScan("cn.itcast.order.mapper")
+   @SpringBootApplication
+   @EnableFeignClients
+   public class OrderApplication {
+   }
+   ```
+
+3. 编写FeignClient客户端
+
+   > Feign就可以帮我们发送Http请求
+
+   ```java
+   @FeignClient(name = "user-service")
+   public interface UserServiceFeignClient {
+       /**
+        * value --请求路径,必须是user-service实际存在可达接口
+        */
+       @RequestMapping(value = "/user/{id}", method = RequestMethod.GET)
+       User getUserById(@PathVariable("id") Long userId);
+   }
+   ```
+
+4. 测试
+
+   ```java
+   @Autowired
+   UserServiceFeignClient userServiceFeignClient;
+   public Order queryOrderById(Long orderId) {
+       // 1.查询订单
+       Order order = orderMapper.findById(orderId);
+       final User user = userServiceFeignClient.getUserById(order.getUserId());
+       order.setUser(user);
+       // 4.返回
+       return order;
+   }
+   ```
+
+   
+
+   
+
+   
+
+### Feign自定义配置
+
+Feign可以支持很多的自定义配置，如下表所示：
+
+| 类型                   | 作用             | 说明                                                   |
+| ---------------------- | ---------------- | ------------------------------------------------------ |
+| **feign.Logger.Level** | 修改日志级别     | 包含四种不同的级别：NONE、BASIC、HEADERS、FULL         |
+| feign.codec.Decoder    | 响应结果的解析器 | http远程调用的结果做解析，例如解析json字符串为java对象 |
+| feign.codec.Encoder    | 请求参数编码     | 将请求参数编码，便于通过http请求发送                   |
+| feign. Contract        | 支持的注解格式   | 默认是SpringMVC的注解                                  |
+| feign. Retryer         | 失败重试机制     | 请求失败的重试机制，默认是没有，不过会使用Ribbon的重试 |
+
+一般情况下，默认值就能满足我们使用，如果要自定义时，只需要创建自定义的@Bean覆盖默认Bean即可。
+
+#### Feign自定义配置日志
+
+> feign.Logger.Level有四个级别
+
+而日志的级别分为四种：
+
+- NONE：不记录任何日志信息，这是默认值。
+- BASIC：仅记录请求的方法，URL以及响应状态码和执行时间
+- HEADERS：在BASIC的基础上，额外记录了请求和响应的头信息
+- FULL：记录所有请求和响应的明细，包括头信息、请求体、元数据。
+
+##### 配置文件
+
+- 全局有效,对所有服务有效
+
+  ```yml
+  feign:
+    client:
+      config:
+        default: # default默认对全局有效
+          logger-level: full
+  ```
+
+- 针对某个服务配置日志级别
+
+  ```yaml
+  feign:
+    client:
+      config:
+        user-service: # user-service这个服务有效
+          logger-level: full
+  ```
+
+  
+
+##### JavaConfig方式
+
+> 基于Java代码来修改日志级别，先声明一个类，然后声明一个Logger.Level的对象：
+
+```java
+public class DefaultFeignConfiguration {
+    @Bean
+    Logger.Level level() {
+        return Logger.Level.FULL;
+    }
+}
+```
+
+- 全局有效,对所有服务有效
+
+  > 在@EnableFeignClients注解中添加全局配置
+
+  ```java
+  @EnableFeignClients(defaultConfiguration = DefaultFeignConfiguration.class)
+  ```
+
+- 针对某个服务配置日志级别
+
+  > 在对应feignclient上添加配置
+
+  ```java
+  @FeignClient(name = "user-service", configuration = DefaultFeignConfiguration.class)
+  ```
+
+### Feign优化
+
+Feign底层发起http请求，依赖于其它的框架。其底层客户端实现包括：
+
+- URLConnection：默认实现，不支持连接池
+- Apache HttpClient ：支持连接池
+- OKHttp：支持连接池
+
+> URLConnection是JDK自带的Http连接客户端,而他是不支持连接池的。Feign除了实现了默认Http连接客户端外,还实现了Apache HttpClient和OKHttp这两个Http连接诶客户端。所以我们自定自定义Feign底层Http连接客户端,来提升响应效率。
+
+
+
+#### ApacheHttpClient
+
+1. 引入依赖
+
+   ```xml
+   <!--httpClient的依赖 -->
+   <dependency>
+       <groupId>io.github.openfeign</groupId>
+       <artifactId>feign-httpclient</artifactId>
+   </dependency>
+   ```
+
+2. 配置Feign底层Http连接客户端
+
+   ```yaml
+   feign:
+     httpclient:
+       enabled: true # 开启HttpClient
+       max-connections: 200 # 连接池最大连接数
+       max-connections-per-route: 50 # 单个请求最大连接数
+   ```
+
+   ![image-20230430180006818](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430180006818.png)
+
+#### 小结
+
+总结，Feign的优化：
+
+1. 日志级别尽量用basic
+
+2. 使用HttpClient或OKHttp代替URLConnection
+
+   - 引入feign-httpClient依赖
+
+   -  配置文件开启httpClient功能，设置连接池参数
+
+
+
+### Feign最佳实践
+
+> Feign的定义和服务提供者的接口定义是一样的,也就是说是固定的,那么如果存在多个服务消费者,我们就需要写多个相同的FeignClient。
+>
+> 所以得避免这种情况。
+
+![image-20230430181830170](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430181830170.png)
+
+
+
+#### 继承方式
+
+一样的代码可以通过继承来共享：
+
+1）定义一个API接口，利用定义方法，并基于SpringMVC注解做声明。
+
+2）Feign客户端和Controller都继承该接口
+
+优点：
+
+- 简单
+- 实现了代码共享
+
+缺点：
+
+- 服务提供方、服务消费方紧耦合
+
+- 参数列表中的注解映射并不会继承，因此Controller中必须再次声明方法、参数列表、注解
+
+
+
+#### 抽取方法
+
+> 将Feign的Client抽取为独立模块，并且把接口有关的POJO、默认的Feign配置都放到这个模块中，提供给所有消费者使用。
+>
+> 例如，将UserClient、User、Feign的默认配置都抽取到一个feign-api包中，所有微服务引用该依赖包，即可直接使用。
+
+
+
+##### 实现
+
+1. 新建一个模块
+
+   ![image-20230430183823679](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430183823679.png)
+
+2. feign-api中引入依赖
+
+   ```xml
+   <!--  openfeign -->
+   <dependency>
+       <groupId>org.springframework.cloud</groupId>
+       <artifactId>spring-cloud-starter-openfeign</artifactId>
+   </dependency>
+   ```
+
+3. 在服务消费者引入feign-api
+
+   ```xml
+   <!-- feign-api -->
+   <dependency>
+       <groupId>cn.itcast</groupId>
+       <artifactId>feign-api</artifactId>
+       <version>1.0</version>
+   </dependency>
+   ```
+
+4. 扫描注册feign-api下的FeignClient
+
+   > `@EnableFeignClient`默认只扫描同级别包下的FeignClient。所以得手动配置一下
+
+   ```java
+   // 扫描
+   @EnableFeignClients(basePackages = {"cn.itcast.feignapi.feign"})
+   //或者 指定feignclient
+   @EnableFeignClients(clients = {UserServiceFeignClient.class})
+   ```
+
+   
+
+   
+
+
+
+## 网关Geteway
+
+### 网关是什么
+
+> Gateway网关是我们所有微服务的统一入口。
+
+在SpringCloud中网关的实现包括两种：
+
+- gateway
+- zuul
+
+Zuul是基于Servlet的实现，属于阻塞式编程。而SpringCloudGateway则是基于Spring5中提供的WebFlux，属于响应式编程的实现，具备更好的性能。
+
+> Spring Cloud Gateway 是 Spring Cloud 的一个全新项目，该项目是基于 Spring 5.0，Spring Boot 2.0 和 Project Reactor 等响应式编程和事件流技术开发的网关，它旨在为微服务架构提供一种简单有效的统一的 API 路由管理方式。
+
+
+
+### 网关作用
+
+- 权限控制
+
+  > 网关是所有请求的路口,在这可以做权限控制。
+
+- 请求路由和负载均衡
+
+  > 网关是所有请求的路口,它不处理业务,而是根据配置规则,将请求转发到目标微服务,这个过程就叫做请求路由。
+  >
+  > 当路由目标有多个则可以做负载均衡。
+
+- 限流削峰
+
+  > 当某一时刻请求流量达到配置峰值时,则可以等待或拒绝,保证微服务正常稳定运行。
+
+
+
+![image-20210714210131152](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20210714210131152.png)
+
+### 搭建网关
+
+
+
+#### 创建getway服务
+
+![image-20230430210340498](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430210340498.png)
+
+#### 引入依赖
+
+> getway是一个单独的服务,也需要注册进Nacos,拉取可用服务,做路由配置。
+
+```xml
+<!-- 服务发现依赖 -->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+</dependency>
+
+<!-- getway -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-gateway</artifactId>
+</dependency>
+```
+
+
+
+#### 配置路由规则
+
+```yaml
+server:
+  port: 10010 # 网关端口
+spring:
+  application:
+    name: gateway # 服务名称
+  cloud:
+    nacos:
+      server-addr: localhost:80 # nacos地址
+    gateway:
+      routes: # 网关路由配置
+        - id: user-service # 路由id，自定义，只要唯一即可
+          # uri: http://127.0.0.1:8081 # 路由的目标地址 http就是固定地址
+          uri: lb://user-service # 路由的目标地址 lb就是负载均衡，后面跟服务名称
+          predicates: # 路由断言，也就是判断请求是否符合路由规则的条件
+            - Path=/user/** # 这个是按照路径匹配，只要以/user/开头就符合要求        
+        
+        - id: order-service
+          uri: lb://order-service
+          predicates: 
+            - Path=/order/**
+```
+
+
+
+#### 测试
+
+> getaway注册成功
+
+![image-20230430210737351](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430210737351.png)
+
+> 测试路由
+
+![image-20230430210909463](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430210909463.png)
+
+
+
+#### 路由过程
+
+![image-20210714211742956](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20210714211742956.png)
+
+#### 小结
+
+网关搭建步骤：
+
+- 创建getaway服务
+
+  > 路由也是nacos中的一员,需要注册进去,并拉取可用服务做路由则。
+
+- 配置路由规则
+
+  - 路由id(id)：随意唯一
+  - 目标地址(uri)：可以是单个服务http，也可以是集群lb(会做负载均衡)
+  - 路由断言(pridicates)： 判断路由规则(匹配)
+  - 路由过滤(filters)：对请求或响应做处理
+
+### 断言工厂(pridicates)
+
+[spring官网predicates](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#the-xforwarded-remote-addr-route-predicate-factory)
+
+> 在配置文件中配置的predicates是一个且判断,配置的规则会生成对应的断言工厂,所有请求多会进过断言工厂判断,符合条件则路由通过,否则404。
+>
+> path最常用。
+
+![image-20230430212436590](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430212436590.png)
+
+| **名称**   | **说明**                       | **示例**                                                     |
+| ---------- | ------------------------------ | ------------------------------------------------------------ |
+| After      | 是某个时间点后的请求           | -  After=2037-01-20T17:42:47.789-07:00[America/Denver]       |
+| Before     | 是某个时间点之前的请求         | -  Before=2031-04-13T15:14:47.433+08:00[Asia/Shanghai]       |
+| Between    | 是某两个时间点之前的请求       | -  Between=2037-01-20T17:42:47.789-07:00[America/Denver],  2037-01-21T17:42:47.789-07:00[America/Denver] |
+| Cookie     | 请求必须包含某些cookie         | - Cookie=chocolate, ch.p                                     |
+| Header     | 请求必须包含某些header         | - Header=X-Request-Id, \d+                                   |
+| Host       | 请求必须是访问某个host（域名） | -  Host=**.somehost.org,**.anotherhost.org                   |
+| Method     | 请求方式必须是指定方式         | - Method=GET,POST                                            |
+| Path       | 请求路径必须符合指定规则       | - Path=/red/{segment},/blue/**                               |
+| Query      | 请求参数必须包含指定参数       | - Query=name, Jack或者-  Query=name                          |
+| RemoteAddr | 请求者的ip必须是指定范围       | - RemoteAddr=192.168.1.1/24                                  |
+| Weight     | 权重处理                       |                                                              |
+
+
+
+### 过滤器工厂
+
+[spring官网过滤器工厂](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#gatewayfilter-factories)
+
+> GatewayFilter是网关中提供的一种过滤器，可以对进入网关的请求和微服务返回的响应做处理：
+
+![image-20210714212312871](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20210714212312871.png)
+
+种类,例如：
+
+| **名称**             | **说明**                     |
+| -------------------- | ---------------------------- |
+| AddRequestHeader     | 给当前请求添加一个请求头     |
+| RemoveRequestHeader  | 移除请求中的一个请求头       |
+| AddResponseHeader    | 给响应结果中添加一个响应头   |
+| RemoveResponseHeader | 从响应结果中移除有一个响应头 |
+| RequestRateLimiter   | 限制请求的流量               |
+
+
+
+#### 添加请求头过滤器
+
+> 为请求添加请求头。
+>
+> authorization, admin逗号是等于的意思。
+
+[官网例子](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#the-addrequestheader-gatewayfilter-factory)
+
+> 为user-service服务添加请求头过滤器
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes: # 网关路由配置
+        - id: user-service # 路由id，自定义，只要唯一即可
+          # uri: http://127.0.0.1:8081 # 路由的目标地址 http就是固定地址
+          uri: lb://user-service # 路由的目标地址 lb就是负载均衡，后面跟服务名称
+          predicates: # 路由断言，也就是判断请求是否符合路由规则的条件
+            - Path=/user/** # 这个是按照路径匹配，只要以/user/开头就符合要求
+          filters:
+            - AddRequestHeader=authorization, admin
+```
+
+获取请求头
+
+```java
+@GetMapping("/{id}")
+public User queryById(@PathVariable("id") Long id, @RequestHeader(value = "authorization" ,required = false) String authorization) {
+    log.info("authorization:" + authorization);
+    return userService.queryById(id);
+}
+
+@GetMapping("/{id}")
+public User queryById(@PathVariable("id") Long id, @RequestHeader MultiValueMap authorization) {
+    log.warn("authorization:" + authorization.get("authorization"));
+    return userService.queryById(id);
+}
+```
+
+
+
+#### 默认过滤器
+
+> 对所有服务都生效的过滤器。目的是为所有服务添加统一过滤器避免重复配置。
+
+> 为所有服务添加默认过滤器,功能是添加请求参数。[官网例子](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#the-addrequestparameter-gatewayfilter-factory)
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - AddRequestParameter=authorization, admin
+```
+
+获取添加的请求参数
+
+```java
+@GetMapping("/{id}")
+public User queryById(@PathVariable("id") Long id, @RequestHeader MultiValueMap authorization, @RequestParam(value = "authorization", required = false) String authorizationP) {
+    log.warn("authorization:" + authorization.get("authorization"));
+    log.warn("authorization param:" + authorizationP);
+    return userService.queryById(id);
+}
+```
+
+![image-20230430220403899](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430220403899.png)
+
+
+
+### 自定义全局过滤器
+
+[spring-globalfilter](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#global-filters)
+
+> 自定义全局过滤器,只要实现以下接口就行。
+>
+> 网关提供的服务器,是固定用法,如果需要定制的过滤器,则需要自己实现。
+
+```java
+public interface GlobalFilter {
+    Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain);
+}
+```
+
+> - 自定义全局过滤器,获取请求参数并校验
+> - 设置过滤器优先级,越小优先级越高
+
+```java
+@Slf4j
+// @Order(-1)//优先级，默认最大，越小越优先
+@Component// 作为组件给Spring维护
+public class AuthorizationFilter implements GlobalFilter, Ordered {
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
+        // 获取request
+        final ServerHttpRequest request = exchange.getRequest();
+        final MultiValueMap<String, String> queryParams = request.getQueryParams();
+        // 获取请求参数
+        final String authorization = queryParams.getFirst("authorization");
+        if ("admin".equals(authorization)) {
+            log.info("权限校验成功,放行,authorization：{}", authorization);
+            // 符合，放行
+            return chain.filter(exchange);
+        }
+        log.error("权限校验失败,authorization：{}", authorization);
+        // 不符合设置响应码,结束请求
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        return exchange.getResponse().setComplete();
+    }
+    @Override
+    public int getOrder() {
+        return -1;
+    }
+}
+```
+
+测试：
+
+![image-20230430224705483](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20230430224705483.png)
+
+
+
+### 过滤器执行顺序
+
+请求进入网关会碰到三类过滤器：
+
+- DefaultFilter
+- 当前路由的过滤器(RouteFilter)
+- GlobalFilter
+
+DefaultFilter和RouteFilter都叫做GatewayFilter,全局过滤器叫做GlobalFilter。请求路由后,会将GlobalFilter适配成GatewayFilter,再将这三个过滤器合并到一个过滤器链（集合）中，排序后依次执行每个过滤器：
+
+![image-20210714214228409](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/springcloud_base/image-20210714214228409.png)
+
+排序的规则是什么呢？
+
+- 每一个过滤器都必须指定一个int类型的order值，**order值越小，优先级越高，执行顺序越靠前**。
+- GlobalFilter通过实现Ordered接口，或者添加@Order注解来指定order值，由我们自己指定
+- 路由过滤器和defaultFilter的order由Spring指定，默认是按照声明顺序从1递增。
+- 当过滤器的order值一样时，会按照 defaultFilter > 路由过滤器 > GlobalFilter的顺序执行。
+
+详细内容，可以查看源码：
+
+`org.springframework.cloud.gateway.route.RouteDefinitionRouteLocator#getFilters()`方法是先加载defaultFilters，然后再加载某个route的filters，然后合并。
+
+`org.springframework.cloud.gateway.handler.FilteringWebHandler#handle()`方法会加载全局过滤器，与前面的过滤器合并后根据order排序，组织过滤器链
+
+
+
+### 跨域问题
+
+> SpringCloudGetaway是基于WebFlux实现的,它不可以想Sevlet那样通过重定向来解决跨域问题。
+>
+> WebFlux 是 Spring Framework5.0 中引入的一种新的响应式Web框架。完全异步和非阻塞框架。本身不会加快程序执行速度，但在高并发情况下借助异步IO能够以少量而稳定的线程处理更高的吞吐，规避文件IO/网络IO阻塞带来的线程堆积。
+
+
+
+#### 什么是跨域问题
+
+跨域：域名不一致就是跨域，主要包括：
+
+- 域名不同： www.taobao.com 和 www.taobao.org 和 www.jd.com 和 miaosha.jd.com
+
+- 域名相同，端口不同：localhost:8080和localhost8081
+
+[跨域问题](https://www.ruanyifeng.com/blog/2016/04/cors.html)：浏览器禁止请求的发起者与服务端发生跨域ajax请求，请求被浏览器拦截的问题
+
+解决方案：CORS(跨域资源共享)，解决ajax只能同源使用限制，目前浏览器都支持cors方案,所以说只需要服务端支持cors就可以解决跨域问题。
+
+
+
+#### 网关解决跨域问题
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      # 。。。
+      globalcors: # 全局的跨域处理
+        add-to-simple-url-handler-mapping: true # 解决options请求被拦截问题,浏览器点击接收cookie的请求
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: # 允许哪些网站的跨域请求 
+              - "http://localhost:8090"
+            allowedMethods: # 允许的跨域ajax的请求方式
+              - "GET"
+              - "POST"
+              - "DELETE"
+              - "PUT"
+              - "OPTIONS"
+            allowedHeaders: "*" # 允许在请求中携带的头信息
+            allowCredentials: true # 是否允许携带cookie
+            maxAge: 360000 # 这次跨域检测的有效期
+```
+
