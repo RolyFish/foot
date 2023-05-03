@@ -762,6 +762,7 @@ PUT /hotel
       },
       "all":{
         "type": "text",
+        "store": true,
         "analyzer": "ik_max_word"
       }
     }
@@ -1178,20 +1179,20 @@ public void bulkPUTDoc() throws IOException {
     // 查询数据库
     List<Hotel> hotels = hotelService.list();
     // 创建bulkRequest请求
-    final BulkRequest bulkRequest = new BulkRequest();
+    BulkRequest bulkRequest = new BulkRequest();
     int count = 0;
     for (Hotel hotel : hotels) {
         HotelDoc hotelDoc = new HotelDoc(hotel);
         bulkRequest.add(new IndexRequest()
                 .index("hotel")
                 .id(String.valueOf(hotelDoc.getId()))
-                .source(JSON.toJSONString(hotelDoc),XContentType.JSON)
+                .source(JSON.toJSONString(hotelDoc), XContentType.JSON)
         );
-        if (count % 127 == 0) {
+        if ((++count & 127) == 0 || count == hotels.size()) {
             final BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+            bulkRequest = new BulkRequest();
             log.info(bulkResponse.status().toString());
         }
-        count++;
     }
 }
 ```
