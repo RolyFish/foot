@@ -305,3 +305,876 @@ GET hotel/_search
 
 #### 复合查询
 
+
+
+##### 相关性算分
+
+当我们利用match查询时，文档结果会根据与搜索词条的关联度打分（_score），返回结果时按照分值降序排列。
+
+例如，我们搜索 "虹桥如家"，结果如下：
+
+![image-20230504142838739](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504142838739.png)
+
+在elasticsearch中，早期使用的打分算法是TF-IDF算法，公式如下：
+
+![image-20210721190152134](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20210721190152134.png)在后来的5.1版本升级中，elasticsearch将算法改进为BM25算法，公式如下：
+
+![image-20210721190416214](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20210721190416214.png)
+
+
+
+##### 算分函数查询
+
+
+
+###### 语法说明
+
+![image-20210721191544750](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20210721191544750.png)
+
+function score 查询中包含四部分内容：
+
+- **原始查询**条件：query部分，基于这个条件搜索文档，并且基于BM25算法给文档打分，**原始算分**（query score)
+- **过滤条件**：filter部分，符合该条件的文档才会重新算分
+- **算分函数**：符合filter条件的文档要根据这个函数做运算，得到的**函数算分**（function score），有四种函数
+  - weight：函数结果是常量
+  - field_value_factor：以文档中的某个字段值作为函数结果
+  - random_score：以随机数作为函数结果
+  - script_score：自定义算分函数算法
+- **运算模式**：算分函数的结果、原始查询的相关性算分，两者之间的运算方式，包括：
+  - multiply：相乘
+  - replace：用function score替换query score
+  - 其它，例如：sum、avg、max、min
+
+function score的运行流程如下：
+
+- 1）根据**原始条件**查询搜索文档，并且计算相关性算分，称为**原始算分**（query score）
+- 2）根据**过滤条件**，过滤文档
+- 3）符合**过滤条件**的文档，基于**算分函数**运算，得到**函数算分**（function score）
+- 4）将**原始算分**（query score）和**函数算分**（function score）基于**运算模式**做运算，得到最终结果，作为相关性算分。
+
+因此，其中的关键点是：
+
+- 过滤条件：决定哪些文档的算分被修改
+- 算分函数：决定函数算分的算法
+- 运算模式：决定最终算分结果
+
+
+
+###### 例子
+
+需求：给“如家”这个品牌的酒店排名靠前一些
+
+翻译一下这个需求，转换为之前说的四个要点：
+
+- 原始条件：不确定，可以任意变化
+- 过滤条件：brand = "如家"
+- 算分函数：可以简单粗暴，直接给固定的算分结果，weight
+- 运算模式：比如求和
+
+因此最终的DSL语句如下：
+
+```json
+GET /hotel/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "match": {
+          "all": {
+            "query": "虹桥如家"
+          }
+        }
+        
+      },
+      "functions": [
+        {
+          "filter": {
+            "term": {
+              "brand": "如家"
+            }
+          },
+          "weight": 2
+        }
+      ],
+      "score_mode": "sum"
+    }
+  }
+}
+```
+
+![image-20230504145239225](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504145239225.png)
+
+
+
+###### 小结
+
+function score query定义的三要素是什么？
+
+- 过滤条件：哪些文档要加分
+- 算分函数：如何计算function score
+- 加权方式：function score 与 query score如何运算
+
+
+
+##### 布尔查询
+
+布尔查询是一个或多个查询子句的组合，每一个子句就是一个**子查询**。子查询的组合方式有：
+
+- must：必须匹配每个子查询，类似“与”
+- should：选择性匹配子查询，类似“或”
+- must_not：必须不匹配，**不参与算分**，类似“非”
+- filter：必须匹配，**不参与算分**
+
+需要注意的是，搜索时，参与**打分的字段越多，查询的性能也越差**。因此这种多条件查询时，建议这样做：
+
+- 搜索框的关键字搜索，是全文检索查询，使用must查询，参与算分
+- 其它过滤条件，采用filter查询。不参与算分
+
+###### 语法说明
+
+```json
+GET /hotel/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"term": {"city": "上海" }}
+      ],
+      "should": [
+        {"term": {"brand": "皇冠假日" }},
+        {"term": {"brand": "华美达" }}
+      ],
+      "must_not": [
+        { "range": { "price": { "lte": 500 } }}
+      ],
+      "filter": [
+        { "range": {"score": { "gte": 45 } }}
+      ]
+    }
+  }
+}
+```
+
+###### 例子
+
+需求：搜索名字包含“如家”，价格不高于400，在坐标31.21,121.5周围10km范围内的酒店。
+
+分析：
+
+- 名称搜索，属于全文检索查询，应该参与算分。放到must中
+- 价格不高于400，用range查询，属于过滤条件，不参与算分。放到must_not中
+- 周围10km范围内，用geo_distance查询，属于过滤条件，不参与算分。放到filter中
+
+![image-20230504151455987](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504151455987.png)
+
+
+
+###### 小结
+
+bool查询有几种逻辑关系？
+
+- must：必须匹配的条件，可以理解为“与”
+- should：选择性匹配的条件，可以理解为“或”
+- must_not：必须不匹配的条件，不参与打分
+- filter：必须匹配的条件，不参与打分
+
+### 搜索结果处理
+
+搜索的结果可以按照用户指定的方式去处理或展示。
+
+#### 排序
+
+elasticsearch默认是根据相关度算分（_score）来排序，但是也支持自定义方式对搜索[结果排序](https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html)。可以排序字段类型有：keyword类型、数值类型、地理坐标类型、日期类型等。
+
+##### 普通字段排序
+
+keyword、数值、日期类型排序的语法基本一致。
+
+**语法**：
+
+```json
+GET /indexName/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    {
+      "FIELD": "desc"  // 排序字段、排序方式ASC、DESC
+    }
+  ]
+}
+```
+
+排序条件是一个数组，也就是可以写多个排序条件。按照声明的顺序，当第一个条件相等时，再按照第二个条件排序，以此类推
+
+###### 例子
+
+> 查询品牌为汉庭,按评分降序,按价格升序排序。
+
+```json
+GET /hotel/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "brand": "汉庭"
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "score": {
+        "order": "desc"
+      }
+    },
+    {
+      "price": {
+        "order": "asc"
+      }
+    }
+  ]
+}
+```
+
+
+
+##### 地理坐标排序
+
+地理坐标排序略有不同。
+
+**语法说明**：
+
+```json
+GET /indexName/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    {
+      "_geo_distance" : {
+          "FIELD" : "纬度，经度", // 文档中geo_point类型的字段名、目标坐标点
+          "order" : "asc", // 排序方式
+          "unit" : "km" // 排序的距离单位
+      }
+    }
+  ]
+}
+```
+
+这个查询的含义是：
+
+- 指定一个坐标，作为目标点
+- 计算每一个文档中，指定字段（必须是geo_point类型）的坐标 到目标点的距离是多少
+- 根据距离排序
+
+**示例：**
+
+需求描述：实现对酒店数据按照到你的位置坐标的距离升序排序
+
+提示：获取你的位置的经纬度的方式：https://lbs.amap.com/demo/jsapi-v2/example/map/click-to-get-lnglat/
+
+假设我的位置是：31.034661，121.612282，寻找我周围距离最近的酒店。
+
+```json
+
+GET /hotel/_search
+{
+  "query": {
+   "match_all": {}
+  },
+  "sort": [
+    {
+      "_geo_distance": {
+        "location": {
+          "lat": 31.034,
+          "lon": 121.612
+        },
+        "order": "asc",
+        "unit": "km"
+      }
+    }
+  ]
+}
+```
+
+
+
+### 分页
+
+elasticsearch 默认情况下只返回top10的数据。而如果要查询更多数据就需要修改分页参数了。elasticsearch中通过修改from、size参数来控制要返回的分页结果：
+
+- from：从第几个文档开始
+- size：总共查询几个文档
+
+类似于mysql中的`limit ?, ?`
+
+#### 基本分页
+
+分页的基本语法如下：
+
+```json
+GET /hotel/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "from": 0, // 分页开始的位置，默认为0
+  "size": 10, // 期望获取的文档总数
+  "sort": [
+    {"price": "asc"}
+  ]
+}
+```
+
+例子：
+
+> 按距离排序,从下标10条开始查询20个。
+
+```json
+GET /hotel/_search
+{
+  "query": {
+   "match_all": {}
+  },
+  "sort": [
+    {
+      "_geo_distance": {
+        "location": {
+          "lat": 31.034,
+          "lon": 121.612
+        },
+        "order": "asc",
+        "unit": "km"
+      }
+    }
+  ],
+  "from": 10,
+  "size": 20
+}
+```
+
+
+
+#### 深度分页问题
+
+现在，我要查询990~1000的数据，查询逻辑要这么写：
+
+```json
+GET /hotel/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "from": 990, // 分页开始的位置，默认为0
+  "size": 10, // 期望获取的文档总数
+  "sort": [
+    {"price": "asc"}
+  ]
+}
+```
+
+这里是查询990开始的数据，也就是 第990~第1000条 数据。
+
+不过，elasticsearch内部分页时，必须先查询 0~1000条，然后截取其中的990 ~ 1000的这10条：
+
+![image-20210721200643029](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20210721200643029.png)
+
+查询TOP1000，如果es是单点模式，这并无太大影响。
+
+但是elasticsearch将来一定是集群，例如我集群有5个节点，我要查询TOP1000的数据，并不是每个节点查询200条就可以了。
+
+因为节点A的TOP200，在另一个节点可能排到10000名以外了。
+
+因此要想获取整个集群的TOP1000，必须先查询出每个节点的TOP1000，汇总结果后，重新排名，重新截取TOP1000。
+
+![image-20210721201003229](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20210721201003229.png)
+
+那如果我要查询9900~10000的数据呢？是不是要先查询TOP10000呢？那每个节点都要查询10000条？汇总到内存中？
+
+当查询分页深度较大时，汇总数据过多，对内存和CPU会产生非常大的压力，因此elasticsearch会禁止from+ size 超过10000的请求。
+
+针对深度分页，ES提供了两种解决方案，[官方文档](https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html)：
+
+- search after：分页时需要排序，原理是从上一次的排序值开始，查询下一页数据。官方推荐使用的方式。
+- scroll：原理将排序后的文档id形成快照，保存在内存。官方已经不推荐使用。
+
+##### 例子
+
+> 使用深度分页查询,from必须为0,因为不需要我们指定,es会根据上一个分片的值去下一个分片查询。
+>
+> 使得聚合的结果不那么多
+
+```json
+GET /hotel/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ],
+  "from": 0,
+  "size": 10000, 
+  "search_after": [
+    "1393017952"
+  ]
+}
+```
+
+
+
+#### 小结
+
+分页查询的常见实现方案以及优缺点：
+
+- `from + size`：
+  - 优点：支持随机翻页
+  - 缺点：深度分页问题，默认查询上限（from + size）是10000
+  - 场景：百度、京东、谷歌、淘宝这样的随机翻页搜索
+- `after search`：
+  - 优点：没有查询上限（单次查询的size不超过10000）
+  - 缺点：只能向后逐页查询，不支持随机翻页
+  - 场景：没有随机翻页需求的搜索，例如手机向下滚动翻页
+
+- `scroll`：
+  - 优点：没有查询上限（单次查询的size不超过10000）
+  - 缺点：会有额外内存消耗，并且搜索结果是非实时的
+  - 场景：海量数据的获取和迁移。从ES7.1开始不推荐，建议用 after search方案。
+
+
+
+### 高亮
+
+#### 高亮原理
+
+什么是高亮显示呢？
+
+我们在百度，京东搜索时，关键字会变成红色，比较醒目，这叫高亮显示。
+
+高亮显示的实现分为两步：
+
+- 1）给文档中的所有关键字都添加一个标签，例如`<em>`标签
+- 2）页面给`<em>`标签编写CSS样式
+
+#### 实现高亮
+
+语法：
+
+```java
+GET /hotel/_search
+{
+  "query": {
+    "match": {
+      "FIELD": "TEXT" // 查询条件，高亮一定要使用全文检索查询
+    }
+  },
+  "highlight": {
+    "fields": { // 指定要高亮的字段
+      "FIELD": {
+        "pre_tags": "<em>",  // 用来标记高亮字段的前置标签
+        "post_tags": "</em>" // 用来标记高亮字段的后置标签
+      }
+    }
+  }
+}
+```
+
+**注意：**
+
+- 高亮是对关键字高亮，因此**搜索条件必须带有关键字**，而不能是范围这样的查询。
+- 默认情况下，**高亮的字段，必须与搜索指定的字段一致**，否则无法高亮
+- 如果要对非搜索字段高亮，则需要添加一个属性：required_field_match=false
+
+
+
+##### 例子
+
+![image-20230504161208025](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504161208025.png)
+
+
+
+#### 小结
+
+查询的DSL是一个大的JSON对象，包含下列属性：
+
+- query：查询条件
+- from和size：分页条件
+- sort：排序条件
+- highlight：高亮条件
+
+
+
+## RestClient查询文档
+
+
+
+### match_all
+
+步骤：
+
+- 构建查询请求
+  - 创建searchRequest对象
+- 准备请求参数
+  - 指定source也就是searchSourceBuilder
+- 发送查询请求
+- 解析结果
+
+
+
+#### 示例
+
+```java
+@Test
+public void matchAll() throws IOException {
+    // 创建请求
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    /**
+     * 准备请求参数
+     * - 查询hotel索引库
+     * - 查询方式 match_all
+     */
+    searchRequest.source().query(QueryBuilders.matchAllQuery());
+    // 发送请求
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
+    /**
+     * 解析响应
+     * json字符串封装的对象 结构为：
+     *   "hits" : {
+     *     "total" : {
+     *       "value" : 30,
+     *       "relation" : "eq"
+     *     },
+     *     "max_score" : null,
+     *     "hits" : [
+     *       {
+     */
+    SearchHits searchHits = searchResponse.getHits();
+    // 命中数
+    TotalHits totalHits = searchHits.getTotalHits();
+    if (0 >= totalHits.value) {
+        return;
+    }
+    List<HotelDoc> result = new ArrayList<>((int) totalHits.value);
+    SearchHit[] hits = searchHits.getHits();
+    for (SearchHit hit : hits) {
+        result.add(JSON.parseObject(hit.getSourceAsString(), HotelDoc.class));
+    }
+    log.info("共查询到{}条数据",totalHits.value);
+    log.info("查询结果{}",result);
+}
+```
+
+
+
+### 全文检索
+
+#### match
+
+> match和match_all差异在于查询类型和查询条件。
+
+步骤：
+
+- 构建查询请求
+  - 创建searchRequest对象
+- 准备请求参数
+  - 指定source也就是searchSourceBuilder
+- 发送查询请求
+- 解析结果
+
+```java
+@Test
+public void match() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source().query(QueryBuilders.matchQuery("all","如家"));
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+private static void parseResult(SearchHits searchHits) {
+    // 命中数
+    TotalHits totalHits = searchHits.getTotalHits();
+    if (0 >= totalHits.value) {
+        return;
+    }
+    List<HotelDoc> result = new ArrayList<>((int) totalHits.value);
+    SearchHit[] hits = searchHits.getHits();
+    for (SearchHit hit : hits) {
+        result.add(JSON.parseObject(hit.getSourceAsString(), HotelDoc.class));
+    }
+    log.info("共查询到{}条数据", totalHits.value);
+    log.info("查询结果{}", result);
+}
+```
+
+
+
+#### multi_match
+
+> 多条件全文检索,同样的也是查询类型和查询条件不一样。
+
+![image-20230504165237204](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504165237204.png)
+
+```java
+@Test
+public void multiMatch() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source().query(QueryBuilders.multiMatchQuery("如家", "name","brand","business"));
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+### 精确查询
+
+#### term
+
+> 也是一样查询类型和查询条件不一样
+
+![image-20230504165527592](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504165527592.png)
+
+```java
+@Test
+public void term() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source().query(QueryBuilders.termQuery("brand", "如家"));
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+
+
+#### range
+
+> 也是一样查询类型和查询条件不一样
+
+![image-20230504165607794](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504165607794.png)
+
+```java
+@Test
+public void range() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+  searchRequest.source().query(QueryBuilders.rangeQuery("price").gte(100).lte(400));
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+
+
+### 地理坐标查询
+
+![image-20230504174229710](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504174229710.png)
+
+
+
+```java
+@Test
+public void geo() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source().query(QueryBuilders.geoDistanceQuery("location")
+            .point(31.21,121.5)
+            .distance(3, DistanceUnit.KILOMETERS));
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+
+
+### 复合查询
+
+#### 布尔查询
+
+> 布尔查询是用must、must_not、filter等方式组合其它查询，代码示例如下：
+
+![image-20230504180930327](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504180930327.png)
+
+```java
+@Test
+public void bool() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source().query(QueryBuilders.boolQuery()
+            .must(QueryBuilders.multiMatchQuery("上海","brand","name","business"))
+            .should(QueryBuilders.matchQuery("brand","皇冠假日"))
+            .should(QueryBuilders.matchQuery("brand","如家"))
+            .mustNot(QueryBuilders.rangeQuery("price").gte(4000))
+            .filter(QueryBuilders.rangeQuery("score").gte(40))
+    );
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+#### 分页
+
+![image-20230504182318178](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504182318178.png)
+
+```java
+@Test
+public void splitPage() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source()
+            .query(QueryBuilders.matchAllQuery())
+            .from(0).size(20);
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+
+
+#### 排序
+
+
+
+##### 分数排序
+
+###### 算分函数查询
+
+![image-20230504183242611](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230504183242611.png)
+
+```java
+@Test
+public void funSort() throws IOException {
+    final FunctionScoreQueryBuilder.FilterFunctionBuilder filterFunctionBuilder = new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+            QueryBuilders.rangeQuery("score").gte(40),ScoreFunctionBuilders.weightFactorFunction(10)
+    );
+    final FunctionScoreQueryBuilder.FilterFunctionBuilder[] filterFunctionBuilders = new FunctionScoreQueryBuilder.FilterFunctionBuilder[1];
+    filterFunctionBuilders[0] = filterFunctionBuilder;
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source()
+            .query(QueryBuilders.functionScoreQuery(
+                            QueryBuilders.matchQuery("all", "如家"),
+                            filterFunctionBuilders
+                            )
+                    .boostMode(CombineFunction.SUM)
+            )
+            .sort(SortBuilders.scoreSort().order(SortOrder.DESC))
+            .from(0).size(20);
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+
+
+##### 字段排序
+
+![image-20230505000139571](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230505000139571.png)
+
+```java
+@Test
+public void fieldSort() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source()
+            .query(QueryBuilders.matchQuery("all", "如家"))
+            .size(100)
+            .sort("score", SortOrder.DESC)
+            .sort("price", SortOrder.ASC);
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+### 高亮
+
+![image-20230505001649282](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230505001649282.png)
+
+> 利用反射通过字段名称设置属性值
+
+```java
+static Field[] fields;
+
+static {
+    fields = HotelDoc.class.getDeclaredFields();
+}
+
+/**
+ * 通过字段名称设置属性值
+ */
+public static void setValueByFieldName(HotelDoc hotelDoc, String fieldName, Object value) throws IllegalAccessException {
+    for (Field field : fields) {
+        if (field.getName().equals(fieldName)) {
+            field.setAccessible(true);
+            field.set(hotelDoc,value);
+            break;
+        }
+    }
+}
+```
+
+> 高亮显示请求构建和结果处理
+
+```java
+@Test
+public void highLight() throws IOException {
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    searchRequest.source()
+            .query(QueryBuilders.matchQuery("all", "如家"))
+            .size(100)
+            .sort("score", SortOrder.DESC)
+            .sort("price", SortOrder.ASC)
+            .highlighter(new HighlightBuilder()
+                    .field(new HighlightBuilder.Field("name").requireFieldMatch(false).preTags("<hl>").postTags("</hl>"))
+                    .field(new HighlightBuilder.Field("brand").requireFieldMatch(false).preTags("<hlz>").postTags("</hlz>"))
+            );
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchHits searchHits = searchResponse.getHits();
+    parseResult(searchHits);
+}
+```
+
+```java
+private static void parseResult(SearchHits searchHits) {
+    // 命中数
+    TotalHits totalHits = searchHits.getTotalHits();
+    if (0 >= totalHits.value) {
+        return;
+    }
+    List<HotelDoc> result = new ArrayList<>((int) totalHits.value);
+    SearchHit[] hits = searchHits.getHits();
+    for (SearchHit hit : hits) {
+        HotelDoc hotelDoc = JSON.parseObject(hit.getSourceAsString(), HotelDoc.class);
+        result.add(hotelDoc);
+        // 获取高亮字段
+        Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+        if (null != highlightFields && highlightFields.size() > 0) {
+            highlightFields.forEach((key, hf) -> {
+                if (null != hf && hf.getFragments().length > 0) {
+                    String hlValue = hf.getFragments()[0].toString();
+                    String fieldName = hf.getName();
+                    try {
+                        HotelDoc.setValueByFieldName(hotelDoc,fieldName,hlValue);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+        }
+    }
+    log.info("共查询到{}条数据", totalHits.value);
+    log.info("查询结果{}", result);
+}
+```
+
+![image-20230505005400612](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230505005400612.png)
