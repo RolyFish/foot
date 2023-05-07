@@ -2,7 +2,7 @@
 
 
 
-## 初始MQ
+## 初识MQ
 
 ### 同步和异步通讯
 
@@ -784,7 +784,7 @@ public void testDirectExchange() {
 
 #### Topic
 
-`Topic`类型的`Exchange`与`Direct`相比，都是可以根据`RoutingKey`把消息路由到不同的队列。只不过`Topic`类型`Exchange`可以让队列在绑定`Routing key` 的时候使用通配符！
+`Topic`类型的`Exchange`与`Direct`相似，都是可以根据`RoutingKey`把消息路由到不同的队列。只不过`Topic`类型`Exchange`可以让队列在绑定`Routing key` 的时候使用通配符！
 
 `Routingkey` 一般都是有一个或多个单词组成，多个单词之间以”.”分割，例如： `item.insert`
 

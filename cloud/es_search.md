@@ -1178,3 +1178,1182 @@ private static void parseResult(SearchHits searchHits) {
 ```
 
 ![image-20230505005400612](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230505005400612.png)
+
+
+
+## 黑马旅游案例
+
+
+
+### 搜索
+
+![image-20230506225813424](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230506225813424.png)
+
+
+
+> 通过`QueryBuilders.matchQuery()`构建
+
+```json
+{
+  "query": {
+    "match": {
+      "FIELD": "TEXT"
+    }
+  }
+}
+```
+
+
+
+#### 请求参数
+
+前端发出请求参数：
+
+```json
+{"key":"如家","page":1,"size":5,"sortBy":"default"}
+```
+
+请求参数接收对象：
+
+```java
+@Data
+public class SearchRequestParams {
+
+    /**
+     * 关键字
+     */
+    private String key;
+
+    /**
+     * 当前页
+     */
+    private Integer page;
+
+    /**
+     * 页面大小
+     */
+    private Integer size;
+
+    /**
+     * 排序方式
+     */
+    private String sortBy;
+}
+```
+
+
+
+#### 查询步骤
+
+- 构建查询请求
+- 准备dsl
+- 发出请求
+- 解析结果
+
+### 过滤
+
+![image-20230506230148324](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230506230148324.png)
+
+> 由于存在多个查询条件,所以使用`QueryBuilder.boolQuery()`查询。
+>
+> 对于需要参与算分的使用must、对于不需要算分的使用filer
+
+```json
+POST /hotel/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "FIELD": "TEXT"
+          }
+        }
+      ],
+      "filter": [
+        {
+          "range": {
+            "FIELD": {
+              "gte": 10,
+              "lte": 20
+            }
+          }
+        }
+      ]
+    }
+  }
+  ,
+  "from": 0,
+  "size": 20
+}
+```
+
+
+
+### 附近酒店
+
+- 发送当前经纬度
+- 按距离升序排序
+- 解析结果,返回距离
+
+排序：
+
+```java
+// 3.0 排序
+// 3.1 按距离排序
+if(StringUtils.isNotBlank(searchRequestParams.getLocation())){
+    searchRequest.source().sort(SortBuilders.geoDistanceSort("location",
+            new GeoPoint(searchRequestParams.getLocation())).order(SortOrder.ASC).unit(DistanceUnit.KILOMETERS));
+}
+```
+
+解析结果：
+
+![image-20230506232226690](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230506232226690.png)
+
+```java
+// 解析sorted 有多个 和 放入排序条件顺序有关, 距离排序放在最后,也就是最后一个sort值
+Object[] sortValues = hit.getSortValues();
+if (sortValues != null && sortValues.length > 0) {
+    // 距离
+    Object geoSort = sortValues[sortValues.length - 1];
+    hotelDoc.setDistance(geoSort);
+}
+```
+
+
+
+### 广告置顶
+
+> 算分函数查询
+
+![image-20230506234230182](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230506234230182.png) 
+
+
+
+## 数据聚合
+
+**[聚合（](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html)[aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html)[）](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html)**可以让我们极其方便的实现对数据的统计、分析、运算。例如：
+
+- 什么品牌的手机最受欢迎？
+- 这些手机的平均价格、最高价格、最低价格？
+- 这些手机每月的销售情况如何？
+
+实现这些统计功能的比数据库的sql要方便的多，而且查询速度非常快，可以实现近实时搜索效果。
+
+
+
+### 聚合种类
+
+聚合常见的有三类：
+
+- **桶（Bucket）**聚合：用来对文档做分组
+  - TermAggregation：按照文档字段值分组，例如按照品牌值分组、按照国家分组
+  - Date Histogram：按照日期阶梯分组，例如一周为一组，或者一月为一组
+
+- **度量（Metric）**聚合：用以计算一些值，比如：最大值、最小值、平均值等
+  - Avg：求平均值
+  - Max：求最大值
+  - Min：求最小值
+  - Stats：同时求max、min、avg、sum等
+- **管道（pipeline）**聚合：其它聚合的结果为基础做聚合
+
+> **注意：**参加聚合的字段必须是keyword、日期、数值、布尔类型
+
+
+
+### DSL实现聚合
+
+现在，我们要统计所有数据中的酒店品牌有几种，其实就是按照品牌对数据分组。此时可以根据酒店品牌的名称做聚合，也就是Bucket聚合。
+
+
+
+#### Bucket
+
+语法如下：
+
+```json
+GET /hotel/_search
+{
+  "size": 0,  // 设置size为0，结果中不包含文档，只包含聚合结果
+  "aggs": { // 定义聚合
+    "brandAgg": { //给聚合起个名字
+      "terms": { // 聚合的类型，按照品牌值聚合，所以选择term
+        "field": "brand", // 参与聚合的字段
+        "size": 20 // 希望获取的聚合结果数量
+      }
+    }
+  }
+}
+```
+
+![image-20230507123505552](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507123505552.png)
+
+#### 聚合结果排序
+
+> 默认情况下，Bucket聚合会统计Bucket内的文档数量，记为`_count`，并且按照`_count`降序排序。
+>
+> 我们可以指定order属性，自定义聚合的排序方式：
+
+```json
+GET /hotel/_search
+{
+  "size": 0, 
+  "aggs": {
+    "brandAgg": {
+      "terms": {
+        "field": "brand",
+        "size": 10,
+        "order": {
+          "_count": "asc"
+        }
+      }
+    }
+  }
+}
+```
+
+
+
+#### 限定聚合范围
+
+默认情况下，Bucket聚合是对索引库的所有文档做聚合，数据量较大则内存、cpu压力较大。
+
+可以限定要聚合的文档范围，只要添加query条件即可：
+
+```json
+GET /hotel/_search
+{
+  "query": {
+    "range": {
+      "price": {
+        "lte": 200
+      }
+    }
+  }, 
+  "size": 0, 
+  "aggs": {
+    "brandAgg": {
+      "terms": {
+        "field": "brand",
+        "size": 10,
+        "order": {
+          "_count": "asc"
+        }
+      }
+    }
+  }
+}
+```
+
+![image-20230507124036710](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507124036710.png)
+
+#### Metric聚合
+
+对酒店按照品牌分组，形成了一个个桶。现在我们需要对桶内的酒店做运算，获取每个品牌的用户评分的min、max、avg等值。
+
+这就要用到Metric聚合了，例如stat聚合：就可以获取min、max、avg等结果。
+
+语法如下：
+
+![image-20230507124326300](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507124326300.png)
+
+> Metric聚合一般在Bucket(桶、分组)聚合后进行,对每个Bucket内数据做聚合。
+
+![image-20230507124728913](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507124728913.png)
+
+
+
+##### 按metric聚合结果排序
+
+> metric聚合结果内有最大值,最小值,平均値等。这些数据往往用于排序条件。
+
+![image-20230507125014494](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507125014494.png)
+
+#### 小结
+
+aggs代表聚合，与query同级，此时query的作用是？
+
+- 限定聚合的的文档范围
+
+聚合必须的三要素：
+
+- 聚合名称
+- 聚合类型
+- 聚合字段
+
+聚合可配置属性有：
+
+- size：指定聚合结果数量
+- order：指定聚合结果排序方式
+- field：指定聚合字段
+
+
+
+### RestClient实现聚合
+
+聚合条件与query条件同级别，因此需要使用request.source()来指定聚合条件。
+
+![image-20210723173057733](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20210723173057733.png)
+
+#### 例子
+
+> status 改成 stats
+
+![image-20230507133908294](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507133908294.png)
+
+> java代码
+
+```java
+@Test
+public void testAgg() throws IOException {
+    // 1 创建查询请求对象
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    // 2 dsL
+    // 2.1 查询
+    searchRequest.source().query(QueryBuilders.rangeQuery("price").lte(200L));
+    // 2.2 按品牌(brand)聚合聚合
+    searchRequest.source().aggregation(AggregationBuilders
+            .terms("brandAgg")
+            .field("brand")
+            .order(BucketOrder.aggregation("score_status", "avg", true))
+            .size(10)
+            .subAggregation(AggregationBuilders.stats("score_stats").field("score"))
+
+    );
+    // 2.3 限制size，只看聚合结果
+    searchRequest.source().size(0);
+    // 3 发出请求
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    // 4 解析结果
+    // 4.1 获取聚合结果集
+    Aggregations aggregations = searchResponse.getAggregations();
+    Terms brandAgg = aggregations.get("brandAgg");
+    final List<? extends Terms.Bucket> buckets = brandAgg.getBuckets();
+    // 4.2 遍历
+    for (Terms.Bucket bucket : buckets) {
+        Aggregations aggregationsScoreStats = bucket.getAggregations();
+        Stats scoreStats = aggregationsScoreStats.get("score_stats");
+        log.info("品牌名称:{},个数:{} 评分:平均{},最大{},最小{},合计{}",
+                bucket.getKeyAsString(),
+                bucket.getDocCount(),
+                scoreStats.getAvg(),
+                scoreStats.getMax(),
+                scoreStats.getMin(),
+                scoreStats.getSum()
+        );
+    }
+}
+```
+
+![image-20230507135751669](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507135751669.png)
+
+
+
+#### 业务需求
+
+需求：搜索页面的品牌、城市等信息不应该是在页面写死，而是通过聚合索引库中的酒店数据得来的。
+
+
+
+##### 多字段聚合
+
+> es允许在一个查询请求中对多个字段进行聚合。并且结果会封装到一个map集合中。
+
+![image-20230507140903406](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507140903406.png)
+
+代码：
+
+```java
+@Test
+public void test() throws IOException {
+
+    // 1 创建搜索请求
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    // 2 DSL
+    // 2.1 查询请求
+    searchRequest.source().query(QueryBuilders.rangeQuery("price").lte(200L));
+    // 2.2 多条件集合。多个聚合条件会放入一个集合中
+    searchRequest.source()
+            .aggregation(AggregationBuilders.terms("brandAgg").field("brand").order(BucketOrder.aggregation("_count", true)))
+            .aggregation(AggregationBuilders.terms("cityAgg").field("city").order(BucketOrder.aggregation("_count", true)))
+            .aggregation(AggregationBuilders.terms("starNameAgg").field("starName").order(BucketOrder.aggregation("_count", true)));
+    // 3 发起请求
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    // 4 解析结果
+    // List<String> brandList = new ArrayList<>();
+    //         // List<String> cityList = new ArrayList<>();
+    //         // List<String> startNameList = new ArrayList<>();
+    Aggregations aggregations = searchResponse.getAggregations();
+    Map<String, Aggregation> asMap = aggregations.getAsMap();
+    asMap.forEach((aggName, agg) -> {
+        log.info("aggName:{}", aggName);
+        MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) agg;
+        final List<? extends MultiBucketsAggregation.Bucket> buckets = multiBucketsAggregation.getBuckets();
+        buckets.forEach(bucket ->{
+            log.info(bucket.getKeyAsString());
+        });
+    });
+}
+```
+
+![image-20230507143021452](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507143021452.png)
+
+
+
+##### 实现
+
+> 过滤条件可选,需要保证选择过滤条件查询有结果。
+
+这就要求对查询结果做聚合,按品牌、按城市、按星级进行bucket聚合。
+
+
+
+## 自动补全
+
+### 拼音分词器
+
+#### 安装
+
+1. 下载
+
+   [选择合适版本下载](https://github.com/medcl/elasticsearch-analysis-pinyin/releases/tag/v7.13.4)我是7.13.4
+
+   ![image-20230507181825585](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507181825585.png)
+
+2. 移动到plugins挂载卷目录下
+
+   ```shell
+   mv elasticsearch-analysis-pinyin-7.13.4/  /var/lib/docker/volumes/es-plugins/_data
+   ```
+
+3. 重启
+
+   ```shell
+   docker restart es
+   ```
+
+4. 测试
+
+   ![image-20230507182606314](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507182606314.png)
+
+
+
+##### 默认拼音分词器问题
+
+- 会对每一个汉字单独分为拼音，而不是先分词
+
+
+
+#### 自定义分词器
+
+[拼音分词器官方配置选项](https://github.com/medcl/elasticsearch-analysis-pinyin)
+
+默认的拼音分词器会将每个汉字单独分为拼音，而我们希望的是每个词条形成一组拼音，需要对拼音分词器做个性化定制，形成自定义分词器。
+
+elasticsearch中分词器（analyzer）的组成包含三部分：
+
+- character filters：在tokenizer之前对文本进行处理。例如删除字符、替换字符
+- tokenizer：将文本按照一定的规则切割成词条（term）。例如keyword，就是不分词；还有ik_smart
+- tokenizer filter：将tokenizer输出的词条做进一步处理。例如大小写转换、同义词处理、拼音处理等
+
+文档分词时会依次由这三部分来处理文档：
+
+![image-20210723210427878](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20210723210427878.png)
+
+声明自定义分词器的语法如下：
+
+> 自定义分词器需要在创建索引库时自定义,只在当前索引库中有效。
+
+```json
+PUT /test
+{
+  "settings": {
+    "analysis": {
+      "analyzer": { 
+        "my_analyzer": { // 自定义分词器名称
+          "tokenizer": "ik_max_word", // 对text进行分词
+          "filter": "py"              // 在使用拼音分词器分词
+        }
+      },
+      "filter": { // 自定义tockennizer filter
+        "py": { 
+          "type": "pinyin", // 使用拼音分词器
+          "keep_full_pinyin": false, // 不对每个中文进行分词
+          "keep_joined_full_pinyin": true, // 此条全拼
+          "keep_original": true,
+          "limit_first_letter_length": 16,
+          "remove_duplicated_term": true, // 删除重复项
+          "none_chinese_pinyin_tokenize": false
+        }
+      }
+    }
+  },
+  "mappings": { // 声明映射关系
+    "properties": {
+      "name":{
+        "type": "text"
+      }
+    }
+  }
+}
+```
+
+测试：
+
+![image-20230507214356003](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507214356003.png)
+
+##### 问题
+
+> 自定义分词器如果不加以设置的话,会在插入时创建倒排索引和搜索时对text进行分词都生效。
+>
+> 而对于一些同音字,如果采用中文搜索的话就会将不想要的结果返回。
+
+例如：
+
+```java
+POST /test/_doc/1
+{
+  "id": 1,
+  "name": "狮子"
+}
+POST /test/_doc/2
+{
+  "id": 2,
+  "name": "虱子"
+}
+
+# 狮子会被自定义分词器分词为 shizi sz 狮子
+GET /test/_search
+{
+  "query": {
+    "match": {
+      "name": "狮子"
+    }
+  }
+}
+```
+
+狮子会被自定义分词器分词为 shizi sz 狮子,去倒排索引里匹配会匹配到虱子。
+
+![image-20230507221612796](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507221612796.png)
+
+
+
+##### 解决
+
+所以需要对属性(filter)做配置,插入时使用自定义分词器,查询时使用ik分词器。
+
+```json
+"mappings": {
+    "properties": {
+      "name":{
+        "type": "text",
+        "search_analyzer": "ik_smart",
+        "analyzer": "my_analyzer"
+      }
+    }
+}
+```
+
+
+
+总结：
+
+如何使用拼音分词器？
+
+- ①下载pinyin分词器
+
+- ②解压并放到elasticsearch的plugin目录
+
+- ③重启即可
+
+如何自定义分词器？
+
+- ①创建索引库时，在settings中配置，可以包含三部分
+
+- ②character filter
+
+- ③tokenizer
+
+- ④filter
+
+拼音分词器注意事项？
+
+- 为了避免搜索到同音字，搜索时不要使用拼音分词器
+
+
+
+#### 自动补全查询
+
+elasticsearch提供了[Completion Suggester](https://www.elastic.co/guide/en/elasticsearch/reference/7.6/search-suggesters.html)查询来实现自动补全功能。这个查询会匹配以用户输入内容开头的词条并返回。为了提高补全查询的效率，对于文档中字段的类型有一些约束：
+
+- 参与补全查询的字段必须是completion类型
+
+- 字段的内容一般是用来补全的多个词条形成的数组
+
+比如，一个这样的索引库：
+
+```json
+// 创建索引库
+PUT test
+{
+  "mappings": {
+    "properties": {
+      "title":{
+        "type": "completion"
+      }
+    }
+  }
+}
+```
+
+然后插入下面的数据：
+
+```json
+// 示例数据
+POST test/_doc
+{
+  "title": ["Sony", "WH-1000XM3"]
+}
+POST test/_doc
+{
+  "title": ["SK-II", "PITERA"]
+}
+POST test/_doc
+{
+  "title": ["Nintendo", "switch"]
+}
+```
+
+查询的DSL语句如下：
+
+```json
+// 自动补全查询
+GET /test/_search
+{
+  "suggest": {
+    "title_suggest": { // 补全查询名称
+      "text": "s", // 关键字
+      "completion": {
+        "field": "title", // 补全查询的字段
+        "skip_duplicates": true, // 跳过重复的
+        "size": 10 // 获取前10条结果
+      }
+    }
+  }
+}
+```
+
+![image-20230507222958821](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507222958821.png)
+
+### 自动补全
+
+#### 删除索引库重新创建
+
+> 删除索引库重新创建
+>
+> - 删除索引库
+> - 自定义分词器
+> - 添加suggestion字段,对suggestion做自动补全
+>
+> 修改实体类
+>
+> - 添加suggestion字段 类型为`List<String>`类型
+
+```json
+# 酒店数据索引库
+PUT /hotel
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "text_anlyzer": { // 自定义分词器
+          "tokenizer": "ik_max_word",
+          "filter": "py"
+        },
+        "completion_analyzer": {
+          "tokenizer": "keyword",
+          "filter": "py"
+        }
+      },
+      "filter": {
+        "py": {
+          "type": "pinyin",
+          "keep_full_pinyin": false,
+          "keep_joined_full_pinyin": true,
+          "keep_original": true,
+          "limit_first_letter_length": 16,
+          "remove_duplicated_term": true,
+          "none_chinese_pinyin_tokenize": false
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id":{
+        "type": "keyword"
+      },
+      "name":{
+        "type": "text",
+        "analyzer": "text_anlyzer", // 插入时使用
+        "search_analyzer": "ik_smart", // 查询时使用
+        "copy_to": "all"
+      },
+      "address":{
+        "type": "keyword",
+        "index": false
+      },
+      "price":{
+        "type": "integer"
+      },
+      "score":{
+        "type": "integer"
+      },
+      "brand":{
+        "type": "keyword",
+        "copy_to": "all"
+      },
+      "city":{
+        "type": "keyword"
+      },
+      "starName":{
+        "type": "keyword"
+      },
+      "business":{
+        "type": "keyword",
+        "copy_to": "all"
+      },
+      "location":{
+        "type": "geo_point"
+      },
+      "pic":{
+        "type": "keyword",
+        "index": false
+      },
+      "all":{
+        "type": "text",
+        "analyzer": "text_anlyzer", // 插入时使用
+        "search_analyzer": "ik_smart" // 查询时使用
+      },
+      "suggestion":{
+          "type": "completion",
+          "analyzer": "completion_analyzer" // 自动补全
+      }
+    }
+  }
+}
+```
+
+#### 修改实体类
+
+添加属性
+
+```java
+private List<String> suggestion;
+
+// 为suggestion赋值
+List<String> suggestionList = new ArrayList<>(Arrays.asList(hotel.getName(), hotel.getCity()));
+if (hotel.getBusiness().contains("/")) {
+    // Business可能会以/分割,所以想要自动补全得拆出来
+    String[] split = hotel.getBusiness().split("/");
+    Collections.addAll(suggestionList, split);
+}else {
+    suggestionList.add(hotel.getBusiness());
+}
+this.suggestion = suggestionList;
+```
+
+#### 重新导入数据
+
+![image-20230507225601685](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507225601685.png)
+
+#### 自动补全测试
+
+```java
+GET /hotel/_search
+{
+  "suggest": {
+    "suggestions": {
+      "text": "sh",
+      "completion":{
+        "field":"suggestion",
+        "skip_duplicates":true,
+        "size":10
+      }
+    }
+  }
+}
+```
+
+
+
+#### RestClient测试自动补全
+
+>  suggest和query同级,所以在search.score()后面加DSL即可。
+
+```java
+@Test
+public void testSuggester() throws IOException {
+
+    // 1 创建查询请求
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    // 2 suggester DSL
+    searchRequest.source().suggest(new SuggestBuilder()
+            .addSuggestion("suggestions", // 补全名称
+                    SuggestBuilders.completionSuggestion("suggestion") // 补全字段
+                            .prefix("sh") // 搜索框输入前缀,根据这个自动补全
+                            .skipDuplicates(true) // 跳过重复
+                            .size(10) // 显示十条
+            )
+    );
+    // 3 发出查询请求
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    // 4 解析结果
+    // 返回自动补全数据
+    List<String> result = new ArrayList<>();
+    Suggest suggest = searchResponse.getSuggest();
+    // 和上面的补全方式对应
+    CompletionSuggestion completionSuggestion = suggest.getSuggestion("suggestions");
+    List<CompletionSuggestion.Entry.Option> options = completionSuggestion.getEntries().get(0).getOptions();
+    for (CompletionSuggestion.Entry.Option option : options) {
+        result.add(option.getText().string());
+    }
+    log.info(result.toString());
+}
+```
+
+![image-20230507233715041](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/es_search/image-20230507233715041.png)
+
+
+
+### 黑马案例自动补全
+
+自动补全请求：
+
+```tex
+http://localhost:8089/hotel/suggestion?key=sh
+```
+
+创建接口
+
+```java
+/**
+ * 自动补全
+ * @param key
+ * @return
+ */
+@RequestMapping(method = RequestMethod.GET, value = "/suggestion")
+private List<String> suggestion(@RequestParam("key") String key) {
+    return hotelService.suggestion(key);
+}
+```
+
+service
+
+```java
+public List<String> suggestion(String key) {
+    // 1 创建查询请求
+    SearchRequest searchRequest = new SearchRequest("hotel");
+    // 2 自动补全dsl
+    searchRequest.source().suggest(new SuggestBuilder()
+            .addSuggestion("suggestions", SuggestBuilders
+                    .completionSuggestion("suggestion")
+                    .skipDuplicates(true)
+                    .size(10)
+                    .prefix(key)
+            )
+    );
+    // 3 发起请求
+    SearchResponse searchResponse;
+    try {
+        searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    } catch (IOException e) {
+        throw new RuntimeException("异常", e);
+    }
+    // 4 解析结果
+    List<String> result = new ArrayList<>();
+    final Suggest suggest = searchResponse.getSuggest();
+    CompletionSuggestion suggestion = suggest.getSuggestion("suggestions");
+    List<CompletionSuggestion.Entry.Option> options = suggestion.getOptions();
+    options.forEach(option -> result.add(option.getText().string()));
+    return result;
+}
+```
+
+
+
+## 数据同步
+
+### 同步调用
+
+> 更新Mysql时远程同步调用ES的更新接口。
+
+### MQ异步通知
+
+> 更新Mysql时将需要更新的数据ID发送到消息队列,ES服务监听队列并消费消息,更新es。
+
+### 监听BinLog
+
+> 开启Mysql BinLog, 引入Canal(利用Mysql主从原理)中间件监听Binlog 变化, 将更新同步到es。
+
+### 对比
+
+- 同步调用
+  - 优点：实现简单，粗暴
+  - 缺点：业务耦合度高
+- 异步通知
+  - 优点：低耦合，实现难度一般
+  - 缺点：依赖mq的可靠性
+- 监听binlog
+  - 优点：完全解除服务间耦合
+  - 缺点：开启binlog增加数据库负担、实现复杂度高
+
+
+
+### 利用MQ实现数据同步
+
+利用课前资料提供的hotel-admin项目作为酒店管理的微服务。当酒店数据发生增、删、改时，要求对elasticsearch中数据也要完成相同操作。
+
+步骤：
+
+- 导入课前资料提供的hotel-admin项目，启动并测试酒店数据的CRUD
+
+- 声明exchange、queue、RoutingKey
+
+- 在hotel-admin中的增、删、改业务中完成消息发送
+
+- 在hotel-demo中完成消息监听，并更新elasticsearch中数据
+
+- 启动并测试数据同步功能
+
+#### 分析
+
+> 消息生产者和消息消费者
+
+- hotel-admin是消息生产者
+  - 生产消息
+- hotel-demo是消息消费者
+  - 消费消息
+  - 创建listener监听队列变化
+
+> 消息类型
+
+- 消息为Long类型的id
+
+  > MQ需要内存,网络传输也需要带宽,数据越小越好
+
+> 交换机、消息队列、RoutingKey
+
+- 交换机名称   hotel.topic
+
+- 队列名称
+
+  > 数据更新存在以下三种情况
+  >
+  > - 新增
+  > - 修改
+  > - 删除
+  >
+  > 新增和修改作为一类成为insert(mq中插入重复id数据就是修改)
+  >
+  > 删除成为delete
+  >
+  > 所以有两个消息队列：
+  >
+  > - hotel.insert.queue   更新
+  > - hotel.delete.queue
+
+- routingkey
+
+  > - hotel.insert
+  > - hotel.delete
+
+#### 实现
+
+##### 定义交换机等
+
+> 定义交换机、队列、绑定关系
+
+```java
+public class HotelConstants {
+
+    /**
+     * topic交换机名称
+     */
+    public static final String EXCHANG_HOTEL_TOPIC = "hotel.topic";
+
+    /**
+     * 更新队列
+     */
+    public static final String HOTEL_INSERT_QUEUE = "hotel.insert.queue";
+    
+    /**
+     * 删除队列
+     */
+    public static final String HOTEL_DELETE_QUEUE = "hotel.delete.queue";
+    
+    /**
+     * 更新routingkey
+     */
+    public static final String ROUTINGKEY_HOTEL_INSERT = "hotel.insert";
+    
+    /**
+     * 删除routingkey
+     */
+    public static final String ROUTINGKEY_HOTEL_DELETE = "hotel.delete";
+
+    /**
+     * 索引库名称
+     */
+    public static final String ES_INDEX_NAME = "hotel";
+}
+```
+
+
+
+##### 引入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-amqp</artifactId>
+</dependency>
+```
+
+##### 配置mq
+
+```yml
+spring:
+  rabbitmq:
+    host: 10.211.55.4
+    port: 5672 # 端口
+    virtual-host: / # 虚拟主机
+    username: rolyfish # 用户名
+    password: 123456 # 密码
+    listener:
+      simple:
+        prefetch: 1 # 限制消费者每次只取一个消息,消息处理完成再去消息队列取消息
+```
+
+##### 声明交换机等
+
+```java
+@Component
+public class MqConfig {
+    /**
+     * 声明交换机topic
+     */
+    protected @Bean TopicExchange topicExchange() {
+        return new TopicExchange(HotelConstants.EXCHANG_HOTEL_TOPIC);
+    }
+    /**
+     * 声明队列  insertQueue
+     */
+    protected @Bean Queue insertQueue() {
+        return new Queue(HotelConstants.HOTEL_INSERT_QUEUE, true);
+    }
+    /**
+     * 声明队列  deleteQueue
+     */
+    protected @Bean Queue deleteQueue() {
+        return new Queue(HotelConstants.HOTEL_DELETE_QUEUE, true);
+    }
+    /**
+     * insertQueue与交换机绑定
+     */
+    protected @Bean Binding topicExchangeBandingInsertQueue(@Autowired TopicExchange topicExchange, @Autowired /*@Qualifier("fanoutQueue1") */Queue insertQueue) {
+        return BindingBuilder.bind(insertQueue).to(topicExchange).with(HotelConstants.ROUTINGKEY_HOTEL_INSERT);
+    }
+    /**
+     * deleteQueue与交换机绑定
+     */
+    protected @Bean Binding topicExchangeBandingDeleteQueue(@Autowired TopicExchange topicExchange, @Autowired /*@Qualifier("fanoutQueue1") */Queue deleteQueue) {
+        return BindingBuilder.bind(deleteQueue).to(topicExchange).with(HotelConstants.ROUTINGKEY_HOTEL_DELETE);
+    }
+}
+```
+
+##### 注册监听器
+
+> 注册监听器监听队列变化,消费消息
+
+```java
+@Slf4j
+@Component
+public class MqListener {
+    @Autowired
+    IHotelService hotelService;
+    @Autowired
+    RestHighLevelClient client;
+    @RabbitListener(queues = {HotelConstants.HOTEL_INSERT_QUEUE})
+    public void listenerInsert(Long id) {
+        // 0 查询数据转化成 hotelDoc
+        Hotel hotel = hotelService.getById(id);
+        HotelDoc hotelDoc = new HotelDoc(hotel);
+        // 1 创建请求
+        IndexRequest indexRequest = new IndexRequest(ES_INDEX_NAME);
+        // 2 dsl
+        indexRequest.id(id.toString()).source(JSON.toJSONString(hotelDoc), XContentType.JSON);
+        // 3 发送请求
+        IndexResponse indexResponse;
+        try {
+            indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new RuntimeException("异常", e);
+        }
+        log.info("结果:{}", indexResponse.getResult().toString());
+    }
+    @RabbitListener(queues = {HotelConstants.HOTEL_DELETE_QUEUE})
+    public void listenerDelete(Long id) {
+        // 1 创建请求
+        DeleteRequest deleteRequest = new DeleteRequest(ES_INDEX_NAME);
+        deleteRequest.id(id.toString());
+        // 2 发送请求
+        DeleteResponse deleteResponse;
+        try {
+            deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new RuntimeException("异常", e);
+        }
+        log.info("结果:{}", deleteResponse.getResult().toString());
+    }
+}
+```
+
+##### 生产消息
+
+```java
+@Autowired
+private IHotelService hotelService;
+@Autowired
+RabbitTemplate rabbitTemplate;
+@PostMapping
+public void saveHotel(@RequestBody Hotel hotel) {
+    boolean b = hotelService.save(hotel);
+    if (b) {
+        // 发送消息
+        rabbitTemplate.convertAndSend(EXCHANG_HOTEL_TOPIC, ROUTINGKEY_HOTEL_INSERT, hotel.getId());
+    }
+}
+@PutMapping()
+public void updateById(@RequestBody Hotel hotel) {
+    if (hotel.getId() == null) {
+        throw new InvalidParameterException("id不能为空");
+    }
+    boolean b = hotelService.updateById(hotel);
+    if (b) {
+        // 发送消息
+        rabbitTemplate.convertAndSend(EXCHANG_HOTEL_TOPIC, ROUTINGKEY_HOTEL_INSERT, hotel.getId());
+    }
+}
+@DeleteMapping("/{id}")
+public void deleteById(@PathVariable("id") Long id) {
+    boolean b = hotelService.removeById(id);
+    if (b) {
+        rabbitTemplate.convertAndSend(EXCHANG_HOTEL_TOPIC, ROUTINGKEY_HOTEL_DELETE, id);
+    }
+}
+```
+
