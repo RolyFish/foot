@@ -808,3 +808,243 @@ feign:
 
 
 
+## 授权规则
+
+> Sentinel除了可以做限流、线程隔离、熔断降级外,还可以做权限校验,对请求方来源做判断和控制。
+
+> SpringCloudGetway也可以做权限校验,为什么还需要Sentinel？
+>
+> Getway只会对进入网关的请求做校验,如果服务的地址暴露了,那么就可以绕过网关。而Sentinel则可以避免这种情况,Sentinel会对请求来源做判断(浏览器、网关?),符合要求的请求才会放行。
+
+
+
+### 黑白名单
+
+授权规则可以对调用方的来源做控制，有白名单和黑名单两种方式。
+
+- 白名单：来源（origin）在白名单内的调用者允许访问
+
+- 黑名单：来源（origin）在黑名单内的调用者不允许访问
+
+![image-20230509142053375](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/cloud_%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%BF%9D%E6%8A%A4/image-20230509142053375.png)
+
+#### 如何获取请求来源名称
+
+Sentinel是通过RequestOriginParser这个接口的parseOrigin来获取请求的来源的。
+
+```java
+public interface RequestOriginParser {
+    /**
+     * 从请求request对象中获取origin，获取方式自定义
+     */
+    String parseOrigin(HttpServletRequest request);
+}
+```
+
+在order-service中实现接口,并注入交由Spring管理
+
+```java
+@Component
+public class HeaderOriginParser implements RequestOriginParser {
+    @Override
+    public String parseOrigin(HttpServletRequest httpServletRequest) {
+        String origin = httpServletRequest.getHeader("origin");
+        if (StringUtils.isBlank(origin)) {
+            origin = "default";
+        }
+        return origin;
+    }
+}
+```
+
+#### 网关添加请求头
+
+> 正常流程中,所有请求都会进入网关,执行完所有过滤器,符合条件后路由到指定服务。
+>
+> 在网关中可以对请求添加请求头。
+
+过滤器类型：default-filters
+
+```java
+default-filters:
+  - AddRequestHeader=origin,getway
+```
+
+
+
+#### 配置授权规则
+
+![image-20230509145114623](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/cloud_%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%BF%9D%E6%8A%A4/image-20230509145114623.png)
+
+#### 测试
+
+![image-20230509150001163](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/cloud_%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%BF%9D%E6%8A%A4/image-20230509150001163.png)
+
+### 自定义异常
+
+默认情况下，发生限流、降级、授权拦截时，都会抛出异常到调用方。异常结果都是flow limmiting（限流）。这样不够友好，无法得知是限流还是降级还是授权拦截。
+
+#### 异常类型
+
+而如果要自定义异常时的返回结果，需要实现Sentinel提供的接口,BlockExceptionHandler
+
+```java
+public interface BlockExceptionHandler {
+    void handle(HttpServletRequest request, HttpServletResponse response, BlockException e) throws Exception;
+}
+```
+
+此接口只有一个默认实现类：DefaultBlockExceptionHandler
+
+```java
+public class DefaultBlockExceptionHandler implements BlockExceptionHandler {
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, BlockException e) throws Exception {
+        response.setStatus(429);
+        out.print("Blocked by Sentinel (flow limiting)");
+        out.flush();
+        out.close();
+    }
+}
+```
+
+handle方法有三个参数：
+
+- HttpServletRequest request：request对象
+
+- HttpServletResponse response：response对象,输出结果
+
+- BlockException e：被sentinel拦截时抛出的异常
+
+  > BlockException的子类：
+  >
+  > - FlowException 限流异常
+  > - ParamFlowException 热点参数限流异常
+  > - DegradeException  降级异常
+  > - AuthorityException 授权异常
+  > - SystemBlockException  系统规则异常
+
+#### 自定义异常
+
+> 自定义异常处理类,覆盖自动装配的默认异常处理类：
+
+```java
+@Component
+public class SentinelExceptionHandler implements BlockExceptionHandler {
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, BlockException e) throws Exception {
+        String msg = "未知异常";
+        int status = 429;
+        if (e instanceof AuthorityException) {
+            msg = "权限校验异常";
+            status = 401;
+        } else if (e instanceof DegradeException) {
+            msg = "降级异常";
+        } else if (e instanceof FlowException) {
+            msg = "限流异常";
+        } else if (e instanceof ParamFlowException) {
+            msg = "热点参数限流异常";
+        } else if (e instanceof SystemBlockException) {
+            msg = "系统规则异常";
+        }
+        response.setContentType("application/json;charset=utf-8");
+        response.setStatus(status);
+        final PrintWriter writer = response.getWriter();
+        writer.println("{\"msg\": " + msg + ", \"status\": " + status + "}");
+        writer.flush();
+        writer.close();
+    }
+}
+```
+
+
+
+##### 测试
+
+1. 权限校验异常
+
+   ![image-20230509154919190](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/cloud_%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%BF%9D%E6%8A%A4/image-20230509154919190.png)
+
+2. 限流
+
+   ![image-20230509155035824](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/cloud_%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%BF%9D%E6%8A%A4/image-20230509155035824.png)
+
+3. 熔断降级异常
+
+   ![image-20230509160036487](https://xiaochuang6.oss-cn-shanghai.aliyuncs.com/cloud/cloud_%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%BF%9D%E6%8A%A4/image-20230509160036487.png)
+
+
+
+
+
+
+## 持久化
+
+> 开源的Sentinel未提供持久化。企业级的Sentinel可以持久化。
+
+> 可以改源码
+
+规则是否能持久化，取决于规则管理模式，sentinel支持三种规则管理模式：
+
+- 原始模式：Sentinel的默认模式，将规则保存在内存，重启服务会丢失。
+
+- pull模式
+
+  > 控制台将配置的规则推送到Sentinel客户端，而客户端会将配置规则保存在本地文件或数据库中。以后会定时去本地文件或数据库中查询，更新本地规则。
+
+- push模式
+
+  > 控制台将配置规则推送到远程配置中心，例如Nacos。Sentinel客户端监听Nacos，获取配置变更的推送消息，完成本地配置更新。
+
+### push模式
+
+push模式：控制台将配置规则推送到远程配置中心，例如Nacos。Sentinel客户端监听Nacos，获取配置变更的推送消息，完成本地配置更新。
+
+
+
+
+
+#### 实现push模式
+
+> 哥们又失败了~
+
+修改OrderService，让其监听Nacos中的sentinel规则配置。
+
+1. 引入依赖
+
+   ```xml
+   <dependency>
+       <groupId>com.alibaba.csp</groupId>
+       <artifactId>sentinel-datasource-nacos</artifactId>
+   </dependency>
+   ```
+
+2. 启动nacos并配置持久化
+
+   ```shell
+    bin/startup.sh -m standalone
+   ```
+
+3. 配置nacos地址
+
+   ```yaml
+   spring:
+     cloud:
+       sentinel:
+         datasource:
+           flow:
+             nacos:
+               server-addr: localhost:8848 # nacos地址
+               dataId: orderservice-flow-rules
+               groupId: SENTINEL_GROUP
+               rule-type: flow # 规则,这里是流控规则。还可以是：degrade(熔断)、authority(授权)、param-flow(热点参数)
+   ```
+
+4. 启动Sentinel
+
+   
+
+
+
+
+
