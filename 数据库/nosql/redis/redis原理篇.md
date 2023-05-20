@@ -168,7 +168,7 @@ dict:
 - privdata 
 - dictht    h[0]平常用,h[1]做rehash时用
 - rehashidx  rehash过程中记录的下标
-- pauserehash  rehash是否开始
+-    rehash是否开始
 
 dictht：
 
@@ -1054,7 +1054,7 @@ epoll模式中如何解决这些问题的？
 >   - 初始化服务
 >     - 创建一个结构体event_poll(红黑树+链表)---epoll_create
 >     - 创建serversocketFD(RedisServer)  --- epoll_ctl
->     - 监听这个ssfd,并设置他的回调函数(也就是一个事件处理器,这个时间在ssfd可读时触发,也就是有client连接进来时触发)
+>     - 监听这个ssfd,并设置他的回调函数(也就是一个事件处理器,这个事件在ssfd可读时触发,也就是有client连接进来时触发)
 >     - 注册一个前置处理器(处理csfd写事件)
 >   - 循环监听注册的FD(包括ssfd、cfd)
 >     - 处理csfd的写事件
