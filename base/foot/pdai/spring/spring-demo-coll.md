@@ -1506,23 +1506,386 @@ class CodeMake {
 
 ![image-20230202161016249](spring-demo-coll.assets/image-20230202161016249.png)
 
+## Spring-boot-async
+
+> Spring Boot 使用原生提供的异步任务支持，实现异步执行任务。
+
+### 依赖
+
+> SpringBoot原生提供异步任务支持, 所以只需要引入基本的启动器即可。
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+</dependencies>
+```
 
 
 
+### 配置
+
+> 配置连接池
+
+> 对应`TaskExecutionProperties`这个配置类。
+>
+> 对应`TaskExecutionAutoConfiguration`这个自动装配了。
+
+```yaml
+spring:
+  task:
+    execution:
+      pool:
+        # 最大线程数
+        max-size: 16
+        # 核心线程数
+        core-size: 16
+        # 存活时间
+        keep-alive: 10s
+        # 队列大小
+        queue-capacity: 100
+        # 是否允许核心线程超时
+        allow-core-thread-timeout: true
+      # 线程名称前缀
+      thread-name-prefix: async-task-
+```
+
+### 测试
+
+> 定义异步方法
+
+```java
+@Component
+@Slf4j
+public class TaskFactory {
+
+    /**
+     * 模拟5秒的异步任务
+     */
+    @Async
+    public Future<Boolean> asyncTask1() throws InterruptedException {
+        doTask("asyncTask1", 5);
+        return new AsyncResult<>(Boolean.TRUE);
+    }
+
+    /**
+     * 模拟2秒的异步任务
+     */
+    @Async
+    public Future<Boolean> asyncTask2() throws InterruptedException {
+        doTask("asyncTask2", 2);
+        return new AsyncResult<>(Boolean.TRUE);
+    }
+
+    /**
+     * 模拟3秒的异步任务
+     */
+    @Async
+    public Future<Boolean> asyncTask3() throws InterruptedException {
+        doTask("asyncTask3", 3);
+        return new AsyncResult<>(Boolean.TRUE);
+    }
+
+    /**
+     * 模拟5秒的同步任务
+     */
+    public void task1() throws InterruptedException {
+        doTask("task1", 5);
+    }
+
+    /**
+     * 模拟2秒的同步任务
+     */
+    public void task2() throws InterruptedException {
+        doTask("task2", 2);
+    }
+
+    /**
+     * 模拟3秒的同步任务
+     */
+    public void task3() throws InterruptedException {
+        doTask("task3", 3);
+    }
+
+    private void doTask(String taskName, Integer time) throws InterruptedException {
+        log.info("{}开始执行，当前线程名称【{}】", taskName, Thread.currentThread().getName());
+        TimeUnit.SECONDS.sleep(time);
+        log.info("{}执行成功，当前线程名称【{}】", taskName, Thread.currentThread().getName());
+    }
+}
+```
+
+> 测试
+
+```java
+@Slf4j
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class TaskFactoryTest /*extends SpringBootDemoAsyncApplicationTests*/ {
+    @Autowired
+    private TaskFactory task;
+
+    /**
+     * 测试异步任务
+     */
+    @Test
+    public void asyncTaskTest() throws InterruptedException, ExecutionException {
+        long start = System.currentTimeMillis();
+        Future<Boolean> asyncTask1 = task.asyncTask1();
+        Future<Boolean> asyncTask2 = task.asyncTask2();
+        Future<Boolean> asyncTask3 = task.asyncTask3();
+
+        // 调用 get() 阻塞主线程
+        asyncTask1.get();
+        asyncTask2.get();
+        asyncTask3.get();
+        long end = System.currentTimeMillis();
+
+        log.info("异步任务全部执行结束，总耗时：{} 毫秒", (end - start));
+    }
+
+    /**
+     * 测试同步任务
+     */
+    @Test
+    public void taskTest() throws InterruptedException {
+        long start = System.currentTimeMillis();
+        task.task1();
+        task.task2();
+        task.task3();
+        long end = System.currentTimeMillis();
+
+        log.info("同步任务全部执行结束，总耗时：{} 毫秒", (end - start));
+    }
+}
+```
+
+> 同步任务全部由主线程执行, 阻塞式调用。
+>
+> 异步任务会使用线程池, 开启子线程执行。
+
+![image-20230609154154483](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230609154154483.png)
 
 
 
+## Spring-boot-cache-ehcache
+
+> EhCache是一款高性能的本地缓存框架，能够显著提高应用的响应速度。
+>
+> 一般不持久化。不用于分布式系统, 避免缓存多份数据， 可通过负载均衡策略解决。
+
+### 依赖
+
+> SpringBot提供对Ehcache整合支持。
+>
+> 支持的缓存类型在`CacheType`枚举中。
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-cache</artifactId>
+</dependency>
+<dependency>
+    <groupId>net.sf.ehcache</groupId>
+    <artifactId>ehcache</artifactId>
+</dependency>
+```
+
+### 配置
+
+> Spring缓存配置`CacheProperties`
+>
+> echcache配置类`EhCacheCacheConfiguration`
+
+> Spring配置
+
+```yaml
+spring:
+  cache:
+    type: ehcache
+    ehcache:
+      config: classpath:ehcache.xml
+```
+
+> ehcache配置
+
+```xml
+<!-- ehcache配置 -->
+<ehcache
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd"
+  updateCheck="false">
+  <?xml version="1.0" encoding="UTF-8"?>
+  <cache name="user"
+         maxElementsInMemory="20000"
+         overflowToDisk="false"
+         diskPersistent="false"
+         timeToLiveSeconds="180"/>
+</ehcache>
+```
+
+### 使用
+
+> 缓存名称常量
+
+```java
+public class EhcacheConstant {
+  public static final String USER = "user";
+}
+```
+
+> 使用默认的EhCacheCacheManager即可
+
+```java
+@Bean
+public EhCacheCacheManager cacheManager(CacheManager ehCacheCacheManager) {
+    return this.customizers.customize(new EhCacheCacheManager(ehCacheCacheManager));
+}
+```
+
+> 非注解形式使用
+
+```java
+@Configuration
+public class EhcacheConfig {
+  @Resource
+  private EhCacheCacheManager ehCacheCacheManager;
+  @Bean
+  public Cache userCache() {
+    return ehCacheCacheManager.getCache("user");
+  }
+}
+
+@Resource
+Cache userCache;
+@Test
+public void testEcache2(){
+    User user = new User(1L, "test");
+    userCache.put(user.getId(),user);
+    User userGet = userCache.get(1L,User.class);
+    log.info(userGet.toString());
+}
+```
+
+> 注解形式使用
+>
+> 启动类添加支持缓存注解 @EnableCaching
+
+> 编写业务
+
+```java
+// 存或更新数据库前首先放入缓存
+@CachePut(value = EhcacheConstant.USER, key = "#user.id")
+@Override
+public User saveOrUpdate(User user) {
+    DATABASES.put(user.getId(), user);
+    log.info("保存用户【user】= {}", user);
+    return user;
+}
+// 先去缓存读取
+@Cacheable(value = EhcacheConstant.USER, key = "#id")
+@Override
+public User get(Long id) {
+    // 我们假设从数据库读取
+    log.info("查询用户【id】= {}", id);
+    return DATABASES.get(id);
+}
+// 首先删除缓存，再删除数据库
+@CacheEvict(value = EhcacheConstant.USER, key = "#id")
+@Override
+public void delete(Long id) {
+    DATABASES.remove(id);
+    log.info("删除用户【id】= {}", id);
+}
+```
 
 
 
+## Spring-Boot-cache-Caffeine
 
+> Caffeine是一个进程内部缓存框架，使用了Java 8最新的[StampedLock](https://www.altitude.xin/code/home/#/java/util/concurrent/locks/StampedLock)乐观锁技术，极大提高缓存并发吞吐量，一个高性能的 Java 缓存库，被称为最快缓存。
+>
+> Java领域可用的缓存框架非常多，`Caffeine`不属于分布式缓存，但不影响其在本地缓存场景出色的表现。开发者在进行缓存架构设计时需要综合考虑各类缓存的优缺点，依据具体场景选配相应缓存。
 
+### 依赖
 
+```xml
+<dependency>
+    <groupId>com.github.ben-manes.caffeine</groupId>
+    <artifactId>caffeine</artifactId>
+</dependency>
+```
 
+### 配置
 
+```yaml
+spring:
+  cache:
+    type: caffeine
+```
 
+### 使用
 
+> Caffeine 配置类：CaffeineCacheConfiguration。
+>
+> 注入了一个缓存管理器。
 
+```java
+@Bean
+public CaffeineCacheManager cacheManager() {
+    CaffeineCacheManager cacheManager = createCacheManager();
+    List<String> cacheNames = this.cacheProperties.getCacheNames();
+    if (!CollectionUtils.isEmpty(cacheNames)) {
+        cacheManager.setCacheNames(cacheNames);
+    }
+    return this.customizers.customize(cacheManager);
+}
+```
+
+> 非注解方式
+
+```java
+@Configuration
+public class CaffeineConfig {
+  @Resource
+  CaffeineCacheManager caffeineCacheManager;
+  @Bean
+  public Cache userCache() {
+    return caffeineCacheManager.getCache("user");
+  }
+}
+@Resource
+Cache userCache;
+@Test
+public void testCaffeine(){
+    User user = new User(1L, "test");
+    userCache.put(user.getId(),user);
+    User userGet = userCache.get(1L,User.class);
+    log.info(userGet.toString());
+}
+```
+
+> 注解使用方式：
+>
+> 开启缓存支持：@EnableCaching
+>
+> 和ehcache一样
+
+## SpringBoot-cache-redis
 
 
 
