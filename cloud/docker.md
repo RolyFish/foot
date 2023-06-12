@@ -64,6 +64,107 @@ sudo systemctl restart docker
 
 
 
+#### windows安装docker
+
+> 我windows下的docker挂载有问题, 所以安装虚拟机。
+
+1. 安装VMware  [果壳剥壳](https://www.ghxi.com/vmware17.html)
+
+2. 下载Linux发行版本   [CentOS阿里云镜像](https://mirrors.aliyun.com/centos)  安装7.0之后版本
+
+3. 创建虚拟机
+
+4. 安装docker-engin
+
+   > [官网教程](https://docs.docker.com/engine/install/centos/)
+   >
+   > [教程](https://yeasy.gitbook.io/docker_practice/install/centos)
+
+   1. 移除已安装
+
+     ```shell
+     yum remove docker \
+         docker-client \
+         docker-client-latest \
+         docker-common \
+         docker-latest \
+         docker-latest-logrotate \
+         docker-logrotate \
+         docker-engine
+     ```
+
+   2. 安装yum-utils
+
+      ```shell
+      yum install -y yum-utils
+      ```
+
+   3. 添加阿里云镜像
+
+      ```shell
+      yum-config-manager \
+      --add-repo \
+      https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+      
+      sed -i 's/download.docker.com/mirrors.aliyun.com\/docker-ce/g' /etc/yum.repos.d/docker-ce.repo
+      ```
+
+   4. 安装docker
+
+      ```shell
+      yum install docker-ce docker-ce-cli containerd.io
+      ## 按需安装 插件, 默认自带
+      yum install docker-buildx-plugin docker-compose-plugin
+      ```
+
+   5. 查看结果, 并配置服务
+
+      ```shell
+      docker -v
+      Docker version 24.0.2, build cb74dfc
+      
+      ## 启动docker
+      systemctl enable docker
+      systemctl start docker
+      systemctl status docker
+      systemctl stop docker
+      ```
+
+   6. 测试docker
+
+      ```shell
+       docker run --rm hello-world
+      ```
+
+   7. 配置docker镜像
+
+      ```shell
+      vim /etc/docker/daemon.json
+      ```
+
+      ```shell
+      {
+        "registry-mirrors": [
+          "https://hub-mirror.c.163.com",
+          "https://mirror.baidubce.com"
+        ]
+      }
+      ```
+
+      ```shell
+      systemctl daemon-reload
+      systemctl restart docker
+      ```
+
+   8. 用户无权限解决
+
+      ```shell
+      sudo groupadd docker     #添加docker用户组
+      sudo gpasswd -a $USER docker     #将登陆用户加入到docker用户组中
+      newgrp docker     #更新用户组
+      docker ps    #测试docker命令是否可以使用sudo正常使用
+      ```
+
 
 
 ## docker基本操作
@@ -517,8 +618,6 @@ sed -i  -e 's/Welcome to nginx!/666666/g' index.html
 
 
 
-
-
 ## docker-compose
 
 Compose是一个用于定义和运行多容器Docker应用程序的工具。 Compose可以基于YAML文件来配置应用程序的服务。 然后，使用一个命令，根据配置创建并启动所有服务。
@@ -537,9 +636,11 @@ Compose文件是一个yml格式文本文件，通过配置定义集群中的每�
 
 
 
+
+
+
+
 ## docker镜像仓库
-
-
 
 ### 搭建私有仓库
 
