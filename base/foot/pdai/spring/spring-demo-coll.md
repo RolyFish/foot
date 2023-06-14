@@ -1889,5 +1889,651 @@ public void testCaffeine(){
 
 
 
+### 依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+<!-- 对象池，使用redis时必须引入 , jdk默认http客户端不支持池化技术-->
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-pool2</artifactId>
+</dependency>
+<!-- 序列化工具，默认使用jdk序列化会导致占用内存 -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-json</artifactId>
+</dependency>
+```
+
+
+
+### 配置
+
+> 这里以单机redis为例。
+
+- docker启动redis
+  - 拉取镜像
+  - 创建本地数据卷
+  - 启动redis
+
+#### yaml
+
+```yaml
+spring:
+  redis:
+    host: 192.168.111.128
+    password: 123456
+    port: 6380
+    # 连接超时时间（记得添加单位，Duration）
+    timeout: 10000ms
+    # Redis默认情况下有16个分片，这里配置具体使用的分片
+    database: 0
+    lettuce:
+      pool:
+        # 连接池最大连接数（使用负值表示没有限制） 默认 8
+        max-active: 8
+        # 连接池最大阻塞等待时间（使用负值表示没有限制） 默认 -1
+        max-wait: -1ms
+        # 连接池中的最大空闲连接 默认 8
+        max-idle: 8
+        # 连接池中的最小空闲连接 默认 0
+        min-idle: 0
+  cache:
+    # 一般来说是不用配置的，Spring Cache 会根据依赖的包自行装配
+    type: redis
+```
+
+#### 注解 + javaconfig
+
+> 配置序列化。
+>
+> redisTemplate序列化默认使用Jdk序列化工具， 可读性差、内存浪费。
+
+```java
+@Bean
+public RedisTemplate<String, Serializable> redisCacheTemplate(@Autowired LettuceConnectionFactory redisConnectionFactory) {
+    RedisTemplate<String, Serializable> template = new RedisTemplate<>();
+    GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer();
+    template.setKeySerializer(RedisSerializer.string());
+    template.setValueSerializer(genericJackson2JsonRedisSerializer);
+    template.setHashValueSerializer(genericJackson2JsonRedisSerializer);
+    template.setConnectionFactory(redisConnectionFactory);
+    return template;
+}
+```
+
+> 配置CacheManager
+
+```java
+/**
+   * 配置使用注解的时候缓存配置，默认是序列化反序列化的形式，加上此配置则为 json 形式
+   */
+@Bean
+public CacheManager cacheManager(@Autowired RedisConnectionFactory factory) {
+    // 配置序列化
+    RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig();
+    RedisCacheConfiguration redisCacheConfiguration = config
+        // ::  -->  :
+        .computePrefixWith(name -> name + ":")
+        // 设置缓存过期时间
+        .entryTtl(Duration.ofSeconds(60L))
+        .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+    return RedisCacheManager.builder(factory).cacheDefaults(redisCacheConfiguration).build();
+}
+```
+
+> http连接池工具自动装配了
+
+> 自定义缓存key生成策略
+
+```java
+@Component
+public class UserKeyGenerator implements KeyGenerator {
+  @Override
+  public Object generate(Object target, Method method, Object... params) {
+    return String.format("cache:%s)", params[0]);
+  }
+}
+	/**
+     * 获取用户
+     * key生成策略么欧人： value::key
+     * 自定义key生成策略:userKeyGenerator  value::keyGenerator
+     * @param id key值
+     * @return 返回结果
+     */
+@Cacheable(value = "user", /*key = "#id",*/ keyGenerator = "userKeyGenerator")
+@Override
+public User get(Long id) {
+    // 我们假设从数据库读取
+    log.info("查询用户【id】= {}", id);
+    return DATABASES.get(id);
+}
+```
+
+> 不缓存空值
+
+表达式`unless = "#result==null”`用于标示，如果方法返回值为`null`则不缓存，适用于查询注解`@Cacheable`、更新注解`@CachePut`。删除注解`@CacheEvict`不需要考虑此种场景。
+
+
+
+## Springboot-RabbitMQ
+
+### docker启动RabbitMQ
+
+1. 拉取镜像
+
+   ```shell
+   docker pull rabbitmq:3.11-management
+   ```
+
+2. 启动mq容器
+
+   ```shell
+   docker run \
+    -e RABBITMQ_DEFAULT_USER=rolyfish \
+    -e RABBITMQ_DEFAULT_PASS=123456 \
+    --name mq-standalone \
+    --hostname mq-standalone \
+    -p 15672:15672 \
+    -p 5672:5672 \
+    -d \
+   rabbitmq:3.11-management
+   ```
+
+3. 拷贝默认配置
+
+   ```shell
+   mkdir data
+   mkdir conf
+   mkdir log
+   mkdir plugins
+   
+   docker cp mq-standalone:/var/lib/rabbitmq ./data
+   docker cp mq-standalone:/etc/rabbitmq ./conf
+   docker cp mq-standalone:/var/log/rabbitmq  ./log
+   docker cp mq-standalone:/opt/rabbitmq/plugins  ./plugins
+   ```
+
+4. 启动并挂载数据卷
+
+   ```shell
+   docker run \
+    -e RABBITMQ_DEFAULT_USER=rolyfish \
+    -e RABBITMQ_DEFAULT_PASS=123456 \
+    -v /home/rolyfish/home/rabbitmq/data:/var/lib/rabbitmq \
+    --name mq-standalone \
+    --hostname mq-standalone \
+    -p 15672:15672 \
+    -p 5672:5672 \
+    -d \
+    --privileged=true \
+   rabbitmq:3.11-management
+   
+    -v /home/rolyfish/home/rabbitmq/conf:/etc/rabbitmq \
+    -v /home/rolyfish/home/rabbitmq/log:/var/log/rabbitmq \
+    -v /home/rolyfish/home/rabbitmq/plugins:/plugins \
+   ```
+
+5. 使用上面的账户密码登录RabbitMQ管理页面
+
+   > `http://192.168.111.128:15672`
+
+### 依赖
+
+#### AMQP
+
+> AMQP(高级队列协议), Spring基于AMQP实现了一个项目, 将Spring与AMQP结合, 并提供抽象template用于消息发送和接收。
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-amqp</artifactId>
+</dependency>
+```
+
+### 配置
+
+```yaml
+server:
+  port: 8080
+  servlet:
+    context-path: /demo
+spring:
+  rabbitmq:
+    host: 192.168.111.128
+    port: 5672
+    username: rolyfish
+    password: 123456
+    ## 虚拟主机， 一般每个租户一个虚拟注解
+    virtual-host: /
+    # 手动提交消息
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1 # 消息预取机制
+```
+
+### 基本使用
+
+> 队列模型
+
+- 简单队列
+- 工作队列
+- pub/sub 模型
+  - fanout  --- 广播
+  - topic   ---- 主题
+  - direct  --- 扇出  和 topic类似，支持占位符匹配
+
+> 原生demo
+
+- 消息生产者
+
+  ```java
+  @Test
+  public void publisher() throws IOException, TimeoutException {
+      // 1. 建立连接
+      ConnectionFactory connFactory = new ConnectionFactory();
+      connFactory.setHost("192.168.111.128");
+      connFactory.setPort(5672);
+      connFactory.setUsername("rolyfish");
+      connFactory.setPassword("123456");
+      connFactory.setVirtualHost("/");
+      Connection conn = connFactory.newConnection();
+      Channel channel = conn.createChannel();
+  
+      // 2 创建队列
+      AMQP.Queue.DeclareOk declareOk = channel.queueDeclare("simple.queue", true, false, false, null);
+  
+      // 3. 发送消息
+      channel.basicPublish("", declareOk.getQueue(), null, "hello".getBytes());
+      channel.close();
+      conn.close();
+  }
+  ```
+
+- 消费消息
+
+  ```java
+  @Test
+  public void consumer() throws Exception {
+      // 1. 建立连接
+      ConnectionFactory connFactory = new ConnectionFactory();
+      connFactory.setHost("192.168.111.128");
+      connFactory.setPort(5672);
+      connFactory.setUsername("rolyfish");
+      connFactory.setPassword("123456");
+      connFactory.setVirtualHost("/");
+      Connection conn = connFactory.newConnection();
+      Channel channel = conn.createChannel();
+  
+      // 2 订阅消息
+      channel.basicConsume("simple.queue", true, new DefaultConsumer(channel) {
+          @Override
+          public void handleDelivery(String consumerTag, Envelope envelope,
+                                     AMQP.BasicProperties properties, byte[] body) {
+              String msg = new String(body);
+              log.info("consumer accept msg : {}", msg);
+          }
+      });
+  }
+  ```
+
+  
+
+#### 简单队列
+
+> 简单队列只有三个角色
+>
+> - publisher
+> - consumer
+> - queue
+
+##### 消息生产者
+
+> 直接发送消息到队列。不再使用原生的amqp连接，而是使用SpringAMQP提供的RabbitTemplate来发送消息
+
+```java
+@Autowired
+private RabbitTemplate rabbitTemplate;
+@Test
+public void simpleQueue() {
+    rabbitTemplate.convertAndSend("simple.queue", "hello mq");
+}
+```
+
+##### 消息消费者
+
+> 方式一
+
+```java
+@Test
+public void simpleQueueConsumer() {
+    Object o = rabbitTemplate.receiveAndConvert("simple.queue");
+    log.info(o.toString());
+}
+```
+
+> 基于注解
+
+- 自动创建队列
+
+  ```java
+  @Slf4j
+  @Configuration
+  public class SimpleQueueConfig {
+      // 创建队列
+      public @Bean Queue simpleQueue(){
+          // 队列持久化，默认就是持久化的
+          return new Queue(RabbitConsts.SIMPLE_QUEUE, true);
+      }
+  }
+  ```
+
+- 消费者
+
+  ```java
+  @Slf4j
+  @Component
+  @RabbitListener(queues = RabbitConsts.SIMPLE_QUEUE)
+  public class SimpleQueueHandler {
+      @RabbitHandler
+      public void simpleQueueHandler(String str, Message message, Channel channel) {
+          final long deliveryTag = message.getMessageProperties().getDeliveryTag();
+          try {
+              log.info("接受到消息: {}", str);
+              // 手动确认消息, 只确认收到的消息
+              channel.basicAck(deliveryTag, false);
+          } catch (IOException e) {
+              try {
+                  // 处理失败,重新压入MQ
+                  channel.basicRecover();
+              } catch (IOException e1) {
+                  e1.printStackTrace();
+              }
+          }
+      }
+  }
+  ```
+
+> 基于注解
+>
+> @RabbitListener 可以放在方法上。
+>
+> 会自动创建队列, 无需在网页和配置类中创建。 
+
+```java
+@Slf4j
+@Component
+public class RabbitMQListener {
+    @RabbitListener
+            (
+                queues = RabbitConsts.SIMPLE_QUEUE
+            )
+    public void simpleQueueListener(String str, Message message, Channel channel){
+        final long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        try {
+            log.info("接受到消息: {}", str);
+            // 手动确认消息, 只确认收到的消息
+            channel.basicAck(deliveryTag, false);
+        } catch (IOException e) {
+            try {
+                // 处理失败,重新压入MQ
+                channel.basicRecover();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+
+
+#### 工作队列
+
+> 多个消费者订阅同一个队列, 可以达到加快队列消费速度的目的, 前提是限制消息预取数量。
+
+```yaml
+spring:
+  rabbitmq:
+    listener:
+      simple:
+        prefetch: 1 # 消息预取机制
+```
+
+> 工作队列模型, 创建两个listener监听同一个队列。
+
+#### pub/sub模型
+
+> 涉及四个角色
+>
+> - publisher
+> - consumer
+> - exchange
+> - queue
+
+##### fanout(广播)模式
+
+> publisher 生产消息 到交换机, 交换机路由消息到 所有绑定了交换机的队列。
+
+###### publisher
+
+```java
+/**
+* 测试fanout
+*/
+@Test
+public void exchangeQueuePublisher() throws InterruptedException {
+    for (int i = 0; i < 10; i++) {
+        Thread.sleep(200);
+        rabbitTemplate.convertAndSend("pubsub.fanout.exchange","", "hello mq" );
+    }
+}
+```
+
+###### consumer
+
+```java
+/**
+     * 次注解声明  Queue  Exchange 和 consumer
+     * @param str
+     */
+@RabbitListener(bindings = {
+    @QueueBinding(
+        value = @Queue(RabbitConsts.FANOUT_EXCHANGE_QUEUE),
+        exchange = @Exchange(value = "pubsub.fanout.exchange", type = ExchangeTypes.FANOUT, durable = "true"))}
+               )
+public void FanoutExchangeListener(String str) {
+    // 这里开启了Spring自动ack， 不再手动ack
+    log.info(str);
+}
+```
+
+
+
+##### direct模式
+
+> 和广播模式一样涉及交换机， 多了一个概念,叫做routing-key,  队列 和交换机通过一个routing-key绑定。
+
+###### publisher
+
+```java
+/**
+     * 测试direct
+     */
+@Test
+public void directQueuePublisher() throws InterruptedException {
+    for (int i = 0; i < 10; i++) {
+        Thread.sleep(200);
+        rabbitTemplate.convertAndSend("pubsub.direct.exchange", "direct.queue.rk1", "hello mq 1");
+        rabbitTemplate.convertAndSend("pubsub.direct.exchange", "direct.queue.rk2", "hello mq 2");
+    }
+}
+
+```
+
+###### consumer
+
+```java
+/**
+     * 此注解声明  Queue  Exchange 和 consumer
+     * @param str
+     */
+@RabbitListener(bindings = {
+    @QueueBinding(
+        value = @Queue(RabbitConsts.DIRECT_EXCHANGE_QUEUE),
+        exchange = @Exchange(value = RabbitConsts.PUBSUB_DIRECT_EXCHANGE, type = ExchangeTypes.DIRECT, durable = "true"),
+        key = {"direct.queue.rk1","direct.queue.rk2"}
+    )
+}
+               )
+public void directExchangeListener(String str) {
+    // 这里开启了Spring自动ack， 不再手动ack
+    log.info(str);
+}
+```
+
+##### topic模式
+
+> topic模式和direct模式差不多，支持routingkey占位符匹配。
+
+###### publish
+
+```java
+/**
+* 测试topic
+*/
+@Test
+public void topicQueuePublisher() throws InterruptedException {
+    for (int i = 0; i < 10; i++) {
+        Thread.sleep(200);
+        rabbitTemplate.convertAndSend("pubsub.topic.exchange", "topic.queue.k1", "hello mq k1");
+        rabbitTemplate.convertAndSend("pubsub.topic.exchange", "topic.queue.k2", "hello mq k2");
+    }
+}
+```
+
+###### consumer
+
+```java
+/**
+     * 此注解声明  Queue  Exchange 和 consumer
+     * @param str
+     */
+@RabbitListener(bindings = {
+    @QueueBinding(
+        value = @Queue(RabbitConsts.TOPIC_EXCHANGE_QUEUE),
+        exchange = @Exchange(value = RabbitConsts.PUBSUB_TOPIC_EXCHANGE, type = ExchangeTypes.TOPIC, durable = "true"),
+        key = {"topic.queue.*"} // # - 匹配一个  * - 匹配多个
+    )
+}
+               )
+public void topicExchangeListener(String str) {
+    // 这里开启了Spring自动ack， 不再手动ack
+    log.info(str);
+}
+```
+
+### 消息转换器
+
+> RabbitMQTemplate 封装了发送消息到mq的api， Object类型接受所有类型的数据， 但是MQ有自己的通讯协议， 消息必须转化成 Message 再发送到MQ。
+
+#### 默认消息转化器
+
+> 会根具传入的Object类型选择不同的方式将 object转化成 字节数据 作为 Message的草书。
+
+```java
+MessageConverter messageConverter = new SimpleMessageConverter();
+```
+
+#### 自定义消息转化器
+
+RabbitMQ自动装配类, RabbitAutoConfiguration 会注入RabbitTemplate到Spring容器。
+
+通过ObjectProvider实现优雅注入，我们只需要提供一个 MessageConverter 到Spring容器中即可。
+
+```java
+MessageConverter messageConverter = this.messageConverter.getIfUnique();
+```
+
+```java
+@Configuration
+public class MQMessageConverter implements MessageConverter {
+    @Override
+    public Message toMessage(Object object, MessageProperties messageProperties) throws MessageConversionException {
+        return new Message(JSON.toJSONString(object).getBytes(), messageProperties);
+
+    }
+    @Override
+    public Object fromMessage(Message message) throws MessageConversionException {
+        final String s = new String(message.getBody());
+        return JSON.toJSON(s);
+    }
+}
+```
+
+#### 使用现成的消息转化器
+
+> amqp 提供了消息转化器， 借助 Jackson实现。
+
+```java
+@Bean
+public Jackson2JsonMessageConverter jackson2JsonMessageConverter(){
+    return new Jackson2JsonMessageConverter();
+}
+```
+
+
+
+### 消息可靠性
+
+#### 持久化
+
+- 交换机持久化
+- 队列持久化
+- 消息持久化
+
+> 使用SpringAMQP创建的队列、交换机、以及消息默认都是开启持久化。
+
+```java
+// 交换机
+new FanoutExchange(RabbitConsts.FANOUT_MODE_QUEUE,true,false);
+// 队列
+new Queue(RabbitConsts.QUEUE_TWO,true,false,false);
+// 消息 默认是开启持久化的
+MessageDeliveryMode DEFAULT_DELIVERY_MODE = MessageDeliveryMode.PERSISTENT;
+	// 也可以手动设置
+    // 1.准备消息
+    Message message = MessageBuilder
+        .withBody("hello, spring".getBytes(StandardCharsets.UTF_8))
+        .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+        .build();
+    // 2.发送消息
+    rabbitTemplate.convertAndSend("simple.queue", message);
+```
+
+
+
+#### 消息确认机制
+
+> 两个方面
+>
+> - 发送消息确认
+>   - 到达交换机
+>   - 到达队列
+> - 消费者消费确认，保证至少消费一次
+
+
+
+
+
+
+
+
+
 
 
