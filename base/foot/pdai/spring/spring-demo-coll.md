@@ -2504,16 +2504,17 @@ public Jackson2JsonMessageConverter jackson2JsonMessageConverter(){
 new FanoutExchange(RabbitConsts.FANOUT_MODE_QUEUE,true,false);
 // 队列
 new Queue(RabbitConsts.QUEUE_TWO,true,false,false);
+
 // 消息 默认是开启持久化的
 MessageDeliveryMode DEFAULT_DELIVERY_MODE = MessageDeliveryMode.PERSISTENT;
-	// 也可以手动设置
-    // 1.准备消息
-    Message message = MessageBuilder
-        .withBody("hello, spring".getBytes(StandardCharsets.UTF_8))
-        .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
-        .build();
-    // 2.发送消息
-    rabbitTemplate.convertAndSend("simple.queue", message);
+// 也可以手动设置
+// 1.准备消息
+Message message = MessageBuilder
+    .withBody("hello, spring".getBytes(StandardCharsets.UTF_8))
+    .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+    .build();
+// 2.发送消息
+rabbitTemplate.convertAndSend("simple.queue", message);
 ```
 
 
@@ -2526,6 +2527,355 @@ MessageDeliveryMode DEFAULT_DELIVERY_MODE = MessageDeliveryMode.PERSISTENT;
 >   - 到达交换机
 >   - 到达队列
 > - 消费者消费确认，保证至少消费一次
+
+##### publisher  确认
+
+> 分两步
+>
+> - publisher-confirm
+> - publisher-returen
+>
+> 两步分别对应消息到达交换机和队列, mq会发送回执给到生产者, 生产者通过回执判断消息是否送达。
+
+###### confirm-rollback
+
+> - 开启 confirm-rollback
+> - 设置回调函数
+
+第一种方式：每次发送消息绑定一个CorrelationData
+
+```yaml
+spring:
+  rabbitmq:
+    publisher-confirms: true
+```
+
+```java
+// 1.准备消息
+String message = "hello, spring amqp!";
+// 2.准备CorrelationData
+// 2.1.消息ID
+CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString());
+// 2.2.准备ConfirmCallback
+correlationData.getFuture().addCallback(result -> {
+    // 判断结果
+    if (Boolean.TRUE.equals(result.isAck())) {
+        // ACK
+        log.debug("消息成功投递到交换机！消息ID: {}", correlationData.getId());
+    } else {
+        // NACK
+        log.error("消息投递到交换机失败！消息ID：{}", correlationData.getId());
+        // 重发消息
+    }
+}, ex -> {
+    // 记录日志
+    log.error("消息发送失败！", ex);
+    // 重发消息
+});
+// 3.发送消息
+rabbitTemplate.convertAndSend("pubsub.topic.exchange", "topic.queue.k1", message,correlationData);
+```
+
+第二种方式：设置全局的confirmRollback
+
+```java
+@Slf4j
+@Configuration
+public class CommonConfig implements ApplicationContextAware {
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        // 获取RabbitTemplate对象
+        RabbitTemplate rabbitTemplate = applicationContext.getBean(RabbitTemplate.class);
+        // 配置全局 confirmrollback
+        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
+            if (Boolean.TRUE.equals(ack)) {
+                log.info("消息到达交换机");
+            } else {
+                log.info("消息到达交换机失败:{}", cause);
+            }
+        }
+        );
+    }
+}
+```
+
+
+
+###### return-rollback
+
+> - 开启return-rollback
+> - 设置回调
+
+```yaml
+spring:
+  rabbitmq:
+    publisher-returns: true
+```
+
+```java
+
+@Slf4j
+@Configuration
+public class CommonConfig implements ApplicationContextAware {
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        // 获取RabbitTemplate对象
+        RabbitTemplate rabbitTemplate = applicationContext.getBean(RabbitTemplate.class);
+        // 配置ReturnCallback
+        rabbitTemplate.setReturnCallback((message, replyCode, replyText, exchange, routingKey) -> {
+            // 判断是否是延迟消息
+            Integer receivedDelay = message.getMessageProperties().getReceivedDelay();
+            if (receivedDelay != null && receivedDelay > 0) {
+                // 是一个延迟消息，忽略这个错误提示
+                return;
+            }
+            // 记录日志
+            log.error("消息发送到队列失败，响应码：{}, 失败原因：{}, 交换机: {}, 路由key：{}, 消息: {}",
+                    replyCode, replyText, exchange, routingKey, message);
+            // 如果有需要的话，重发消息
+        });
+    }
+}
+```
+
+##### Consumer确认
+
+消费者确认有三种模式：
+
+- none  关闭ack,MQ假定消费者获取消息后会成功处理,因此消息投递后立即被删除
+- manual：手动ack,需要在业务代码结束后,调用api发送ack给mq。
+- auto：自动ack,由spring监测listener代码是否出现异常,没有异常则返回ack；抛出异常则返回nack
+
+> 配置方式：
+
+```yaml
+spring:
+  rabbitmq:
+    listener:
+      simple:
+#        acknowledge-mode: manual
+#        acknowledge-mode: auto # 由Spring自动确认
+        acknowledge-mode: none
+```
+
+###### none
+
+```java
+/**
+     * 由mq自动确认, 消费者拿到消息mq直接将消息移除, 消息是否被消费成功 都会被移除
+     */
+@RabbitListener(
+    queues = RabbitConsts.SIMPLE_QUEUE
+)
+public void testNone(String msg) {
+    // 模拟消息消费异常, 消息也会被移除
+    int i = 1 / 0;
+    log.info("msg:{}", msg);
+}
+```
+
+###### manual
+
+```java
+@RabbitListener(
+    queues = RabbitConsts.SIMPLE_QUEUE
+)
+public void simpleQueueListener(String str, Message message, Channel channel) {
+    final long deliveryTag = message.getMessageProperties().getDeliveryTag();
+    try {
+        log.info("接受到消息: {}", str);
+        int i = 1 / 0;
+        // 手动确认消息, 只确认收到的消息
+        channel.basicAck(deliveryTag, false);
+    } catch (Exception e) {
+        try {
+            // 处理失败,重新压入MQ
+            channel.basicRecover();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+    }
+}
+```
+
+![image-20230615115925679](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230615115925679.png)
+
+###### auto
+
+```java
+/**
+* Spring自动确认
+*/
+@RabbitListener(
+    queues = RabbitConsts.SIMPLE_QUEUE
+)
+public void testAuto(String str) {
+    log.info("接受到消息: {}", str);
+    int i = 1 / 0;
+}
+```
+
+缺陷就是负载太高了
+
+![image-20230615130410458](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230615130410458.png)
+
+
+
+#### 重试机制
+
+> 无论是手动确认还是Spring自动确认, 返回unack给MQ, MQ会立刻将消息重新入队, 就会导致无限循环重试, 增加MQ负载。
+
+已Spring自动重试为例：
+
+##### 配置
+
+```yaml
+spring:
+  rabbitmq:
+    host: 192.168.111.128
+    port: 5672
+    username: rolyfish
+    password: 123456
+    ## 虚拟主机， 一般每个租户一个虚拟注解
+    virtual-host: /
+    # 手动提交消息
+    listener:
+      simple:
+        acknowledge-mode: auto # 由Spring自动确认
+        prefetch: 1 # 消息预取机制
+        retry:
+          enabled: true # 开启本地重试
+          initial-interval: 1000 # 初次失败等待时长
+          multiplier: 1  # 失败等待时长倍数
+          max-attempts: 3 # 最大重试次数
+          max-interval: 10000 # 最大等待时长
+          stateless: true # 业务包含事务改为 false
+```
+
+
+
+##### 测试重试
+
+重试三次后返回unack, 跳出本地重试
+
+![image-20230615174012210](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230615174012210.png)
+
+
+
+##### 失败策略
+
+> 重试耗尽后失败策略
+>
+> 本地重试解决了,消息确认机制auto模式无线循环requeue问题,但是默认的失败策略会丢弃消息。这是不友好的。
+>
+> Spring提供了以下三种失败策略：MessageRecovery的子类
+>
+> - RejectAndDontRequeueRecoverer：重试耗尽后，直接reject，丢弃消息。默认就是这种方式
+> - ImmediateRequeueMessageRecoverer：重试耗尽后，返回nack，消息重新入队
+>
+> - RepublishMessageRecoverer：重试耗尽后，将失败消息投递到指定的交换机
+
+`RabbitAutoConfiguration` 将`RabbitAnnotationDrivenConfiguration` `Import`进来,  `RabbitAnnotationDrivenConfiguration`这个配置类会注入`SimpleRabbitListenerContainerFactoryConfigurer`, 会通过如下方式初始化:
+
+```java
+private final ObjectProvider<MessageRecoverer> messageRecoverer;
+configurer.setMessageRecoverer(this.messageRecoverer.getIfUnique());
+```
+
+为何默认失策略为拒绝呢？
+
+  `RabbitAnnotationDrivenConfiguration`有一个`config()`方法, 内部会调用父类`AbstractRabbitListenerContainerFactoryConfigurer.config()`方法。
+
+```java
+MessageRecoverer recoverer = (this.messageRecoverer != null)
+					? this.messageRecoverer : new RejectAndDontRequeueRecoverer();
+```
+
+所以想要自定义消息失败机制, 只需要注入对应Bean即可。ObjectProvider可实现宽松注入。
+
+ImmediateRequeueMessageRecoverer
+
+```java
+@Slf4j
+@Configuration
+public class MessageRecoverConfig {
+    /**
+     * 消费失败重新入队
+     * @return
+     */
+    public @Bean MessageRecoverer messageRecover() {
+        return new ImmediateRequeueMessageRecoverer();
+    }
+}
+```
+
+RepublishMessageRecoverer
+
+```java
+@Slf4j
+@Configuration
+public class ErrorMessageConfig {
+
+    private static final String ERROR_EXCHANGE = "error.exchange";
+    private static final String ERROR_ROUTING_KEK = "error.rk";
+    private static final String ERROR_QUEUE = "error.queue";
+
+
+    /**
+     * 错误交换机
+     * @return
+     */
+    public @Bean TopicExchange errorExchange() {
+        return new TopicExchange(ERROR_EXCHANGE, true, false);
+    }
+
+    /**
+     * 错误队列
+     * @return
+     */
+    public @Bean Queue errorQueue() {
+        return new Queue(ERROR_QUEUE, true, false, false);
+    }
+
+    /**
+     * 绑定关系
+     * @return
+     */
+    public @Bean Binding binding(TopicExchange errorExchange, Queue errorQueue) {
+        return BindingBuilder.bind(errorQueue).to(errorExchange).with(ERROR_ROUTING_KEK);
+    }
+
+    /**
+     * 失败策略
+     * @param rabbitTemplate
+     * @return
+     */
+    public @Bean MessageRecoverer messageRecoverer(@Autowired RabbitTemplate rabbitTemplate) {
+        return new RepublishMessageRecoverer(rabbitTemplate, ERROR_EXCHANGE, ERROR_ROUTING_KEK);
+    }
+
+}
+```
+
+![image-20230615181427831](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230615181427831.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
