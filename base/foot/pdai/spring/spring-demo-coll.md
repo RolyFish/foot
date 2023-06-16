@@ -2065,6 +2065,7 @@ public User get(Long id) {
     -e RABBITMQ_DEFAULT_USER=rolyfish \
     -e RABBITMQ_DEFAULT_PASS=123456 \
     -v /home/rolyfish/home/rabbitmq/data:/var/lib/rabbitmq \
+    -v /home/rolyfish/home/rabbitmq/plugins:/plugins \
     --name mq-standalone \
     --hostname mq-standalone \
     -p 15672:15672 \
@@ -2861,27 +2862,266 @@ public class ErrorMessageConfig {
 
 
 
+### 死信交换机
+
+死信：MQ中不可用的消息
+
+- 未ack且未requeue(也就是reject)的消息
+- 超时未消费, 队列可以定义超时时间
+- 队列满了
+
+ #### 定义死信交换机和队列
+
+```java
+@Slf4j
+@Configuration
+public class DieMsgConfig {
+    private static final String DIE_MSG_EXCHANGE = "die.msg.exchange";
+    private static final String DIE_MSG_ROUTING_KEK = "die.msg.rk";
+    private static final String DIE_MSG_QUEUE = "die.msg.queue";
+
+    /**
+     * 死信交换机
+     */
+    public @Bean TopicExchange dieMsgExchange() {
+        return new TopicExchange(DIE_MSG_EXCHANGE, true, false);
+    }
+
+    /**
+     * 死信队列
+     */
+    public @Bean Queue dieMsgQueue() {
+        return new Queue(DIE_MSG_QUEUE, true, false,false);
+    }
+    /**
+     * 绑定
+     */
+    public @Bean Binding dieMsgBinding(TopicExchange dieMsgExchange, Queue dieMsgQueue) {
+        return BindingBuilder.bind(dieMsgQueue).to(dieMsgExchange).with(DIE_MSG_ROUTING_KEK);
+    }
+}
+
+```
+
+#### 队列绑定死信交换机
+
+> 设置超时队列, 并绑定 交换机和 routing key。
+
+```java
+public static final String DEMO_DIE_MSG_EXCHANGE = "demo.die.msg.exchange";
+public static final String DEMO_DIE_MSG_ROUTING_KEK = "demo.die.msg.rk";
+public static final String DEMO_DIE_MSG_QUEUE = "demo.die.msg.queue";
+
+public @Bean TopicExchanage demoDieMsgExchange() {
+    return new TopicExchange(DEMO_DIE_MSG_EXCHANGE, true, false);
+}
+public @Bean Queue demoDieMsgQueue() {
+    return QueueBuilder
+        .durable(DEMO_DIE_MSG_QUEUE)
+        .ttl(5000) // 5 秒后消息超时 ， 加入死信队列
+        .deadLetterExchange(DIE_MSG_EXCHANGE)
+        .deadLetterRoutingKey(DIE_MSG_ROUTING_KEK)
+        .build();
+}
+
+public @Bean Binding demoDieMsgBinding(TopicExchange demoDieMsgExchange, Queue demoDieMsgQueue) {
+    return BindingBuilder.bind(demoDieMsgQueue).to(demoDieMsgExchange).with(DEMO_DIE_MSG_ROUTING_KEK);
+}
+
+```
+
+#### 发送消息
+
+> 由于没有consumer消费消息, 达到超时时间后变为死信, 队列将消息路由到死信交换机。
+
+```java
+@Test
+public void deadLetterDDL() {
+    String str = "超时死信 加入死信队列";
+    rabbitTemplate.convertAndSend(DieMsgConfig.DEMO_DIE_MSG_EXCHANGE,DieMsgConfig.DEMO_DIE_MSG_ROUTING_KEK, str);
+}
+```
 
 
 
+### 延时队列
+
+> 设置ttl + 死信交换机可以实现延时队列, 但不够优雅。
+
+#### 插件
+
+> RabbitMQ官方给出延时交换机插件。
+
+[RabbitMQ的插件列表](https://www.rabbitmq.com/community-plugins.html)
+
+[延时队列插件delayed-message-exchange](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange)
 
 
 
+##### 安装
+
+1. [下载插件](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange/releases)
+
+2. 将差价压缩包复制到插件挂载目录
+
+3. 交互式进入mq容器, 开启插件
+
+   > 执行`rabbitmq-plugins enable rabbitmq_delayed_message_exchange`
+
+   ![image-20230616144342382](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230616144342382.png)
 
 
 
+#### DelayExchange原理
+
+> DelayExchange对官方的交换机做了一层包装, mq自带的交换机没有存储消息的功能, 而DelayExchange具备暂存消息的功能, 延时时间过了以后, DelayExchange会将消息发送到指定队列。
+
+#### DelayExchange使用
+
+##### dashbord
+
+1. 创建延时交换机
+
+![image-20230616145550730](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230616145550730.png)
+
+2. 创建队列并绑定
+
+   ![image-20230616150738756](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230616150738756.png)
+
+3. 发布消息
+
+   ![image-20230616150824669](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230616150824669.png)
 
 
 
+##### SpringAMQP
+
+> SpringAMQP使用DelayExchange
+
+- javabean方式
+
+  ```java
+  /**
+  * 创建延时交换机
+  */
+  public @Bean TopicExchange delayExchange() {
+      return ExchangeBuilder
+          .topicExchange("delay.exchange")
+          .durable(true)
+          .delayed()  // 申明延时交换机
+          .build();
+  }
+  /**
+  * 创建队列
+  */
+  public @Bean Queue delayQueue() {
+      return QueueBuilder
+          .durable("delay.queue")
+          .build();
+  }
+  /**
+  * 绑定
+  */
+  public @Bean Binding delayBinding(TopicExchange delayExchange, Queue delayQueue) {
+      return BindingBuilder.bind(delayQueue).to(delayExchange).with("delay.*");
+  }
+  
+  ```
+
+- 声明试注解方式
+
+  ```java
+  @RabbitListener(
+      bindings = @QueueBinding(
+          value = @Queue(value = "delay.queue", durable = "true"),
+          exchange = @Exchange(value = "delay.exchange", type = "topic", delayed = "true", durable = "true",
+                               arguments = @Argument(name = "x-delayed-type", value = "direct")),
+          key = "delay.*"
+      )
+  )
+  public void delayMsgListener(String msg) {
+      log.info("收到的延时消息:{}", msg);
+  }
+  ```
+
+- 发送延时消息
+
+  ```java
+  Message message = MessageBuilder
+      .withBody("发送消息到延时交换机延时交换机".getBytes(StandardCharsets.UTF_8))
+      .setDeliveryMode(MessageDeliveryMode.PERSISTENT) // 持久化
+      .setHeader("x-delay", 5000) // 设置延时时间
+      .build();
+  // 3.发送消息
+  rabbitTemplate.convertAndSend("delay.exchange", "delay.d", message);
+  log.info("消息发送成功");
+  ```
+
+  ![image-20230616153717956](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230616153717956.png)
+
+### 消息堆积
+
+消息堆积原因
+
+- consumer 少  --- 采用workqueue模式增加consumer个数 
+- consumer消费慢, 优化代码
+- mq容量太小
+
+#### 惰性队列
+
+> 从RabbitMQ的3.6.0版本开始，就增加了Lazy Queues的概念，也就是惰性队列。惰性队列的特征如下：
+
+- 接收到消息后直接存入磁盘而非内存
+- 消费者要消费消息时才会从磁盘中读取并加载到内存
+- 支持数百万条的消息存储
+
+##### 创建惰性队列
+
+>  设置惰性队列规则,
+
+```shell
+rabbitmqctl set_policy Lazy "^lazy-queue$" '{"queue-mode":"lazy"}' --apply-to queues  
+```
+
+命令解读：
+
+- `rabbitmqctl` ：RabbitMQ的命令行工具
+- `set_policy` ：添加一个策略
+- `Lazy` ：策略名称，可以自定义
+- `"^lazy-queue$"` ：用正则表达式匹配队列的名字
+- `'{"queue-mode":"lazy"}'` ：设置队列模式为lazy模式
+- `--apply-to queues  `：策略的作用对象，是所有的队列
+
+1. javabean方式
+
+   ```java
+   public @Bean Queue lazyQueue(){
+       return QueueBuilder.durable("lazy.queue").lazy().build();
+   }
+   ```
+
+2. 注解方式
+
+   ```java
+   @RabbitListener(
+       bindings = @QueueBinding(
+           value = @Queue(value = "lazy.queue", arguments = @Argument(name = "x-queue-mode", value = "lazy")),
+           exchange = @Exchange(name = "lazy.exchange", type = "topic"),
+           key = "lazy.*"
+       )
+   )
+   public void lazyQueue(String str) {
+       log.info("惰性队列,消息:{}", str);
+   }
+   ```
+
+#### 惰性队列问题
+
+> mq普通队列基于内存存储, 消息容量受限于机器内存上限, 而惰性队列基于磁盘存储, 理论上没有上限, 但是性能受限于磁盘io,需要综合考虑使用。
 
 
 
-
-
-
-
-
-
+### 高可用(MQ集群)
 
 
 
