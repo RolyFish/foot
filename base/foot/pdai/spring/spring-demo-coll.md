@@ -1329,176 +1329,9 @@ public class DemoApplicationTests {
 
 
 
-
-
 ## Spring-boot-Mybatis-plus
 
 
-
-### 代码生成器
-
-#### 创建表
-
-```sql
-CREATE TABLE `user` (
-    `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
-    `name` varchar(20) DEFAULT NULL COMMENT '姓名',
-    `email` varchar(20) DEFAULT NULL COMMENT '邮件',
-    `delete` varchar(10) DEFAULT NULL COMMENT '逻辑删除',
-    `version` varchar(10) DEFAULT NULL COMMENT '乐观锁',
-    `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-    `update_time` datetime DEFAULT NULL COMMENT '删除时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8
-```
-
-
-
-#### 代码生成器工具
-
-```java
-@Getter
-public enum DbProperties {
-
-    URL("url", "jdbc:mysql://localhost:3306/spring_all?useUnicode=true&charactEncoding=utf8&useSSL=true&serverTimezone=GMT%2B8"),
-    USER("user", "root"),
-    PASSWORD("pass", "123456");
-
-    private String property;
-    private String value;
-
-    DbProperties(String prop, String value) {
-        this.property = prop;
-        this.value = value;
-    }
-}
-```
-
-```java
-class CodeMake {
-    static {
-        InputStream in = ClassLoader.getSystemResourceAsStream("public/db.properties");
-        Properties prop = new Properties();
-        try {
-            prop.load(in);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println(prop);
-    }
-
-    public static void main(String[] args) {
-
-        DataSourceConfig.Builder dataSourceConfigBuilder =
-                new DataSourceConfig.Builder(
-                        DbProperties.URL.getValue(),
-                        DbProperties.USER.getValue(),
-                        DbProperties.PASSWORD.getValue());
-
-        //配置 entity service xml impl 等文件输出路径
-        Map<OutputFile, String> outputFileStringMap =
-                Collections.singletonMap(OutputFile.xml, "d:xxx");
-        FastAutoGenerator
-                .create(dataSourceConfigBuilder)
-                //.create(DbProperties.URL.getValue(),DbProperties.PASSWORD.getValue(),DbProperties.USER.getValue())
-                .globalConfig(builder -> {
-                    builder.author("roilyFish") // 设置作者
-                            .dateType(DateType.TIME_PACK)//实体日期属性类型
-                            .commentDate("yyyy-MM-dd")
-                            .enableSwagger() // 开启 swagger 模式
-                            .fileOverride() // 覆盖已生成文件
-                            .disableOpenDir()//生成文件后、不要打开目录
-                            .outputDir("d:xxx"); // 指定输出目录
-                })
-                //包路径配置
-                .packageConfig(builder -> {
-                    builder
-                            .parent("com.roily.mp01") // 设置父包名 会影响package
-                            // .moduleName("backstage") // 设置父包模块名
-                            .entity("entity")//实体类包名
-                            .service("service")//service包名
-                            .serviceImpl("service.impl")//impl包名
-                            .mapper("mapper")//mapper接口包名
-                            .controller("controller")//controller包名
-                            .other("other")
-                            //.xml("mp-01\\src\\main\\resources\\mapper")//mapper.xml 输出路径
-                            //以上配置都基于父包路径
-                            .pathInfo(outputFileStringMap); // 设置mapperXml生成路径
-                })
-                //模板配置
-                .templateConfig(builder -> {
-                    builder
-                            //.disable()//禁用所有模板
-                            //.disable(TemplateType.ENTITY)//禁用模板  不生成Entity
-                            .entity("/templates/entity.java")
-                            //.service("/templates/service.java")
-                            //.serviceImpl("/templates/serviceImpl.java")
-                            //.mapper("/templates/mapper.java")
-                            ////.mapperXml("/templates/mapper.xml")
-                            //.com.roily.controller("/templates/com.roily.controller.java")
-                            .build();
-                })
-                .injectionConfig(builder -> {
-                    builder
-                            .beforeOutputFile((tableInfo, objectMap) -> {
-                                    System.out.println("tableInfo: " + tableInfo.getEntityName() + " objectMap: " + objectMap.size());
-                                    System.out.println(objectMap);
-                                }
-                            )
-                            .customMap(Collections.singletonMap("test", "baomidou"))
-                            //.customFile(Collections.singletonMap("test.txt", "/templates/entity.vm"))
-                            .build();
-                })
-                .strategyConfig(builder -> {
-                    builder.addInclude("user")// 设置需要生成的表名
-                            .addTablePrefix("t_", "c_") // 设置过滤表前缀
-                            .addTableSuffix("_info")// 设置过滤表后缀
-                            //.addFieldPrefix("") // 设置过滤字段前缀
-                            //.addFieldSuffix("") // 设置过滤字段后缀
-                            .entityBuilder()
-                                //.disableSerialVersionUID()//禁用生成serialVersionUID
-                                .enableLombok()//允许启用lombok  没有get set  简洁
-                                .enableRemoveIsPrefix()//允许去除bollean类型is前缀
-                                .enableTableFieldAnnotation()// 开启生成实体时,生成字段注解 即 @TableField
-                                .enableActiveRecord()//ActiveRecord 模式 crud更简洁
-                                //.versionColumnName("version")//设置乐观锁字段
-                                .versionPropertyName("version")//设置乐观锁属性
-                                //.logicDeleteColumnName("deleted")//逻辑删除字段
-                                .logicDeletePropertyName("deleted")//逻辑删除属性
-                                .naming(NamingStrategy.underline_to_camel)//数据库名  驼峰命名
-                                .columnNaming(NamingStrategy.underline_to_camel)//数据库字段 驼峰命名
-                                //.addSuperEntityColumns("id")
-                                //.addIgnoreColumns("deleted")//忽略字段
-                                .addTableFills(new Column("create_time", FieldFill.INSERT), new Column("update_time", FieldFill.INSERT_UPDATE))
-                                .idType(IdType.AUTO)//主键生成策略
-                                .fileOverride()//覆盖已有文件
-                                //.formatFileName("%s")
-                            .build()
-                                .controllerBuilder()
-                                //.superClass(BaseController.class)//设置父类
-                                .enableRestStyle()//@RestController
-                                //.formatFileName("%sAction")//格式化文件名称
-                            .build()
-
-                            .serviceBuilder()
-                                //.superServiceClass()//父类
-                                .formatServiceFileName("%sService")
-                                .formatServiceImplFileName("%sServiceImpl")
-                            .build()
-
-                            .mapperBuilder()
-                                //.superClass()//父类
-                                //.enableMapperAnnotation()//开启@Mapper 一般都会的配置扫描包
-                                .enableBaseResultMap()
-                                //.formatMapperFileName("%sMapper")
-                                //.formatXmlFileName("%sMapper")
-                            .build();
-                })
-                .templateEngine(new FreemarkerTemplateEngine()) // 使用Freemarker引擎模板，默认的是Velocity引擎模板
-                .execute();
-    }
-}
-```
 
 
 
@@ -1986,8 +1819,6 @@ public CacheManager cacheManager(@Autowired RedisConnectionFactory factory) {
 }
 ```
 
-> http连接池工具自动装配了
-
 > 自定义缓存key生成策略
 
 ```java
@@ -2053,7 +1884,7 @@ public User get(Long id) {
    mkdir plugins
    
    docker cp mq-standalone:/var/lib/rabbitmq ./data
-   docker cp mq-standalone:/etc/rabbitmq ./conf
+   docker cp mq-standalone:/etc/rabbitmq/conf.d ./conf
    docker cp mq-standalone:/var/log/rabbitmq  ./log
    docker cp mq-standalone:/opt/rabbitmq/plugins  ./plugins
    ```
@@ -2066,6 +1897,7 @@ public User get(Long id) {
     -e RABBITMQ_DEFAULT_PASS=123456 \
     -v /home/rolyfish/home/rabbitmq/data:/var/lib/rabbitmq \
     -v /home/rolyfish/home/rabbitmq/plugins:/plugins \
+    -v /home/rolyfish/home/rabbitmq/conf:/etc/rabbitmq/conf.d \
     --name mq-standalone \
     --hostname mq-standalone \
     -p 15672:15672 \
@@ -2073,10 +1905,6 @@ public User get(Long id) {
     -d \
     --privileged=true \
    rabbitmq:3.11-management
-   
-    -v /home/rolyfish/home/rabbitmq/conf:/etc/rabbitmq \
-    -v /home/rolyfish/home/rabbitmq/log:/var/log/rabbitmq \
-    -v /home/rolyfish/home/rabbitmq/plugins:/plugins \
    ```
 
 5. 使用上面的账户密码登录RabbitMQ管理页面
@@ -3122,6 +2950,315 @@ rabbitmqctl set_policy Lazy "^lazy-queue$" '{"queue-mode":"lazy"}' --apply-to qu
 
 
 ### 高可用(MQ集群)
+
+- 普通集群
+- 镜像集群
+- 仲裁队列
+
+#### 普通集群
+
+> 普通集群, 每个mq节点内数据可看作两部分, 真实队列、消息、交换机信息 以及队列引用, 引用会在集群内各个节点共享, 但是队列消息信息不会共享, 当存储真实队列消息节点宕机后 消息就会丢失。 
+
+- 会在集群的各个节点间共享部分数据，包括：交换机、队列元信息(队列引用)。不包含队列中的消息。
+- 当访问集群某节点时，如果队列不在该节点，会从数据所在节点传递到当前节点并返回
+- 队列所在节点宕机，队列中的消息就会丢失
+
+##### 搭建普通集群
+
+1. 准备挂载目录.
+
+   ```shell
+   mkdir mq1 mq2 mq3 
+   ```
+
+2. 创建网络
+
+   ```shell
+   docker network create mq-simple
+   ```
+
+3. 拷贝插件
+
+   ```shell
+   printf "%s\n" mq1 mq2 mq3 | xargs -t -I {} cp -r /home/rolyfish/home/rabbitmq/plugins /home/rolyfish/home/mqcluster/{}/plugins
+   ```
+
+4. 准备配置文件拷贝到指定目录
+
+   ```shell
+   docker cp mq-standalone:/etc/rabbitmq/conf.d conf
+   
+   # 看情况
+   vim 10-defaults.conf
+   
+   ## 插入如下配置 
+   loopback_users.guest = false
+   listeners.tcp.default = 5672
+   cluster_formation.peer_discovery_backend = rabbit_peer_discovery_classic_config
+   cluster_formation.classic_config.nodes.1 = rabbit@mq1
+   cluster_formation.classic_config.nodes.2 = rabbit@mq2
+   cluster_formation.classic_config.nodes.3 = rabbit@mq3
+   
+   printf "%s\n" mq1 mq2 mq3 | xargs -t -I {} mkdir /home/rolyfish/home/mqcluster/{}/conf /home/rolyfish/home/mqcluster/{}/data
+   printf "%s\n" mq1 mq2 mq3 | xargs -t -I {} cp -r  /home/rolyfish/home/mqcluster/conf/rabbitmq/conf.d/10-defaults.conf /home/rolyfish/home/mqcluster/{}/conf/10-defaults.conf 
+   ```
+
+5. 启动容器
+
+   ```shell
+   docker rm -f mq1
+   sudo docker run \
+    -e RABBITMQ_DEFAULT_USER=rolyfish \
+    -e RABBITMQ_DEFAULT_PASS=123456 \
+    -v /home/rolyfish/home/mqcluster/mq1/conf/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie \
+    -v /home/rolyfish/home/mqcluster/mq1/plugins:/plugins \
+    -v /home/rolyfish/home/mqcluster/mq1/data:/var/lib/rabbitmq \
+    -v /home/rolyfish/home/mqcluster/mq1/conf:/etc/rabbitmq/conf.d \
+    --name mq1  \
+    --hostname mq1 \
+     --net mq-simple \
+    -p 15673:15672 \
+    -p 5673:5672 \
+    -d \
+    --privileged=true \
+   rabbitmq:3.11-management
+   
+   docker rm -f mq2
+   sudo docker run \
+    -e RABBITMQ_DEFAULT_USER=rolyfish \
+    -e RABBITMQ_DEFAULT_PASS=123456 \
+    -v /home/rolyfish/home/mqcluster/mq2/conf/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie \
+    -v /home/rolyfish/home/mqcluster/mq2/plugins:/plugins \
+    -v /home/rolyfish/home/mqcluster/mq2/data:/var/lib/rabbitmq \
+    -v /home/rolyfish/home/mqcluster/mq2/conf:/etc/rabbitmq/conf.d \
+    --name mq2 \
+    --hostname mq2 \
+    --net mq-simple \
+    -p 15674:15672 \
+    -p 5674:5672 \
+    -d \
+    --privileged=true \
+   rabbitmq:3.11-management
+   
+   docker rm -f mq3
+   sudo docker run \
+    -e RABBITMQ_DEFAULT_USER=rolyfish \
+    -e RABBITMQ_DEFAULT_PASS=123456 \
+    -v /home/rolyfish/home/mqcluster/mq3/conf/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie \
+    -v /home/rolyfish/home/mqcluster/mq3/plugins:/plugins \
+    -v /home/rolyfish/home/mqcluster/mq3/data:/var/lib/rabbitmq \
+    -v /home/rolyfish/home/mqcluster/mq3/conf:/etc/rabbitmq/conf.d \
+    --name mq3 \
+    --hostname mq3 \
+    --net mq-simple \
+    -p 15675:15672 \
+    -p 5675:5672 \
+    -d \
+    --privileged=true \
+   rabbitmq:3.11-management
+   ```
+
+6. 准备cookie
+
+   > 发现集群连接失败, 各个节点相互独立
+
+   ![image-20230619131902087](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230619131902087.png)
+
+   ![image-20230619113740922](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230619113740922.png)
+
+   > mq集群之间需要通过cookie进行通讯
+   >
+   > 
+
+7. 重新构建
+
+   > 挂载cookie
+   >
+   > ` -v /home/rolyfish/home/mqcluster/mq3/conf/.erlang.cookie:/var/lib/rabbitmq/.erlang.cookie \`
+
+   ![image-20230619133405487](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230619133405487.png)
+
+##### 测试
+
+> - 在节点mq1 上创建队列 `mq1.queue`, 此队列属于节点mq1, 并且在节点mq2、mq3存储着`mq1.queue`队列的引用。 当有一个消费消息的请求到达节点 mq2 mq3 时, 会根据引用转发到队列拥有者的节点上。
+>
+> - 当队列拥有者节点宕机后, 队列就不可访问
+>
+>   ![image-20230619134359950](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230619134359950.png)
+
+
+
+#### 镜像集群
+
+> 镜像集群基于普通集群,本质是主从模式, 既然是主从就有主从同步问题, 就有数据不一致可能性存在。
+>
+> - 交换机、队列、队列中的消息会在各个mq的镜像节点之间同步备份。
+> - 创建队列的节点被称为该队列的**主节点，**备份到的其它节点叫做该队列的**镜像**节点。
+> - 一个队列的主节点可能是另一个队列的镜像节点
+> - 所有操作都是主节点完成，然后同步给镜像节点
+> - 主宕机后，镜像节点会替代成新的主节点
+
+##### 搭建
+
+> 只需要进行配置即可。
+
+**准确模式配置**
+
+```shell
+rabbitmqctl set_policy ha-two "^queue\." '{"ha-mode":"exactly","ha-params":2,"ha-sync-mode":"automatic"}'
+```
+
+- `rabbitmqctl set_policy`：固定写法
+- `ha-two`：策略名称，自定义
+- `"^queue\."`：匹配队列的正则表达式，符合命名规则的队列才生效，这里是任何以`queue.`开头的队列名称
+- `'{"ha-mode":"exactly","ha-params":2,"ha-sync-mode":"automatic"}'`: 策略内容
+  - `"ha-mode":"exactly"`：策略模式，此处是exactly模式，指定副本数量
+  - `"ha-params":2`：策略参数，这里是2，就是副本数量为2，1主1镜像
+  - `"ha-sync-mode":"automatic"`：同步策略，默认是manual，即新加入的镜像节点不会同步旧的消息。如果设置为automatic，则新加入的镜像节点会把主节点中所有消息都同步，会带来额外的网络开销
+
+
+
+在dashbord -> admin -> policies下可以看见配置
+
+![image-20230619135504070](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230619135504070.png)
+
+##### 测试
+
+> 如果创建一个以`queue`开头名命的队列, 此队列会有一个同步镜像节点, 如果主节点宕机了镜像节点就会替代主节点( 主节点、镜像节点是相对于队列来说的)
+
+
+
+#### 仲裁队列
+
+> RabbitMQ3.0引入仲裁队列,  作用和镜像集群类似, 但使用起来更加方便。
+
+仲裁队列：仲裁队列是3.8版本以后才有的新功能，用来替代镜像队列，具备下列特征：
+
+- 与镜像队列一样，都是主从模式，支持主从数据同步
+- 使用非常简单，没有复杂的配置
+- 主从同步基于Raft协议，强一致
+
+
+
+##### 添加仲裁队列
+
+> 仲裁队列默认 count为5 ,也就是一主4镜像。
+
+###### danshbord
+
+
+
+![image-20230619144339444](D:\Desktop\myself\foot\base\foot\pdai\spring\assets\image-20230619144339444.png)
+
+
+
+###### AMQP
+
+```yaml
+spring:
+  rabbitmq:
+    addresses: 192.168.111.128:5673, 192.168.111.128:5674, 192.168.111.128:5675
+```
+
+```java
+@Configuration
+public class QuorumQueueConfig {
+    @Bean
+    public Queue queue() {
+        return QueueBuilder.durable("quorum.queue").quorum().build();
+    }
+}
+```
+
+
+
+
+
+## 动态数据源
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Spring -Security
+
+> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

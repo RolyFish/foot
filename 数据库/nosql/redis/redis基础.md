@@ -208,6 +208,7 @@ redis-cli [options] [commonds]
 # bind 127.0.0.1 -::1   ## 这个配置注掉,表示只允许本机连接。或修改为 bind 0.0.0.0
 daemonize no
 requirepass 123123 ## 设置密码
+protected-mode no ## 允许外部主机访问
 ```
 
 #### 启动redis
@@ -220,7 +221,14 @@ requirepass 123123 ## 设置密码
 docker run -d --privileged=true -p 6380:6379 \
 -v /Users/rolyfish/home/redis/conf/redis.conf:/etc/redis/redis.conf  \
 -v /Users/rolyfish/home/redis/data:/data \
---name testredis redis redis-server /etc/redis/redis.conf \
+--name testredis redis:latest redis-server /etc/redis/redis.conf \
+--appendonly yes
+
+
+docker run -d --privileged=true -p 6380:6379 \
+-v /home/rolyfish/home/redis/conf/redis.conf:/etc/redis/redis.conf  \
+-v /home/rolyfish/home/redis/data:/data \
+--name redis7.0 redis:7.0 redis-server /etc/redis/redis.conf \
 --appendonly yes
 ```
 

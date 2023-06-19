@@ -940,25 +940,11 @@ public class MQMessageConverter implements MessageConverter {
 
 #### Jackson
 
-> jackson.dataformat帮我们做好了现成的消息转化器
-
-消息生产者和消息消费者都添加Jackson依赖
-
-```xml
-<dependency>
-    <groupId>com.fasterxml.jackson.dataformat</groupId>
-    <artifactId>jackson-dataformat-xml</artifactId>
-    <version>2.15.0</version>
-</dependency>
-```
-
-配置消息转换器。
-
-在启动类中添加一个Bean即可：
+> amqp 提供了消息转化器， 借助 Jackson实现
 
 ```java
 @Bean
-public MessageConverter jsonMessageConverter() {
+public Jackson2JsonMessageConverter jackson2JsonMessageConverter(){
     return new Jackson2JsonMessageConverter();
 }
 ```
@@ -2135,7 +2121,7 @@ docker exec -it mq1 /bin/bash
 
 #### 仲裁队列
 
-从RabbitMQ 3.8版本开始，引入了新的仲裁队列，他具备与镜像队里类似的功能，但使用更加方便。
+从RabbitMQ 3.8版本开始，引入了新的仲裁队列，他具备与镜像队列类似的功能，但使用更加方便。
 
 ##### 仲裁队列特征
 
