@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+
+    <!--用于区分不同应用程序的记录-->
+    <contextName>logback</contextName>
+
+    <!-- 日志根目录在 tomcat 或 springboot jar包运行环境下指定绝对路径 -->
+    <property name="APP_NAME" value="starcloud-3pl-backend" />
+
+    <!--日志文件所在目录，如果是tomcat，如下写法日志文件会在则为${TOMCAT_HOME}/bin/logs/目录下-->
+    <property name="LOG_HOME_LINUX" value="/data/logs/${APP_NAME}"/>
+
+    <!-- 读取 properties 文件中配置 -->
+    <springProperty scope="context" name="logRootLevel" source="spring.log.root.level"/>
+    <springProperty scope="context" name="logMapperLevel" source="spring.log.mapper.level"/>
+
+
+    <!-- 彩色日志 -->
+    <!-- 彩色日志依赖的渲染类 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+    <!-- 彩色日志格式   [%-5p] %d{yyyy-MM-dd HH:mm:ss,SSS} method:%l%n%m%n  -->
+    <property name="CONSOLE_LOG_PATTERN" value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%25.25t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <!--控制台-->
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %logger输出日志的logger名 %msg：日志消息，%n是换行符 -->
+            <!--            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] %-5level %logger{36} : %msg%n</pattern>-->
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern><!--彩打日志-->
+            <!--解决乱码问题-->
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!--滚动文件-->
+    <appender name="logFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- ThresholdFilter:临界值过滤器，过滤掉 TRACE 和 DEBUG 级别的日志 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME_LINUX}/%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!--            <maxFileSize>100MB</maxFileSize><!&ndash;单个日志文件最大100M，到了这个值，就会再创建一个日志文件，日志文件的名字最后+1-->
+            <maxHistory>60</maxHistory><!--保存最近60天的日志-->
+            <totalSizeCap>20GB</totalSizeCap><!--所有的日志文件最大20G，超过就会删除旧的日志-->
+        </rollingPolicy>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] %-5level %logger{36} : %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--配置多环境日志输出 可以在application.properties中配置选择哪个profiles : spring.profiles.active=dev-->
+    <!--开发环境:打印控制台-->
+    <springProfile name="dev">
+        <!-- myibatis log configure -->
+        <logger name="com.gigacloud.starcloud.dao.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.generator.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.system.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.workcenter.mapper" level="${logMapperLevel}"/>
+
+        <root level="${logRootLevel}">
+            <appender-ref ref="stdout"/>
+            <appender-ref ref="logFile"/>
+        </root>
+    </springProfile>
+
+    <!-- sit 环境:输出到文件-->
+    <springProfile name="sit">
+        <!-- myibatis log configure -->
+        <logger name="com.gigacloud.starcloud.dao.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.generator.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.system.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.workcenter.mapper" level="${logMapperLevel}"/>
+
+        <root level="${logRootLevel}">
+            <appender-ref ref="stdout"/>
+            <appender-ref ref="logFile"/>
+        </root>
+    </springProfile>
+
+    <!-- uat 环境:输出到文件-->
+    <springProfile name="uat">
+
+        <!-- myibatis log configure -->
+        <logger name="com.gigacloud.starcloud.dao.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.generator.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.system.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.workcenter.mapper" level="${logMapperLevel}"/>
+
+        <root level="${logRootLevel}">
+            <appender-ref ref="logFile" />
+        </root>
+    </springProfile>
+
+    <!-- 预发布 环境:输出到文件-->
+    <springProfile name="pre-release">
+        <!-- myibatis log configure -->
+        <logger name="com.gigacloud.starcloud.dao.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.generator.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.system.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.workcenter.mapper" level="${logMapperLevel}"/>
+
+        <root level="${logRootLevel}">
+            <appender-ref ref="logFile" />
+        </root>
+    </springProfile>
+
+    <!--生产环境:输出到文件-->
+    <springProfile name="prod">
+        <!-- myibatis log configure -->
+        <logger name="com.gigacloud.starcloud.dao.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.generator.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.system.mapper" level="${logMapperLevel}"/>
+        <logger name="com.gigacloud.starcloud.workcenter.mapper" level="${logMapperLevel}"/>
+
+        <root level="${logRootLevel}">
+            <appender-ref ref="logFile" />
+        </root>
+    </springProfile>
+
+</configuration>
