@@ -31,7 +31,7 @@ CREATE TABLE `user` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT into user(id,name) values(1,'yyc'),(1111,'yyc');
+INSERT into user(id,name) values(1,'yyc'),(11111,'yyc');
 
 SELECT * from user;
 ```

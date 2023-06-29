@@ -15,13 +15,16 @@
 3. 启动mysql
 
    ```shell
-   docker run --name mysql-xxljob \
+   ## 准备挂载目录
+   mkdir data conf
+   
+   ## 启动容器
+   docker run --name mysql \
    -p 3316:3306 \
    -v /home/rolyfish/home/mysql/data:/var/lib/mysql \
    -v /home/rolyfish/home/mysql/conf:/etc/mysql/conf.d \
    -e MYSQL_ROOT_PASSWORD=123456 \
    -d mysql:8.0.33
    ```
-
    
-
+   
