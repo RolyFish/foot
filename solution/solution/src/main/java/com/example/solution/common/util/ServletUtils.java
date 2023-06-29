@@ -1,6 +1,7 @@
 package com.example.solution.common.util;
 
-import com.gigacloud.starcloud.common.core.text.Convert;
+
+import cn.hutool.core.convert.Convert;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -13,13 +14,15 @@ import java.io.IOException;
 /**
  * 客户端工具类
  *
- * 
+ *
  * @date 2021/12/15
  */
 public class ServletUtils
 {
     /**
      * 获取String参数
+     *
+     * url传参 以及 form-data传参, 参数都会放入HttpServletRequest(通过RequestContextHolder获取ServletRequestAttribute获取)
      */
     public static String getParameter(String name)
     {
@@ -98,7 +101,7 @@ public class ServletUtils
 
     /**
      * 将字符串渲染到客户端
-     * 
+     *
      * @param response 渲染对象
      * @param string 待渲染的字符串
      */
@@ -119,7 +122,7 @@ public class ServletUtils
 
     /**
      * 是否是Ajax异步请求
-     * 
+     *
      * @param request
      */
     public static boolean isAjaxRequest(HttpServletRequest request)

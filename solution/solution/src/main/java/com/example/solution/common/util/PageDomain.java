@@ -1,9 +1,10 @@
 package com.example.solution.common.util;
 
+
 /**
  * 分页数据
  *
- * @author wuyuhao
+ * @author 
  * @date 2021/12/15
  */
 public class PageDomain
@@ -29,7 +30,7 @@ public class PageDomain
         {
             return "";
         }
-        return StringUtils.toUnderScoreCase(orderByColumn) + " " + isAsc;
+        return "StringUtils.toUnderScoreCase(orderByColumn) + " + " + isAsc";
     }
 
     public Integer getPageNum()

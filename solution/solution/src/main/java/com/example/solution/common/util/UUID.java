@@ -1,6 +1,7 @@
 package com.example.solution.common.util;
 
-import com.gigacloud.starcloud.common.exception.UtilException;
+
+import cn.hutool.core.exceptions.UtilException;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

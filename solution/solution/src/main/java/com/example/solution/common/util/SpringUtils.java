@@ -11,12 +11,12 @@ import org.springframework.stereotype.Component;
 
 /**
  * spring工具类 方便在非spring管理环境中获取bean
- * 
- * @author wuyuhao
+ *
+ * @author
  * @date 2021/12/15
  */
 @Component
-public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationContextAware 
+public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationContextAware
 {
     /** Spring应用上下文环境 */
     private static ConfigurableListableBeanFactory beanFactory;
@@ -24,13 +24,13 @@ public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationC
     private static ApplicationContext applicationContext;
 
     @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException 
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException
     {
         SpringUtils.beanFactory = beanFactory;
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException 
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException
     {
         SpringUtils.applicationContext = applicationContext;
     }
@@ -113,7 +113,7 @@ public final class SpringUtils implements BeanFactoryPostProcessor, ApplicationC
 
     /**
      * 获取aop代理对象
-     * 
+     *
      * @param invoker
      * @return
      */

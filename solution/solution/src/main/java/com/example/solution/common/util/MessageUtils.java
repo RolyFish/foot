@@ -10,7 +10,7 @@ import java.util.Locale;
 /**
  * 获取i18n资源文件
  *
- * 
+ *
  * @date 2021/12/15
  */
 public class MessageUtils
