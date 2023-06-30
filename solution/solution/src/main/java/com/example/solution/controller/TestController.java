@@ -1,5 +1,6 @@
 package com.example.solution.controller;
 
+import com.example.solution.common.aspect.annotation.LogAnnotation;
 import com.example.solution.common.config.ComponentBean;
 import com.example.solution.common.util.SpringUtils;
 import com.example.solution.service.IService;
@@ -21,6 +22,7 @@ public class TestController {
 
     private IService iService;
 
+    @LogAnnotation(value = "test方法")
     @PostMapping("/test")
     public void test() {
         iService.service();

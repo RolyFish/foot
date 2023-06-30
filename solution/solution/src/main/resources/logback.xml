@@ -5,7 +5,7 @@
     <contextName>logback</contextName>
 
     <!-- 日志根目录在 tomcat 或 springboot jar包运行环境下指定绝对路径 -->
-    <property name="APP_NAME" value="starcloud-3pl-backend" />
+    <property name="APP_NAME" value="app-backend" />
 
     <!--日志文件所在目录，如果是tomcat，如下写法日志文件会在则为${TOMCAT_HOME}/bin/logs/目录下-->
     <property name="LOG_HOME_LINUX" value="/data/logs/${APP_NAME}"/>

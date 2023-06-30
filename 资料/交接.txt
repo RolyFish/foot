@@ -1,0 +1,69 @@
+1、海运同步财务收货时间给仓储系统
+
+需求：
+#111423 海运同步财务收货时间给仓储系统
+https://ones.oristand.com/project/#/team/8wP6mUy7/task/JSLa18XrWiPDTAt5
+
+状态：
+已自测。  == 仓储未定联调时间，我们是接口提供方，看是否可以先上线==
+
+代码分支:
+111423
+111423-yyc
+
+接口文档：
+http://yapi.orsd.tech/project/486/interface/api/22823
+
+
+描述：
+加了一个接口eleContainerOrder/syncelectronicorder2wms
+
+2、【联调联测】配合英国仓储系统迁移进行联调联测
+
+需求：
+#111171 【联调联测】配合英国仓储系统迁移进行联调联测
+https://ones.oristand.com/project/#/team/8wP6mUy7/task/JSLa18XrdP9aOXrn
+
+描述：未开始，配合联调，无需太多代码改动
+
+3、【联调联测】3PL系统调用海运港口信息接口
+
+需求：
+#112834 【联调联测】3PL系统调用海运港口信息接口
+https://ones.oristand.com/project/#/team/8wP6mUy7/task/JSLa18Xr7t9vFADq
+
+描述：
+海运原本就有返回起运港数据接口，配合联调没有代码改动
+
+4、【内部需求】物流备注字段编辑修改逻辑优化
+
+需求：
+#114363 【内部需求】物流备注字段编辑修改逻辑优化
+https://ones.oristand.com/project/#/team/8wP6mUy7/task/JSLa18Xr3Z5O4JNt
+
+描述：
+已上线，后端没有代码改动
+
+5、【联调联测】【数据管理部】入库单海运状态查询优化
+
+需求：
+#115378 【联调联测】【数据管理部】入库单海运状态查询优化
+https://ones.oristand.com/project/#/team/8wP6mUy7/task/JSLa18XrwlCf4f54
+
+状态：提交测试
+
+分支： 115378  115378-yyc  115378-merge-dev
+
+描述：在dev分支sit环境联调过了，后续流程还没走
+
+
+6、角色权限管理，我看有一个字典管理的 有些代码在 97234-yyc分支上， 没有用就忽略
+
+
+
+
+
+
+
+
+
