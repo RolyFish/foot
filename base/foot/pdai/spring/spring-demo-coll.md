@@ -1335,13 +1335,56 @@ public class DemoApplicationTests {
 ### PageHelper
 
 > 分页插件
+>
+> [官方例子](https://github.com/abel533/MyBatis-Spring-Boot)
+
+#### 使用
+
+##### 引入依赖
+
+```xml
+<dependency>
+  <groupId>com.baomidou</groupId>
+  <artifactId>mybatis-plus-boot-starter</artifactId>
+  <version>${mybatis.plus.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.github.pagehelper</groupId>
+  <artifactId>pagehelper-spring-boot-starter</artifactId>
+  <version>${pagehelper.version}</version>
+</dependency>
+```
+
+##### 配置
+
+```yaml
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+```
+
+- helperDialect ：数据库
+- resonable ：分页合理化参数默认false，当该参数设置为true 时，pageNum <= 0 时，默认显示第一页，pageNum 超过 pageSize 时，显示最后一页。
+- params ：用于从对象中根据属性名取值，可以配置pageNum，pageSize，count 不用配置映射的默认值
+- supportMethodsArguments ：分页插件会根据查询方法的参数中，自动根据params 配置的字段中取值，找到合适的值会自动分页。　
+
+##### 使用
+
+```java
+@Test
+public void testPageHelper() {
+    PageHelper.startPage(1, 2);
+    UserMapper userMapper = (UserMapper) userService.getBaseMapper();
+    List<User> users = userMapper.selectList(null);
+    log.info(users.toString());
+}
+```
 
 
 
 
-#### 执行做稍微调整
-
-![image-20230202161016249](spring-demo-coll.assets/image-20230202161016249.png)
 
 ## Spring-boot-async
 
@@ -3244,6 +3287,369 @@ public class QuorumQueueConfig {
 >
 > 使用拦截器实现不用aop代理
 
+## MapStruct 
+
+> 通过注解自动生成代码, 高性能属性映射器。
+
+### 特点
+
+- 自动生成字节码
+- 通过普通set方法, 而不是反射
+- 编译时类型安全
+
+
+
+### 使用
+
+[官网](https://github.com/mapstruct/mapstruct#what-is-mapstruct)
+
+#### 引入依赖
+
+```xml
+<properties>
+    <java.version>8</java.version>
+    <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+    <lombok.version>1.18.24</lombok.version>
+</properties>
+
+<dependency>
+    <groupId>org.mapstruct</groupId>
+    <artifactId>mapstruct</artifactId>
+    <version>${org.mapstruct.version}</version>
+</dependency>
+<dependency>
+  <groupId>org.projectlombok</groupId>
+  <artifactId>lombok</artifactId>
+  <version>${lombok.version}</version>
+</dependency>
+
+
+<build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+          <annotationProcessorPaths>
+            <!-- Lombok 在编译时会通过这个插件生成代码 -->
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+            <!-- MapStruct 在编译时会通过这个插件生成代码 -->
+            <path>
+              <groupId>org.mapstruct</groupId>
+              <artifactId>mapstruct-processor</artifactId>
+              <version>${org.mapstruct.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+    </plugins>
+</build>
+```
+
+
+
+#### 创建两个实体类
+
+```java
+@Getter
+@Setter
+@Data
+public class User {
+  private String name;
+  private Integer age;
+  private String email;
+}
+@Getter
+@Setter
+@Data
+public class UserDTO {
+  private String name;
+  private Integer age;
+  private String email;
+}
+```
+
+
+
+#### 创建转换工具
+
+```java
+/**
+ * @author: rolyfish
+ */
+@Mapper
+public interface UserConverter {
+
+  UserConverter INSTANCE = Mappers.getMapper(UserConverter.class);
+
+  User dto2Entry(UserDTO userDTO);
+
+  List<User> listDto2Entry(List<UserDTO> userDTOs);
+
+  UserDTO entry2Dto(User user);
+
+  List<UserDTO> listEntry2Dto(List<User> users);
+
+}
+```
+
+
+
+#### 测试
+
+```java
+@Test
+void contextLoads() {
+    UserDTO userDTO = new UserDTO();
+    userDTO.setAge(1);
+    userDTO.setName("yyc");
+    userDTO.setEmail("yyc@qq.com");
+    final User user = UserConverter.INSTANCE.dto2Entry(userDTO);
+    log.info(user.toString());
+}
+```
+
+
+
+## jetcache
+
+> Mapper 缓存
+
+
+
+
+
+## Validate
+
+> 参数校验
+
+学习一下，参数校验，及异常处理。
+
+
+
+### 依赖
+
+> `@Validated`属于org.springframework下，只要是SpringBoot项目都包含。
+>
+> `@Valid`属于javax下，版本不同，可能有区别，如果缺少依赖就添加如下依赖，版本选择本文2.6.6。
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+
+
+
+### 注解
+
+#### 空检查
+
+- @Null 只允许传null
+
+- @NotNull 不允许传null，不会检查空字符串
+
+- @NotBlank 不允许传null，且trim后不允许为空字符串
+
+- @NotEmpty 不允许传null，且empty返回false
+
+#### Booelan检查
+
+- @AssertTrue Boolean类型，只允许传true
+
+- @AssertFalse Boolean类型，只允许传 false
+
+#### 长度检查
+
+- @Size(min=, max=)  验证存在Size()api的集合长度
+
+- @Length(min=, max=) 验证存在length()api的类  String）
+
+#### 日期检查
+
+- @Past 过去的时间
+
+- @Future 未来的时间
+
+- @Pattern 格式检查
+
+#### 数值检查
+
+- @Min   最小
+
+- @Max  最大
+
+#### 其他
+
+- @CreitCardNumber信用卡验证
+
+- @Email 验证是否是邮件地址，如果为null,不进行验证，算通过验证。
+
+
+
+
+### 嵌套校验
+
+> 很多情况下，往往一个校验的参数中，嵌套着其他的对象。
+
+#### 对于继承关系来说
+
+> 子类继承父类，父类的校验也会被扫描到，都可以参与校验。
+
+
+
+#### 对于聚合关系来说
+
+##### 测试
+
+>  UserQueryReqDTO
+
+```java
+public class Param01 {
+    @NotBlank(message = "不可为空")
+    private String name;
+
+    @Min(value = 0, message = "年龄不合法")
+    @Max(value = 999, message = "年龄不合法")
+    private Integer age;
+
+    @Email(message = "邮箱格式错误")
+    private String email;
+
+    @Size(min = 1, max = 3, message = "元素个数错误")
+    private List<String> hobbies;
+    
+    private BirthDay birthDay;
+}
+
+@Data
+public class BirthDay {
+    @NotNull
+    @Past(message = "请填入之前时间")
+    LocalDate start;
+
+    @NotNull
+    LocalDate end;
+}
+```
+
+
+
+> controller
+
+```java
+@PostMapping("/list")
+List<UserDTO> userDTOList(@Valid @RequestBody UserQueryReqDTO reqDTO) {
+    log.info("参数合法,{}", reqDTO);
+    return Collections.emptyList();
+}
+```
+
+
+
+##### 解决
+
+> 添加@Valid
+
+```java
+@Valid
+private BirthDay birthDay;
+```
+
+##### 最佳实践
+
+> 使用@Validated在控制器参数校验，@Valid进行嵌套校验。
+
+
+
+### 异常处理
+
+
+
+> 第一步：在springBoot启动器同级目录下创建一个common.exception包，并在此目录下创建一个自定义全局异常处理类。
+
+```java
+public class GlobalCustomException extends RuntimeException {
+    private static final long serialVersionUID = -7278881947512853935L;
+    @ApiModelProperty("异常代码")
+    private String code;
+    @ApiModelProperty("异常描述")
+    private String msg;
+}
+```
+
+> 第二步：在该目录下，创建一个异常处理器。
+
+一般来说会有一个`最后的屏障`来处理未知异常RuntimeException，以便友好显示。
+
+parse()方法是对BindResult的解析，显示具体哪个参数不符合校验规则，其实大可不必，上线了一般不会出现参数问题，主要方便联调。
+
+```java
+@RestControllerAdvice
+@Slf4j
+public class GlobalCustomExceptionHandler {
+    /**
+     * 未知异常
+     *
+     * @param e 异常
+     * @return ResultVo<String>
+     */
+    @ExceptionHandler(value = RuntimeException.class)
+    public ResultVo<String> unKnownException(RuntimeException e) {
+        log.error("系统出现异常:{}", e.getMessage());
+        return ResultVo.error(e.getMessage());
+    }
+    /**
+     * 请求参数不合法
+     *
+     * @param notValid 请求参数不合法异常
+     * @return ResultVo<String>
+     */
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    public ResultVo<Map<String, Object>> methodArgumentNotValidException(MethodArgumentNotValidException notValid) {
+        Map<String, Object> errorDesc = parse(notValid);
+        log.error("请求参数不合法:{}", JSON.toJSONString(errorDesc));
+        return ResultVo.error(errorDesc);
+    }
+    
+    /**
+     * 解析异常
+     *
+     * @param notValid 异常
+     * @return Map<String, String>
+     */
+    private Map<String, Object> parse(MethodArgumentNotValidException notValid) {
+        //方法名
+        String methodName = Objects.requireNonNull(notValid.getParameter().getMethod()).getName();
+        //异常信息保存于BindingResult
+        BindingResult exceptions = notValid.getBindingResult();
+        List<ObjectError> allErrors = exceptions.getAllErrors();
+        //返回结果
+        Map<String, Object> result = new HashMap<>();
+        //参数错误
+        Properties fieldErrorProp = new Properties();
+        allErrors.forEach((error) -> {
+            //转化为fieldError
+            FieldError fieldError = (FieldError) error;
+            //放入prop
+            fieldErrorProp.setProperty(fieldError.getField(), fieldError.getDefaultMessage());
+        });
+
+        result.put("methodName", methodName);
+        result.put("fieldErrorProp", fieldErrorProp);
+        return result;
+    }
+}
+```
 
 
 
@@ -3259,22 +3665,13 @@ public class QuorumQueueConfig {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- 学信网可查呢
+- 熟练使用主流框架 boot  cloud  以及微服务中间件(nacos  RabbitMQ sentinel 等)
+- 2年开发经验  但是 知识扎实 快速上手
+- 熟练使用 mysql   熟悉mvcc 事务 索引机制。   深入了解 redis, 熟练使用redis
+- 熟悉  常见容器   tomcat  nginx  openrestry
+- 学习能力优秀   个人gitee主页 包括笔记和练手项目   https://gitee.com/rolyfish
+- 熟练使用 docker
 
 
 

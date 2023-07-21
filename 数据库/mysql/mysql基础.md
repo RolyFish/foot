@@ -37,6 +37,15 @@
    -v /home/rolyfish/home/mysql/conf:/etc/mysql/conf.d \
    -e MYSQL_ROOT_PASSWORD=123456 \
    -d mysql:8.0.33
+   
+   
+   
+   docker run --name mysql \
+   -p 3316:3306 \
+   -v ./data:/var/lib/mysql \
+   -v ./conf:/etc/mysql/conf.d \
+   -e MYSQL_ROOT_PASSWORD=123456 \
+   -d mysql:8.0.33
    ```
 
 ### 可视化客户端
