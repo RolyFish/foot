@@ -46,6 +46,9 @@
    -v ./conf:/etc/mysql/conf.d \
    -e MYSQL_ROOT_PASSWORD=123456 \
    -d mysql:8.0.33
+   
+   
+   home/rolyfish/home/mysql
    ```
 
 ### 可视化客户端
