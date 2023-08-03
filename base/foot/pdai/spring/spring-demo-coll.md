@@ -3655,23 +3655,11 @@ public class GlobalCustomExceptionHandler {
 
 
 
+## spring-batch
+
+> 批处理
 
 
-
-
-
-
-
-
-
-
-- 学信网可查呢
-- 熟练使用主流框架 boot  cloud  以及微服务中间件(nacos  RabbitMQ sentinel 等)
-- 2年开发经验  但是 知识扎实 快速上手
-- 熟练使用 mysql   熟悉mvcc 事务 索引机制。   深入了解 redis, 熟练使用redis
-- 熟悉  常见容器   tomcat  nginx  openrestry
-- 学习能力优秀   个人gitee主页 包括笔记和练手项目   https://gitee.com/rolyfish
-- 熟练使用 docker
 
 
 

@@ -87,8 +87,6 @@
 - [私有gitLab安装](https://gitlab.cn/install/)
 - [安装步骤](https://gitlab.cn/install/#centos-7)
 
-
-
 ##### 安装步骤
 
 - 安装相关依赖
@@ -126,10 +124,10 @@
 - 配置
 
   ```shell
-  /etc/gitlab/gitlab.rb file
+  /etc/gitlab/gitlab.rb 
   
   external_url 'http://192.168.227.128:82'
-  sten_port'] = 82
+  nginx['listen_port'] = 82
   ```
 
 - 重载配置
@@ -237,7 +235,7 @@
 - 解压 
 
   ```shell
-  tar -zxvf jdk-8u171-linux-x64.tar.gz -C /home/rolyfish
+  tar -zxvf jdk-11.0.19_linux-x64_bin.tar.gz -C /usr/bin
   ```
 
 - 配置环境
@@ -247,21 +245,302 @@
   ```
 
   ```shell
-  
-  export JAVA_HOME = /home/rolyfish/jdk1.8.0_171
+  export JAVA_HOME=/usr/bin/jdk-11.0.19
   export PATH=$JAVA_HOME/bin:$PATH
   export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
   ```
-
+  
 - 测试jdk环境
 
   ```shell
+  source /etc/profile
   java -version
   ```
 
-  
+
+
+
 
 ##### Jenkins安装
+
+- 下载rpm或使用yum工具
+-  [jenkins下载清华镜像](https://mirrors.tuna.tsinghua.edu.cn/jenkins/redhat-stable/)
+- 安装
+  - `  rpm -ivh jenkins-2.401.3-1.1.noarch.rpm`
+
+- 配置
+
+  ```shell
+  vim /etc/sysconfig/jenkins
+  ```
+
+  ```shell
+  JENKINS_PORT="8888"
+  JENKINS_USER="root"
+  ```
+
+- 启动
+
+  ```shell
+  systemctl start jenkins
+  ```
+
+- 如果存在jdk版本问题
+
+  ```shell
+   vim /etc/init.d/jenkins
+  
+  systemctl daemon-reload
+  ```
+
+- 按提示完成安装
+
+- 获取初始化密码
+
+  ```shell
+  cat /var/lib/jenkins/secrets/initialAdminPassword
+  ```
+
+- 跳过插件安装
+
+- 创建管理员账户
+
+  
+
+##### Jenkins插件按安装
+
+> Jenkins本身不提供很多功能，我们可以通过使用插件来满足我们的使用。例如从Gitlab拉取代码，使用Maven构建项目等功能需要依靠插件完成。接下来演示如何下载插件。
+
+管理插件.![image-20230727135529266](jenkins.assets/image-20230727135529266.png)
+
+
+
+###### 修改配置
+
+```shell
+cd  /var/lib/jenkins/updates
+
+-- 替换jenkins默认配置
+sed -i 's/http:\/\/updates.jenkins-ci.org\/download/https:\/\/mirrors.tuna.tsinghua.edu.cn\/jenkins/g' default.json && sed -i  's/http:\/\/www.google.com/https:\/\/www.baidu.com/g' default.json
+
+
+sed -i 's//-/g' default.json
+```
+
+##### docker安装
+
+- 拉取镜像
+
+  ```shell
+  docker pull jenkins/jenkins:2.417-jdk11
+  ```
+
+- 启动容器
+
+  ```shell
+  docker network create jenkins
+  
+  docker run \
+    --name jenkins-docker1 \
+    -p 8898:8080 \
+    -v /home/rolyfish/home/jenkins/jenkins-docker-certs:/certs/client \
+    -v /home/rolyfish/home/jenkins/data:/var/jenkins_home \
+    -d jenkins/jenkins:2.417-jdk11
+  ```
+
+- 防火墙放行
+
+  ```shell
+  firewall-cmd --zone=public --add-port=8888/tcp --permanent
+  firewall-cmd --reload
+  ```
+
+- 获取初始密码
+
+  ```shell
+  ## 进入容器
+  docker exec -it jenkins-docker /bin/bash
+  ## 获取初始化密码
+  cat /var/jenkins_home/secrets/initialAdminPassword
+  ```
+
+- 安装
+
+  选择插件--> 无
+
+- Jenkins->Manage Jenkins-> Plugins，点击Available
+
+- 修改配置
+
+  ```shell
+  Manage Plugins点击Advanced  修改 update site
+  https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
+  ```
+
+- 安装汉化插件
+
+- Jenkins->Manage Jenkins->Manage Plugins，点击Available，搜索"Chinese"
+
+- 
+
+
+
+##### 用户权限管理
+
+###### 用户管理
+
+
+
+> 利用`Role-based Authorization Strategy`插件帮忙管理用户
+
+![image-20230802171826207](jenkins.assets/image-20230802171826207.png)
+
+###### 开启安全策略
+
+> 开启全局安全策略
+
+![image-20230802172142284](jenkins.assets/image-20230802172142284.png)
+
+###### 创建角色
+
+> 创建角色
+
+![image-20230802173828790](jenkins.assets/image-20230802173828790.png)
+
+###### 创建用户
+
+> 创建用户绑定角色
+
+![image-20230802173428273](jenkins.assets/image-20230802173428273.png)
+
+![image-20230802173746712](jenkins.assets/image-20230802173746712.png)
+
+###### 创建项目
+
+> 创建项目绑定角色
+
+> 使用管理员账户创建项目`item1`和`item2`。 
+>
+> yyc role1能看见 item1  。lizicheng  role2能看见item2
+
+![image-20230802192432996](jenkins.assets/image-20230802192432996.png)
+
+
+
+##### 凭证管理
+
+> 凭据用于管理需要密文存储的第三方账户密码, 方便Jenkins与第三方应用交互, 比如GitLab、数据库、Docker等。
+
+###### 安装**Credentials Binding**插件
+
+> 插件安装成功后多出`凭据配置`
+
+![image-20230802193400108](jenkins.assets/image-20230802193400108.png)
+
+![image-20230802193537573](jenkins.assets/image-20230802193537573.png)
+
+- Username with password：用户名和密码
+- SSH Username with private key： 使用SSH用户和密钥
+- Secret file：需要保密的文本文件，使用时Jenkins会将文件复制到一个临时目录中，再将文件路径设置到一个变量中，等构建结束后，所复制的Secret file就会被删除。
+- Secret text：需要保存的一个加密的文本串，如钉钉机器人或Github的api token
+- Certificate：通过上传证书文件的方式
+
+
+
+###### 安装git插件&git工具
+
+> 安装git插件
+
+> Centos 安装git工具
+
+```shell
+yum install git -y
+
+# 查看结果
+git --version
+```
+
+
+
+###### 用户密码凭证
+
+> 创建凭证
+
+![image-20230802195014469](jenkins.assets/image-20230802195014469.png)
+
+
+
+> 测试凭证。创建项目，使用凭证登录gitlab，测试凭证。
+
+![image-20230802195257978](jenkins.assets/image-20230802195257978.png)
+
+> 点击立即构建，查看控制台输出。
+>
+> 查看挂载目录即可发现代码已拉到本地
+
+![image-20230802195446898](jenkins.assets/image-20230802195446898.png)
+
+![image-20230802195825987](jenkins.assets/image-20230802195825987.png)
+
+
+
+###### SSH凭证
+
+> gitlab存公钥, jenkin存私钥。
+>
+> 注意：公钥私钥在docker容器内生成
+
+- 生成密钥
+
+  ```shell
+  docker exec -it jenkins-docker /bin/bash
+  
+  ssh-keygen -t rsa
+  ```
+
+  ![image-20230803092816666](jenkins.assets/image-20230803092816666.png)
+
+- 公钥放入gitlab
+
+  > gitlab ---> 头像 ----> SSHKEY
+
+- 私钥配置在jenkins凭证中
+
+  ![image-20230803093156657](jenkins.assets/image-20230803093156657.png)
+
+  出错添加配置
+
+  ![image-20230803094133130](jenkins.assets/image-20230803094133130.png)
+
+- 测试
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
