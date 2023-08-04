@@ -520,21 +520,80 @@ git --version
 
 
 
+#### maven安装
+
+- [下载压缩包](https://maven.apache.org/download.cgi)
+
+- 解压
+
+  ```shell
+  mkdir /opt/maven
+  tar -zxvf apache-maven-3.6.2-bin.tar.gz -C  /home/rolyfish/home/jenkins/data
+  ```
+
+- 配置环境变量
+
+  ```shell
+  export MAVEN_HOME=/opt/maven
+  export PATH=$PATH:$MAVEN_HOME/bin
+  ```
+
+  docker内没装vi，使用`cat 1.txt >> /etc/profile`
+
+- 检查
+
+  ```shell
+  mvn -v
+  ```
+
+- Jenkins配置maven
+
+  ![image-20230804164857512](jenkins.assets/image-20230804164857512.png)
+
+- 添加全局变量
+
+  ![image-20230804165834999](jenkins.assets/image-20230804165834999.png)
+
+- 新建仓库
+
+  ```shell
+  mkdir maven_repo
+  ```
+
+- 修改配置i
+
+  ```shell
+  vim ./maven/conf/settings.xml
+  
+  # 本地仓库
+  <localRepository>/var/jenkins_home/maven_repo</localRepository>
+  
+  # maven镜像
+  <mirror>
+      <id>nexus-aliyun</id>
+      <mirrorOf>*,!jeecg,!jeecg-snapshots</mirrorOf>
+      <name>Nexus aliyun</name>
+      <url>http://maven.aliyun.com/nexus/content/groups/public/</url>	
+  </mirror>
+  ```
 
 
 
+##### 测试maven
+
+> 增加构建步骤
+
+![image-20230804180412850](jenkins.assets/image-20230804180412850.png)
 
 
 
+> 控制台输出
 
+![image-20230804180443614](jenkins.assets/image-20230804180443614.png)
 
+> 本地maven仓库检查
 
-
-
-
-
-
-
+![image-20230804180532622](jenkins.assets/image-20230804180532622.png)
 
 
 
