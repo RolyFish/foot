@@ -87,7 +87,7 @@
 - [私有gitLab安装](https://gitlab.cn/install/)
 - [安装步骤](https://gitlab.cn/install/#centos-7)
 
-##### 安装步骤
+##### 安装步骤-centos
 
 - 安装相关依赖
 
@@ -148,25 +148,131 @@
 
   > 首次登录需要套修改密码, 使用顶层用户root登录即可。
 
+
+
+##### 安装-docker
+
+- 拉镜像
+
+  ```shell
+  docker pull bitnami/gitlab-runner:16.2.1
+  ```
+
+- 启动容器
+
+  ```shell
+  docker run -d \
+  -p 10008:80 \
+  -p 10009:443 \
+  -p 10010:22 \
+  --name gitlab \
+  -v /home/rolyfish/home/gitlab/etc/gitlab:/etc/gitlab \
+  -v /home/rolyfish/home/gitlab/var/log/gitlab:/var/log/gitlab \
+  -v /home/rolyfish/home/gitlab/var/opt/gitlab:/var/opt/gitlab \
+  --privileged=true bitnami/gitlab-runner:16.2.1
+  ```
+
+- 
+
+##### 安装-ubuntn
+
+[教程地址](https://about.gitlab.com/install/#ubuntu)
+
+- 安装必要依赖
+
+  ```shell
+  sudo apt-get update
+  sudo apt-get install -y curl openssh-server ca-certificates tzdata perl
+  
+  # 电子邮件支持
+  sudo apt-get install -y postfix
+  ```
+
+- 下载gitlab包并安装
+
+  ```shell
+  curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.deb.sh | sudo bash
+  
+  apt-get install gitlab-ee
+  ```
+
+- 编辑配置
+
+  ```shell
+  /etc/gitlab/gitlab.rb 
+  
+  external_url 'http://10.211.55.4:82'
+  nginx['listen_port'] = 82
+  ```
+
+- 重载配置
+
+  ```shell
+  gitlab-ctl reconfigure
+  
+  gitlab-ctl start
+  ```
+
+- 查看初始密码并登录修改密码
+
+  ```shell
+  cat /etc/gitlab/initial_root_password
+  ```
+
+  ![image-20230910210328369](jenkins.assets/image-20230910210328369.png)
+
+- 基本命令
+
+  ```shell
+  # Start all GitLab components
+  sudo gitlab-ctl start
+  # Stop all GitLab components
+  sudo gitlab-ctl stop
+  # Restart all GitLab components
+  sudo gitlab-ctl restart
+  ```
+
+  
+
+##### 设置
+
+###### 关闭用户注册
+
+> setting>general 下的Sign-up restrictions
+
+![image-20230910211651942](jenkins.assets/image-20230910211651942.png)
+
+>  管理员同意
+
+![image-20230910214802819](jenkins.assets/image-20230910214802819.png)
+
+
+
 ##### 添加组、用户、项目
 
 ###### 创建用户组
 
-> 使用管理员 root 创建组，一个组里面可以有多个项目分支，可以将开发添加到组里面进行设置权限，不同的组就是公司不同的开发项目或者服务模块，不同的组添加不同的开发即可实现对开发设置权限的管理
+> 使用管理员 root 创建组,一个组里面可以有多个项目分支，可以将开发添加到组里面进行设置权限，不同的组就是公司不同的开发项目或者服务模块，不同的组添加不同的开发即可实现对开发设置权限的管理
 
-![image-20230720161626461](jenkins.assets/image-20230720161626461.png)
+![image-20230910213129437](jenkins.assets/image-20230910213129437.png)
+
+
 
 ###### 创建项目
 
-![image-20230720161804969](jenkins.assets/image-20230720161804969.png)
+![image-20230910213235589](jenkins.assets/image-20230910213235589.png)
 
 ###### 创建用户
 
-![image-20230720162120873](jenkins.assets/image-20230720162120873.png)
+> 登录邮箱设置密码
+
+![image-20230910215415667](jenkins.assets/image-20230910215415667.png)
 
 ###### group添加成员
 
-![image-20230720165138777](jenkins.assets/image-20230720165138777.png)
+> 邀请成员
+
+![image-20230910215804687](jenkins.assets/image-20230910215804687.png)
 
 > 权限
 
@@ -188,8 +294,10 @@
 
 - 创建gitignore文件
 
+  > [java.gitignore](https://github.com/github/gitignore/blob/main/Java.gitignore)
+
   ```shell
-  touch .gitignoer
+  touch .gitignore
   ```
 
 - 提交本地暂存区
@@ -209,11 +317,11 @@
   ```shell
   git remote add 仓库名称 仓库地址
   
-   git remote add web_demo3 http://192.168.227.128:82/rolyfish_group/web_demo3.git
+  git remote add test http://10.211.55.4:82/root_roup/test.git
    
-   -- 查看远程仓库信息
-   git remote 
-   git remote -v
+  -- 查看远程仓库信息
+  git remote 
+  git remote -v
   ```
 
 - 提交远程仓库
@@ -599,7 +707,11 @@ git --version
 
 
 
+### 持续集成
 
+
+
+#### GitLab搭建
 
 
 
