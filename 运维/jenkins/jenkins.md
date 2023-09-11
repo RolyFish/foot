@@ -326,6 +326,43 @@
 
 - 提交远程仓库
 
+#### Jenkins安装-ubuntn
+
+##### jdk安装
+
+- 安装jdk
+
+  ```shell
+  sudo apt install openjdk-17-jdk
+  
+  java -version
+  ```
+
+- jdk版本管理
+
+  ```shell
+  sudo update-alternatives --config java
+  ```
+
+- 配置环境变量
+
+  ```shell
+  # 查看jdk安装路径
+  sudo update-alternatives --config java
+  vim /etc/environment
+  
+  ===
+  export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+  export JRE_HOME=${JAVA_HOME}/jre  
+  export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib  
+  export PATH=${JAVA_HOME}/bin:$PATH
+  ===
+  
+  source /etc/environment
+  ```
+
+##### jenkins安装
+
 
 
 #### Jenkins安装
@@ -435,93 +472,76 @@ sed -i 's/http:\/\/updates.jenkins-ci.org\/download/https:\/\/mirrors.tuna.tsing
 sed -i 's//-/g' default.json
 ```
 
-##### docker安装
 
-- 拉取镜像
 
-  ```shell
-  docker pull jenkins/jenkins:2.417-jdk11
-  ```
+##### docker安装-ubuntn
 
-- 启动容器
+[文档](https://github.com/jenkinsci/docker/blob/master/README.md)
 
-  ```shell
-  docker network create jenkins
-  
-  docker run \
-    --name jenkins-docker1 \
-    -p 8898:8080 \
-    -v /home/rolyfish/home/jenkins/jenkins-docker-certs:/certs/client \
-    -v /home/rolyfish/home/jenkins/data:/var/jenkins_home \
-    -d jenkins/jenkins:2.417-jdk11
-  ```
+```shell
+docker pull jenkins/jenkins:jdk17
+docker run -p 8080:8080 -p 50000:50000 --restart=on-failure -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts-jdk11
 
-- 防火墙放行
 
-  ```shell
-  firewall-cmd --zone=public --add-port=8888/tcp --permanent
-  firewall-cmd --reload
-  ```
+mkdir -p /home/rolyfish/home/jenkins/jenkins_home
+docker run \
+  --name jenkins-jdk17 \
+  -p 8898:8080 \
+  -p 50000:50000 \
+  -v /home/rolyfish/home/jenkins/jenkins_home:/var/jenkins_home \
+  -d jenkins/jenkins:jdk17
 
-- 获取初始密码
+# 查看初始密码
+cat /home/rolyfish/home/jenkins/jenkins_home/secrets/initialAdminPassword
+```
 
-  ```shell
-  ## 进入容器
-  docker exec -it jenkins-docker /bin/bash
-  ## 获取初始化密码
-  cat /var/jenkins_home/secrets/initialAdminPassword
-  ```
+- 插件安装  选择 无
 
-- 安装
+- 创建第一个用户
 
-  选择插件--> 无
-
-- Jenkins->Manage Jenkins-> Plugins，点击Available
+  ![image-20230911212347655](jenkins.assets/image-20230911212347655.png)
 
 - 修改配置
 
   ```shell
-  Manage Plugins点击Advanced  修改 update site
+  Managejenkins> Plugins 点击Advanced setting  修改 update site
+  
   https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
   ```
 
-- 安装汉化插件
+ - 安装汉化插件
 
-- Jenkins->Manage Jenkins->Manage Plugins，点击Available，搜索"Chinese"
+   Manage Jenkins-> Plugins，点击Available plugins ，搜索"Chinese"
 
-- 
+   ![image-20230911212830999](jenkins.assets/image-20230911212830999.png)
 
-
+   重启jenkins
 
 ##### 用户权限管理
 
 ###### 用户管理
 
-
-
 > 利用`Role-based Authorization Strategy`插件帮忙管理用户
 
-![image-20230802171826207](jenkins.assets/image-20230802171826207.png)
+![image-20230911213359611](jenkins.assets/image-20230911213359611.png)
 
 ###### 开启安全策略
 
 > 开启全局安全策略
 
-![image-20230802172142284](jenkins.assets/image-20230802172142284.png)
+![image-20230911213509162](jenkins.assets/image-20230911213509162.png)
 
 ###### 创建角色
 
 > 创建角色
 
-![image-20230802173828790](jenkins.assets/image-20230802173828790.png)
+![image-20230911215341231](jenkins.assets/image-20230911215341231.png)
 
 ###### 创建用户
 
 > 创建用户绑定角色
 
-![image-20230802173428273](jenkins.assets/image-20230802173428273.png)
-
-![image-20230802173746712](jenkins.assets/image-20230802173746712.png)
+![image-20230911214356358](jenkins.assets/image-20230911214356358.png)
 
 ###### 创建项目
 
@@ -529,9 +549,9 @@ sed -i 's//-/g' default.json
 
 > 使用管理员账户创建项目`item1`和`item2`。 
 >
-> yyc role1能看见 item1  。lizicheng  role2能看见item2
+> lizicheng role1能看见 item1  。yuyanchuang  role2能看见item2
 
-![image-20230802192432996](jenkins.assets/image-20230802192432996.png)
+
 
 
 
@@ -543,9 +563,9 @@ sed -i 's//-/g' default.json
 
 > 插件安装成功后多出`凭据配置`
 
-![image-20230802193400108](jenkins.assets/image-20230802193400108.png)
+![image-20230911215659076](jenkins.assets/image-20230911215659076.png)
 
-![image-20230802193537573](jenkins.assets/image-20230802193537573.png)
+![image-20230911215856301](jenkins.assets/image-20230911215856301.png)
 
 - Username with password：用户名和密码
 - SSH Username with private key： 使用SSH用户和密钥
@@ -559,10 +579,12 @@ sed -i 's//-/g' default.json
 
 > 安装git插件
 
-> Centos 安装git工具
+![image-20230911220324642](jenkins.assets/image-20230911220324642.png)
+
+> 安装git工具。容器内如果自带就不用安装
 
 ```shell
-yum install git -y
+apt-get install git
 
 # 查看结果
 git --version
@@ -574,7 +596,7 @@ git --version
 
 > 创建凭证
 
-![image-20230802195014469](jenkins.assets/image-20230802195014469.png)
+![image-20230911220857724](jenkins.assets/image-20230911220857724.png)
 
 
 
